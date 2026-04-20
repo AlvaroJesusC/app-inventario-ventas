@@ -1,0 +1,140 @@
+import 'package:flutter/material.dart';
+import '../../config/app_theme.dart';
+import '../home/tabs/home_tab.dart';
+import '../home/tabs/inventory_tab.dart';
+import '../home/tabs/sales_tab.dart';
+import '../home/tabs/reports_tab.dart';
+
+/// Pantalla principal con navegación inferior
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  int _currentIndex = 0;
+
+  final List<Widget> _tabs = const [
+    HomeTab(),
+    InventoryTab(),
+    SalesTab(),
+    ReportsTab(),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppTheme.backgroundGrey,
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 250),
+        child: _tabs[_currentIndex],
+      ),
+      bottomNavigationBar: _buildBottomNavBar(),
+    );
+  }
+
+  Widget _buildBottomNavBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.white,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.only(top: 8, bottom: 8),
+          child: SafeArea(
+            top: false,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildNavItem(
+                  icon: Icons.home_rounded,
+                  label: 'Inicio',
+                  index: 0,
+                ),
+                _buildNavItem(
+                  icon: Icons.inventory_2_rounded,
+                  label: 'Inventario',
+                  index: 1,
+                ),
+                _buildNavItem(
+                  icon: Icons.point_of_sale_rounded,
+                  label: 'Ventas',
+                  index: 2,
+                ),
+                _buildNavItem(
+                  icon: Icons.bar_chart_rounded,
+                  label: 'Reportes',
+                  index: 3,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem({
+    required IconData icon,
+    required String label,
+    required int index,
+  }) {
+    final bool isActive = _currentIndex == index;
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _currentIndex = index;
+        });
+      },
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeInOut,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isActive
+              ? AppTheme.primaryGreen.withValues(alpha: 0.1)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 24,
+              color: isActive ? AppTheme.primaryGreen : AppTheme.textHint,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                color: isActive ? AppTheme.primaryGreen : AppTheme.textHint,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

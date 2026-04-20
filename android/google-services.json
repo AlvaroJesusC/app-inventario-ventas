@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "708265003002",
+    "project_id": "app-inventario-ventas-3419a",
+    "storage_bucket": "app-inventario-ventas-3419a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:708265003002:android:affd50d70862ef16cd0643",
+        "android_client_info": {
+          "package_name": "com.example.app_inventario_ventas"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyABiydTnZqR1NgiPM5AQandS4Cpf9XVddA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
