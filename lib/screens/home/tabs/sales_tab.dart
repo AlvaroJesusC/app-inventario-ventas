@@ -7,9 +7,8 @@ class SalesTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Center(
-        child: Column(
+    return Center(
+      child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
@@ -35,7 +34,6 @@ class SalesTab extends StatelessWidget {
               ),
             ),
           ],
-        ),
       ),
     );
   }

@@ -6,6 +6,10 @@ import '../../config/app_constants.dart';
 import '../../config/app_theme.dart';
 import '../../models/product_model.dart';
 import '../../services/product_service.dart';
+import '../profile/profile_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../models/user_model.dart';
+import '../../services/user_service.dart';
 
 class AddProductScreen extends StatefulWidget {
   const AddProductScreen({super.key});
@@ -21,7 +25,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final _nombreController = TextEditingController();
   final _precioController = TextEditingController();
   final _stockController = TextEditingController();
-  
+
   String? _selectedCategory;
   String? _scannedBarcode;
   bool _isLoading = false;
@@ -34,7 +38,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     'Snacks',
     'Hogar',
     'Cuidado Personal',
-    'Otros'
+    'Otros',
   ];
 
   @override
@@ -45,59 +49,41 @@ class _AddProductScreenState extends State<AddProductScreen> {
     super.dispose();
   }
 
-  /// Lógica para buscar el producto online mediante código de barras
+  /// Lógica principal para buscar el producto online
   Future<void> _fetchProductFromBarcode(String barcode) async {
     setState(() {
       _isLoading = true;
     });
 
     try {
-      // Usamos el API abierto de OpenFoodFacts como ejemplo para llenar datos reales!
-      final url = Uri.parse('https://world.openfoodfacts.org/api/v0/product/$barcode.json');
-      final response = await http.get(url).timeout(const Duration(seconds: 10));
+      // 1. Intentar en OpenFoodFacts (Comida)
+      bool found = await _tryOpenFoodFacts(barcode, isBeauty: false);
+      
+      // 2. Si no, intentar en OpenBeautyFacts (Shampoos, desodorantes)
+      if (!found) {
+        found = await _tryOpenFoodFacts(barcode, isBeauty: true);
+      }
+      
+      // 3. Si no, intentar en MercadoLibre Perú (Cosas de casa, electrónica, etc)
+      if (!found) {
+        found = await _tryMercadoLibre(barcode);
+      }
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data['status'] == 1 && data['product'] != null) {
-          // Producto encontrado
-          final producto = data['product'];
-          
-          setState(() {
-            // Rellenar nombre
-            if (producto['product_name'] != null && producto['product_name'].toString().isNotEmpty) {
-              _nombreController.text = producto['product_name'];
-            } else if (producto['product_name_es'] != null) {
-              _nombreController.text = producto['product_name_es'];
-            }
-
-            // Adivinar categoría
-            if (producto['categories'] != null) {
-              String cat = producto['categories'].toString().toLowerCase();
-              if (cat.contains('beverage') || cat.contains('bebida')) {
-                _selectedCategory = 'Bebidas';
-              } else if (cat.contains('dairy') || cat.contains('lácteo')) {
-                 _selectedCategory = 'Lácteos';
-              } else if (cat.contains('snack')) {
-                 _selectedCategory = 'Snacks';
-              } else {
-                 _selectedCategory = 'Abarrotes';
-              }
-            }
-          });
-
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('¡Producto encontrado y rellenado automáticamente!'),
-              backgroundColor: AppTheme.primaryGreen,
-            ),
-          );
-        } else {
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Código escaneado, pero no se encontró en la base de datos mundial.')),
-          );
-        }
+      if (found) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('¡Producto encontrado online automáticamente!'),
+            backgroundColor: AppTheme.primaryGreen,
+          ),
+        );
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Código escaneado, pero no se encontró online.'),
+          ),
+        );
       }
     } catch (e) {
       if (!mounted) return;
@@ -111,11 +97,83 @@ class _AddProductScreenState extends State<AddProductScreen> {
     }
   }
 
+  /// Busca en OpenFoodFacts u OpenBeautyFacts
+  Future<bool> _tryOpenFoodFacts(String barcode, {required bool isBeauty}) async {
+    final domain = isBeauty ? 'world.openbeautyfacts.org' : 'world.openfoodfacts.org';
+    try {
+      final url = Uri.parse('https://$domain/api/v0/product/$barcode.json');
+      final response = await http.get(url).timeout(const Duration(seconds: 5));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['status'] == 1 && data['product'] != null) {
+          final producto = data['product'];
+          setState(() {
+            if (producto['product_name'] != null && producto['product_name'].toString().isNotEmpty) {
+              _nombreController.text = producto['product_name'];
+            } else if (producto['product_name_es'] != null) {
+              _nombreController.text = producto['product_name_es'];
+            }
+
+            if (isBeauty) {
+               _selectedCategory = 'Cuidado Personal';
+            } else if (producto['categories'] != null) {
+              String cat = producto['categories'].toString().toLowerCase();
+              if (cat.contains('beverage') || cat.contains('bebida')) {
+                _selectedCategory = 'Bebidas';
+              } else if (cat.contains('dairy') || cat.contains('lácteo')) {
+                _selectedCategory = 'Lácteos';
+              } else if (cat.contains('snack')) {
+                _selectedCategory = 'Snacks';
+              } else {
+                _selectedCategory = 'Abarrotes';
+              }
+            }
+          });
+          return true;
+        }
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  /// Busca en MercadoLibre (super útil para cosas generales)
+  Future<bool> _tryMercadoLibre(String barcode) async {
+    try {
+      // MPE es el sitio de Perú en MercadoLibre
+      final url = Uri.parse('https://api.mercadolibre.com/sites/MPE/search?q=$barcode');
+      final response = await http.get(url).timeout(const Duration(seconds: 5));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['results'] != null && (data['results'] as List).isNotEmpty) {
+          final firstResult = data['results'][0];
+          setState(() {
+             _nombreController.text = firstResult['title'] ?? '';
+             
+             // Como MercadoLibre tiene de todo, asignamos "Otros" por defecto
+             _selectedCategory = 'Otros';
+             
+             // Opcional: Extraer precio sugerido
+             if (firstResult['price'] != null) {
+                _precioController.text = firstResult['price'].toString();
+             }
+          });
+          return true;
+        }
+      }
+    } catch (_) {}
+    return false;
+  }
+
   Future<void> _saveProduct() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedCategory == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Selecciona una categoría'), backgroundColor: AppTheme.error),
+        const SnackBar(
+          content: Text('Selecciona una categoría'),
+          backgroundColor: AppTheme.error,
+        ),
       );
       return;
     }
@@ -170,7 +228,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
             _buildHeader(),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
                 child: Form(
                   key: _formKey,
                   child: Column(
@@ -185,7 +246,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                         ),
                       ),
                       const SizedBox(height: 24),
-                      
+
                       // Caja de escaneo
                       _buildScanBox(),
                       const SizedBox(height: 32),
@@ -198,7 +259,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                         decoration: const InputDecoration(
                           hintText: 'Ej. Lámpara de Escritorio LED',
                         ),
-                        validator: (value) => 
+                        validator: (value) =>
                             value == null || value.isEmpty ? 'Requerido' : null,
                       ),
                       const SizedBox(height: 20),
@@ -213,10 +274,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                         ),
                         icon: const Icon(Icons.keyboard_arrow_down_rounded),
                         items: _categorias.map((cat) {
-                          return DropdownMenuItem(
-                            value: cat,
-                            child: Text(cat),
-                          );
+                          return DropdownMenuItem(value: cat, child: Text(cat));
                         }).toList(),
                         onChanged: (val) {
                           setState(() {
@@ -236,13 +294,18 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                 const SizedBox(height: 8),
                                 TextFormField(
                                   controller: _precioController,
-                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                  keyboardType:
+                                      const TextInputType.numberWithOptions(
+                                        decimal: true,
+                                      ),
                                   decoration: const InputDecoration(
                                     hintText: 'S/ 0.00',
                                   ),
                                   validator: (value) {
-                                    if (value == null || value.isEmpty) return 'Requerido';
-                                    if (double.tryParse(value) == null) return 'Inválido';
+                                    if (value == null || value.isEmpty)
+                                      return 'Requerido';
+                                    if (double.tryParse(value) == null)
+                                      return 'Inválido';
                                     return null;
                                   },
                                 ),
@@ -263,8 +326,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                     hintText: '0',
                                   ),
                                   validator: (value) {
-                                    if (value == null || value.isEmpty) return 'Requerido';
-                                    if (int.tryParse(value) == null) return 'Inválido';
+                                    if (value == null || value.isEmpty)
+                                      return 'Requerido';
+                                    if (int.tryParse(value) == null)
+                                      return 'Inválido';
                                     return null;
                                   },
                                 ),
@@ -283,13 +348,19 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               onPressed: () => Navigator.pop(context),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: AppTheme.textPrimary,
-                                side: const BorderSide(color: AppTheme.divider, width: 1.5),
+                                side: const BorderSide(
+                                  color: AppTheme.divider,
+                                  width: 1.5,
+                                ),
                                 minimumSize: const Size(0, 56),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
-                              child: const Text('Cancelar', style: TextStyle(fontSize: 16)),
+                              child: const Text(
+                                'Cancelar',
+                                style: TextStyle(fontSize: 16),
+                              ),
                             ),
                           ),
                           const SizedBox(width: 16),
@@ -299,12 +370,19 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               style: ElevatedButton.styleFrom(
                                 minimumSize: const Size(0, 56),
                               ),
-                              child: _isLoading 
-                                ? const SizedBox(
-                                    width: 24, height: 24,
-                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                                  )
-                                : const Text('Guardar', style: TextStyle(fontSize: 16)),
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Guardar',
+                                      style: TextStyle(fontSize: 16),
+                                    ),
                             ),
                           ),
                         ],
@@ -385,14 +463,18 @@ class _AddProductScreenState extends State<AddProductScreen> {
           ),
           const SizedBox(height: 6),
           Text(
-            _scannedBarcode != null 
+            _scannedBarcode != null
                 ? 'Código: $_scannedBarcode'
                 : 'Use la cámara para rellenar\nautomáticamente.',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13,
-              color: _scannedBarcode != null ? AppTheme.primaryGreen : AppTheme.textHint,
-              fontWeight: _scannedBarcode != null ? FontWeight.w600 : FontWeight.normal,
+              color: _scannedBarcode != null
+                  ? AppTheme.primaryGreen
+                  : AppTheme.textHint,
+              fontWeight: _scannedBarcode != null
+                  ? FontWeight.w600
+                  : FontWeight.normal,
               height: 1.4,
             ),
           ),
@@ -434,21 +516,38 @@ class _AddProductScreenState extends State<AddProductScreen> {
               ),
             ),
           ),
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: AppTheme.primaryGreenLight,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AppTheme.primaryGreen.withValues(alpha: 0.2),
-                width: 1.5,
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ProfileScreen()),
+              );
+            },
+            child: StreamBuilder<UserModel?>(
+              stream: UserService().getUserProfileStream(
+                FirebaseAuth.instance.currentUser!.uid,
+                FirebaseAuth.instance.currentUser?.email ?? '',
               ),
-            ),
-            child: const Icon(
-              Icons.person_rounded,
-              size: 22,
-              color: AppTheme.primaryGreen,
+              builder: (context, snapshot) {
+                final initials = snapshot.data?.initials ?? '';
+                return Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryGreenLight,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppTheme.primaryGreen.withValues(alpha: 0.2),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Center(
+                    child: initials.isEmpty
+                        ? const Icon(Icons.person_rounded, size: 22, color: AppTheme.primaryGreen)
+                        : Text(initials, style: const TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.bold, fontSize: 14)),
+                  ),
+                );
+              }
             ),
           ),
         ],

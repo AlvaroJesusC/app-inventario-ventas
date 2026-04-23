@@ -37,11 +37,8 @@ class _InventoryTabState extends State<InventoryTab> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Column(
+    return Column(
         children: [
-          // ── Header: menú + título + avatar ──
-          _buildHeader(),
 
           // ── Barra de búsqueda ──
           _buildSearchBar(),
@@ -89,73 +86,10 @@ class _InventoryTabState extends State<InventoryTab> {
               },
             ),
           ),
-        ],
-      ),
+      ],
     );
   }
 
-  /// Header superior: menú hamburguesa, título de la app, avatar de perfil
-  Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-      child: Row(
-        children: [
-          // Botón de menú
-          GestureDetector(
-            onTap: () {
-              // TODO: Abrir drawer/menú lateral
-            },
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: AppTheme.white,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppTheme.divider),
-              ),
-              child: const Icon(
-                Icons.menu_rounded,
-                size: 20,
-                color: AppTheme.textPrimary,
-              ),
-            ),
-          ),
-
-          // Título centrado
-          const Expanded(
-            child: Text(
-              AppConstants.appName,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: AppTheme.textPrimary,
-              ),
-            ),
-          ),
-
-          // Avatar de perfil
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: AppTheme.primaryGreenLight,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AppTheme.primaryGreen.withValues(alpha: 0.2),
-                width: 1.5,
-              ),
-            ),
-            child: const Icon(
-              Icons.person_rounded,
-              size: 22,
-              color: AppTheme.primaryGreen,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   /// Barra de búsqueda con ícono de filtro/escanear
   Widget _buildSearchBar() {

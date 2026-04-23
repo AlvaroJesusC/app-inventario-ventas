@@ -4,17 +4,36 @@ import '../home/tabs/home_tab.dart';
 import '../home/tabs/inventory_tab.dart';
 import '../home/tabs/sales_tab.dart';
 import '../home/tabs/reports_tab.dart';
+import '../profile/profile_screen.dart';
+import '../../widgets/global_header.dart';
 
 /// Pantalla principal con navegación inferior
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
+  static HomeScreenState? of(BuildContext context) {
+    return context.findAncestorStateOfType<HomeScreenState>();
+  }
+
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<HomeScreen> createState() => HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
+  bool _showProfile = false;
+
+  void showProfile() {
+    setState(() {
+      _showProfile = true;
+    });
+  }
+
+  void hideProfile() {
+    setState(() {
+      _showProfile = false;
+    });
+  }
 
   final List<Widget> _tabs = const [
     HomeTab(),
@@ -27,9 +46,18 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundGrey,
-      body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 250),
-        child: _tabs[_currentIndex],
+      body: SafeArea(
+        child: Column(
+          children: [
+            const GlobalHeader(),
+            Expanded(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 250),
+                child: _showProfile ? const ProfileScreen() : _tabs[_currentIndex],
+              ),
+            ),
+          ],
+        ),
       ),
       bottomNavigationBar: _buildBottomNavBar(),
     );
@@ -96,12 +124,13 @@ class _HomeScreenState extends State<HomeScreen> {
     required String label,
     required int index,
   }) {
-    final bool isActive = _currentIndex == index;
+    final bool isActive = !_showProfile && _currentIndex == index;
 
     return GestureDetector(
       onTap: () {
         setState(() {
           _currentIndex = index;
+          _showProfile = false;
         });
       },
       behavior: HitTestBehavior.opaque,

@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
-
+import '../models/user_model.dart';
+import 'user_service.dart';
 /// Servicio de autenticación con Firebase Auth
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -36,6 +37,14 @@ class AuthService {
         email: email.trim(),
         password: password,
       );
+      
+      // Crear documento en Firestore para el nuevo usuario
+      if (credential.user != null) {
+        final userService = UserService();
+        final newUser = UserModel.empty(credential.user!.uid, email.trim());
+        await userService.saveUserProfile(newUser);
+      }
+      
       return credential;
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
