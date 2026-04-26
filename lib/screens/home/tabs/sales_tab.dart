@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../config/app_theme.dart';
+import '../home_screen.dart';
+import '../../sales/new_sale_screen.dart';
 
 class SalesTab extends StatefulWidget {
   const SalesTab({super.key});
@@ -176,7 +178,12 @@ class _SalesTabState extends State<SalesTab> {
         color: Colors.transparent,
         child: InkWell(
           onTap: () {
-            // TODO: Navigate to new sale process
+            final homeState = HomeScreen.of(context);
+            if (homeState != null) {
+              homeState.showNewSale();
+            } else {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const NewSaleScreen()));
+            }
           },
           borderRadius: BorderRadius.circular(16),
           child: Padding(

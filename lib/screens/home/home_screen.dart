@@ -6,6 +6,8 @@ import '../home/tabs/sales_tab.dart';
 import '../home/tabs/reports_tab.dart';
 import '../profile/profile_screen.dart';
 import '../../widgets/global_header.dart';
+import '../inventory/add_product_screen.dart';
+import '../sales/new_sale_screen.dart';
 
 /// Pantalla principal con navegación inferior
 class HomeScreen extends StatefulWidget {
@@ -22,16 +24,48 @@ class HomeScreen extends StatefulWidget {
 class HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
   bool _showProfile = false;
+  bool _showAddProduct = false;
+  bool _showNewSale = false;
 
   void showProfile() {
     setState(() {
       _showProfile = true;
+      _showAddProduct = false;
+      _showNewSale = false;
     });
   }
 
   void hideProfile() {
     setState(() {
       _showProfile = false;
+    });
+  }
+
+  void showAddProduct() {
+    setState(() {
+      _showAddProduct = true;
+      _showProfile = false;
+      _showNewSale = false;
+    });
+  }
+
+  void hideAddProduct() {
+    setState(() {
+      _showAddProduct = false;
+    });
+  }
+
+  void showNewSale() {
+    setState(() {
+      _showNewSale = true;
+      _showAddProduct = false;
+      _showProfile = false;
+    });
+  }
+
+  void hideNewSale() {
+    setState(() {
+      _showNewSale = false;
     });
   }
 
@@ -44,22 +78,42 @@ class HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.backgroundGrey,
+    return PopScope(
+      canPop: !_showAddProduct && !_showProfile && !_showNewSale,
+      onPopInvoked: (didPop) {
+        if (didPop) return;
+        
+        if (_showAddProduct) {
+          hideAddProduct();
+        } else if (_showProfile) {
+          hideProfile();
+        } else if (_showNewSale) {
+          hideNewSale();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppTheme.backgroundGrey,
       body: SafeArea(
         child: Column(
           children: [
-            const GlobalHeader(),
+            if (!_showAddProduct && !_showNewSale) const GlobalHeader(),
             Expanded(
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 250),
-                child: _showProfile ? const ProfileScreen() : _tabs[_currentIndex],
+                child: _showProfile 
+                    ? const ProfileScreen() 
+                    : _showAddProduct 
+                        ? const AddProductScreen() 
+                        : _showNewSale
+                            ? const NewSaleScreen()
+                            : _tabs[_currentIndex],
               ),
             ),
           ],
         ),
       ),
       bottomNavigationBar: _buildBottomNavBar(),
+      ),
     );
   }
 
@@ -124,13 +178,15 @@ class HomeScreenState extends State<HomeScreen> {
     required String label,
     required int index,
   }) {
-    final bool isActive = !_showProfile && _currentIndex == index;
+    final bool isActive = !_showProfile && !_showAddProduct && !_showNewSale && _currentIndex == index;
 
     return GestureDetector(
       onTap: () {
         setState(() {
           _currentIndex = index;
           _showProfile = false;
+          _showAddProduct = false;
+          _showNewSale = false;
         });
       },
       behavior: HitTestBehavior.opaque,

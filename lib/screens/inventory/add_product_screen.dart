@@ -1,12 +1,13 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:simple_barcode_scanner/simple_barcode_scanner.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../config/app_constants.dart';
 import '../../config/app_theme.dart';
 import '../../models/product_model.dart';
 import '../../services/product_service.dart';
 import '../profile/profile_screen.dart';
+import '../home/home_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../models/user_model.dart';
 import '../../services/user_service.dart';
@@ -21,6 +22,7 @@ class AddProductScreen extends StatefulWidget {
 class _AddProductScreenState extends State<AddProductScreen> {
   final _formKey = GlobalKey<FormState>();
   final _productService = ProductService();
+  final MobileScannerController _scannerController = MobileScannerController();
 
   final _nombreController = TextEditingController();
   final _precioController = TextEditingController();
@@ -43,6 +45,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
   @override
   void dispose() {
+    _scannerController.dispose();
     _nombreController.dispose();
     _precioController.dispose();
     _stockController.dispose();
@@ -201,7 +204,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
           backgroundColor: AppTheme.primaryGreen,
         ),
       );
-      Navigator.pop(context);
+      final homeState = HomeScreen.of(context);
+      if (homeState != null) {
+        homeState.hideAddProduct();
+      } else {
+        Navigator.pop(context);
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -345,7 +353,14 @@ class _AddProductScreenState extends State<AddProductScreen> {
                         children: [
                           Expanded(
                             child: OutlinedButton(
-                              onPressed: () => Navigator.pop(context),
+                              onPressed: () {
+                                final homeState = HomeScreen.of(context);
+                                if (homeState != null) {
+                                  homeState.hideAddProduct();
+                                } else {
+                                  Navigator.pop(context);
+                                }
+                              },
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: AppTheme.textPrimary,
                                 side: const BorderSide(
@@ -413,69 +428,112 @@ class _AddProductScreenState extends State<AddProductScreen> {
   Widget _buildScanBox() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+      height: 240, // Altura fija para la previsualización de la cámara
       decoration: BoxDecoration(
         color: AppTheme.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppTheme.divider, style: BorderStyle.solid),
       ),
-      child: Column(
+      clipBehavior: Clip.hardEdge, // Para que la cámara respete el borde redondeado
+      child: Stack(
         children: [
-          GestureDetector(
-            onTap: () async {
-              // Abrir escáner
-              var res = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const SimpleBarcodeScannerPage(),
-                ),
-              );
-              if (res is String && res != '-1') {
-                setState(() {
-                  _scannedBarcode = res;
-                });
-                // Buscar datos online con el código
-                await _fetchProductFromBarcode(res);
+          // 1. La Cámara
+          MobileScanner(
+            controller: _scannerController,
+            onDetect: (capture) async {
+              if (_isLoading || _scannedBarcode != null) return;
+              
+              final List<Barcode> barcodes = capture.barcodes;
+              if (barcodes.isNotEmpty) {
+                final String code = barcodes.first.rawValue ?? '';
+                if (code.isNotEmpty) {
+                  setState(() {
+                    _scannedBarcode = code;
+                  });
+                  // Detenemos la cámara temporalmente
+                  _scannerController.stop();
+                  await _fetchProductFromBarcode(code);
+                }
               }
             },
+          ),
+          
+          // 2. Overlay decorativo (Borde y mira)
+          Positioned.fill(
             child: Container(
-              width: 72,
-              height: 72,
               decoration: BoxDecoration(
-                color: Colors.blue.shade50,
+                border: Border.all(
+                  color: _scannedBarcode != null 
+                      ? AppTheme.primaryGreen 
+                      : Colors.blue.withValues(alpha: 0.5),
+                  width: 4,
+                ),
                 borderRadius: BorderRadius.circular(16),
               ),
+            ),
+          ),
+
+          if (_scannedBarcode == null)
+            Center(
               child: Icon(
-                Icons.barcode_reader,
-                size: 32,
-                color: Colors.blue.shade700,
+                Icons.center_focus_weak_rounded,
+                size: 80,
+                color: Colors.white.withValues(alpha: 0.6),
               ),
             ),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'Escanear Código',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            _scannedBarcode != null
-                ? 'Código: $_scannedBarcode'
-                : 'Use la cámara para rellenar\nautomáticamente.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 13,
-              color: _scannedBarcode != null
-                  ? AppTheme.primaryGreen
-                  : AppTheme.textHint,
-              fontWeight: _scannedBarcode != null
-                  ? FontWeight.w600
-                  : FontWeight.normal,
-              height: 1.4,
+
+          // 3. Panel de estado en la parte inferior
+          Positioned(
+            bottom: 12,
+            left: 12,
+            right: 12,
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.75),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _scannedBarcode != null
+                        ? 'Código: $_scannedBarcode'
+                        : 'Apunte al código de barras',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: _scannedBarcode != null 
+                          ? AppTheme.primaryGreenLight 
+                          : Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  if (_scannedBarcode != null) ...[
+                     const SizedBox(height: 8),
+                     ElevatedButton.icon(
+                       onPressed: () {
+                         setState(() {
+                           _scannedBarcode = null;
+                         });
+                         _scannerController.start();
+                       },
+                       icon: const Icon(Icons.refresh_rounded, size: 16),
+                       label: const Text('Escanear de nuevo'),
+                       style: ElevatedButton.styleFrom(
+                         backgroundColor: Colors.white.withValues(alpha: 0.2),
+                         foregroundColor: Colors.white,
+                         elevation: 0,
+                         minimumSize: const Size(0, 36),
+                         padding: const EdgeInsets.symmetric(horizontal: 16),
+                         shape: RoundedRectangleBorder(
+                           borderRadius: BorderRadius.circular(8)
+                         )
+                       ),
+                     )
+                  ]
+                ],
+              ),
             ),
           ),
         ],
@@ -489,7 +547,14 @@ class _AddProductScreenState extends State<AddProductScreen> {
       child: Row(
         children: [
           GestureDetector(
-            onTap: () => Navigator.pop(context),
+            onTap: () {
+              final homeState = HomeScreen.of(context);
+              if (homeState != null) {
+                homeState.hideAddProduct();
+              } else {
+                Navigator.pop(context);
+              }
+            },
             child: Container(
               width: 40,
               height: 40,
@@ -518,10 +583,15 @@ class _AddProductScreenState extends State<AddProductScreen> {
           ),
           GestureDetector(
             onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ProfileScreen()),
-              );
+              final homeState = HomeScreen.of(context);
+              if (homeState != null) {
+                homeState.showProfile();
+              } else {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                );
+              }
             },
             child: StreamBuilder<UserModel?>(
               stream: UserService().getUserProfileStream(

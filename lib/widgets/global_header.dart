@@ -14,83 +14,109 @@ class GlobalHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-      child: Row(
-        children: [
-          // Botón de menú
-          GestureDetector(
-            onTap: () {
-              // TODO: Abrir drawer/menú lateral
-            },
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: AppTheme.white,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppTheme.divider),
-              ),
-              child: const Icon(
-                Icons.menu_rounded,
-                size: 20,
-                color: AppTheme.textPrimary,
-              ),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppTheme.primaryGreen.withValues(
+            alpha: 0.05,
+          ), // Fondo verde a baja opacidad
+          borderRadius: BorderRadius.circular(21),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Icono y nombre de la App a la izquierda
+            Row(
+              children: [
+                const Icon(
+                  Icons
+                      .view_in_ar_rounded, // Icono similar al cubo de la imagen
+                  size: 28,
+                  color: AppTheme.primaryGreen,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  AppConstants
+                      .appName, // Usará 'StockApp' o 'MyPeru' según tu app_constants.dart
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.primaryGreen, // Texto verde oscuro
+                  ),
+                ),
+              ],
             ),
-          ),
 
-          // Título centrado
-          const Expanded(
-            child: Text(
-              AppConstants.appName,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: AppTheme.textPrimary,
-              ),
-            ),
-          ),
-
-          // Avatar de perfil
-          GestureDetector(
-            onTap: () {
-              final homeState = HomeScreen.of(context);
-              if (homeState != null) {
-                homeState.showProfile();
-              } else {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const ProfileScreen()),
-                );
-              }
-            },
-            child: StreamBuilder<UserModel?>(
-              stream: UserService().getUserProfileStream(
-                FirebaseAuth.instance.currentUser?.uid ?? '',
-                FirebaseAuth.instance.currentUser?.email ?? '',
-              ),
-              builder: (context, snapshot) {
-                final initials = snapshot.data?.initials ?? '';
-                return Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryGreenLight,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: AppTheme.primaryGreen.withValues(alpha: 0.2),
-                      width: 1.5,
+            // Avatar de perfil a la derecha
+            GestureDetector(
+              onTap: () {
+                final homeState = HomeScreen.of(context);
+                if (homeState != null) {
+                  homeState.showProfile();
+                } else {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ProfileScreen(),
                     ),
-                  ),
-                  child: Center(
-                    child: initials.isEmpty
-                        ? const Icon(Icons.person_rounded, size: 22, color: AppTheme.primaryGreen)
-                        : Text(initials, style: const TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.bold, fontSize: 14)),
-                  ),
-                );
-              }
+                  );
+                }
+              },
+              child: StreamBuilder<UserModel?>(
+                stream: UserService().getUserProfileStream(
+                  FirebaseAuth.instance.currentUser?.uid ?? '',
+                  FirebaseAuth.instance.currentUser?.email ?? '',
+                ),
+                builder: (context, snapshot) {
+                  // Usamos la primera letra del nombre o email como avatar fallback
+                  String initials = 'U';
+                  if (snapshot.hasData && snapshot.data!.initials.isNotEmpty) {
+                    initials = snapshot.data!.initials;
+                  }
+
+                  return Stack(
+                    alignment: Alignment.bottomRight,
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: const BoxDecoration(
+                          color: AppTheme.primaryGreen, // Fondo verde oscuro
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            initials,
+                            style: const TextStyle(
+                              color: Colors.white, // Texto blanco
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Punto verde de estado "Online"
+                      Container(
+                        width: 14,
+                        height: 14,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF4CAF50), // Verde brillante
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: const Color(
+                              0xFFEAF4ED,
+                            ), // Color sólido que simula el primaryGreen con 0.1 de alpha
+                            width: 2.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -45,7 +45,7 @@ class _HomeTabState extends State<HomeTab> {
                     text: TextSpan(
                       text: '¡Buenos días, ',
                       style: const TextStyle(
-                        fontSize: 24,
+                        fontSize: 26,
                         fontWeight: FontWeight.w700,
                         color: AppTheme.textPrimary,
                       ),
@@ -53,8 +53,11 @@ class _HomeTabState extends State<HomeTab> {
                         TextSpan(
                           text: '$nombre!',
                           style: const TextStyle(
-                            color: Colors.blueAccent,
+                            color: AppTheme.primaryGreen, // Cambiado al verde principal
                           ),
+                        ),
+                        const TextSpan(
+                          text: ' 👋',
                         ),
                       ],
                     ),
@@ -100,21 +103,16 @@ class _HomeTabState extends State<HomeTab> {
                         child: _DashboardCard(
                           title: 'VENTAS DIARIAS',
                           value: '\$0.00',
-                          icon: Icons.trending_up_rounded,
-                          iconColor: Colors.blueAccent,
-                          iconBg: Colors.blue.withValues(alpha: 0.1),
+                          icon: Icons.shopping_bag_outlined,
+                          iconColor: AppTheme.primaryGreen,
+                          iconBg: AppTheme.primaryGreen.withValues(alpha: 0.1),
                           indicatorText: '0.0% vs ayer',
                           indicatorColor: AppTheme.textHint,
                           indicatorBg: AppTheme.backgroundGrey,
                           indicatorIcon: Icons.remove_rounded,
-                          lineColor: Colors.blueAccent.withValues(alpha: 0.1),
-                          gradientColors: [
-                            Colors.blueAccent.withValues(alpha: 0.05),
-                            Colors.blueAccent.withValues(alpha: 0.0),
-                          ],
                           actionText: 'Ver desglose',
                           onAction: () {},
-                          leftBorderColor: Colors.blueAccent,
+                          leftBorderColor: AppTheme.primaryGreen,
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -122,21 +120,16 @@ class _HomeTabState extends State<HomeTab> {
                         child: _DashboardCard(
                           title: 'ARTÍCULOS CRÍTICOS',
                           value: criticalCount.toString(),
-                          icon: Icons.warning_rounded,
+                          icon: Icons.warning_amber_rounded,
                           iconColor: Colors.redAccent,
-                          iconBg: Colors.red.withValues(alpha: 0.1),
+                          iconBg: Colors.red.shade50,
                           indicatorText: 'Requieren atención inmediata',
                           indicatorColor: Colors.redAccent,
-                          indicatorBg: Colors.red.withValues(alpha: 0.1),
-                          indicatorIcon: Icons.error_rounded,
-                          lineColor: Colors.redAccent.withValues(alpha: 0.3),
-                          gradientColors: [
-                            Colors.redAccent.withValues(alpha: 0.2),
-                            Colors.redAccent.withValues(alpha: 0.0),
-                          ],
+                          indicatorBg: Colors.red.shade50,
+                          indicatorIcon: null,
                           actionText: 'Reabastecer',
                           onAction: () {},
-                          leftBorderColor: Colors.deepOrangeAccent,
+                          leftBorderColor: Colors.redAccent,
                         ),
                       ),
                     ],
@@ -176,14 +169,14 @@ class _HomeTabState extends State<HomeTab> {
                           children: [
                             Text(
                               'Ver todo',
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.blue.shade600,
+                                color: AppTheme.primaryGreen,
                               ),
                             ),
                             const SizedBox(width: 2),
-                            Icon(Icons.chevron_right_rounded, size: 16, color: Colors.blue.shade600),
+                            const Icon(Icons.chevron_right_rounded, size: 16, color: AppTheme.primaryGreen),
                           ],
                         ),
                       ),
@@ -212,24 +205,40 @@ class _HomeTabState extends State<HomeTab> {
   Widget _buildEmptyAlerts() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
       decoration: BoxDecoration(
         color: AppTheme.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.divider),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         children: [
-          Icon(Icons.check_circle_outline_rounded, size: 48, color: AppTheme.primaryGreen.withValues(alpha: 0.5)),
-          const SizedBox(height: 12),
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              color: AppTheme.primaryGreen.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: const Center(
+              child: Icon(Icons.check_rounded, size: 40, color: AppTheme.primaryGreen),
+            ),
+          ),
+          const SizedBox(height: 20),
           const Text(
             '¡Todo en orden!',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           const Text(
             'No hay artículos con stock crítico.',
-            style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+            style: TextStyle(fontSize: 14, color: AppTheme.textSecondary),
           ),
         ],
       ),
@@ -263,8 +272,6 @@ class _DashboardCard extends StatelessWidget {
   final Color indicatorColor;
   final Color indicatorBg;
   final IconData? indicatorIcon;
-  final Color lineColor;
-  final List<Color> gradientColors;
   final String actionText;
   final VoidCallback onAction;
   final Color leftBorderColor;
@@ -279,8 +286,6 @@ class _DashboardCard extends StatelessWidget {
     required this.indicatorColor,
     required this.indicatorBg,
     this.indicatorIcon,
-    required this.lineColor,
-    required this.gradientColors,
     required this.actionText,
     required this.onAction,
     required this.leftBorderColor,
@@ -292,11 +297,10 @@ class _DashboardCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppTheme.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.divider),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 16,
             offset: const Offset(0, 4),
           ),
         ],
@@ -305,21 +309,6 @@ class _DashboardCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         child: Stack(
           children: [
-            // El fondo con la curva
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 40,
-              height: 60,
-              child: CustomPaint(
-                painter: _WavePainter(
-                  lineColor: lineColor,
-                  gradientColors: gradientColors,
-                ),
-              ),
-            ),
-            
-            // Contenido
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -332,7 +321,7 @@ class _DashboardCard extends StatelessWidget {
                         child: Text(
                           title,
                           style: const TextStyle(
-                            fontSize: 9,
+                            fontSize: 10,
                             fontWeight: FontWeight.w700,
                             color: AppTheme.textSecondary,
                             letterSpacing: 0.5,
@@ -340,30 +329,30 @@ class _DashboardCard extends StatelessWidget {
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.all(6),
+                        padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
                           color: iconBg,
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Icon(icon, size: 14, color: iconColor),
+                        child: Icon(icon, size: 16, color: iconColor),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   Text(
                     value,
                     style: const TextStyle(
-                      fontSize: 22,
+                      fontSize: 26,
                       fontWeight: FontWeight.w800,
                       color: AppTheme.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: indicatorBg,
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius: BorderRadius.circular(6),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -387,34 +376,32 @@ class _DashboardCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 48), // Espacio para el chart
+                  const SizedBox(height: 24),
                   GestureDetector(
                     onTap: onAction,
                     child: Row(
                       children: [
                         Text(
                           actionText,
-                          style: TextStyle(
-                            fontSize: 12,
+                          style: const TextStyle(
+                            fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: Colors.blue.shade600,
+                            color: AppTheme.primaryGreen,
                           ),
                         ),
                         const SizedBox(width: 4),
-                        Icon(Icons.chevron_right_rounded, size: 14, color: Colors.blue.shade600),
+                        const Icon(Icons.chevron_right_rounded, size: 16, color: AppTheme.primaryGreen),
                       ],
                     ),
                   ),
                 ],
               ),
             ),
-            
-            // Borde lateral para el diseño premium
             Positioned(
               left: 0,
               top: 0,
               bottom: 0,
-              width: 3,
+              width: 4,
               child: Container(
                 decoration: BoxDecoration(
                   color: leftBorderColor,
@@ -430,55 +417,6 @@ class _DashboardCard extends StatelessWidget {
       ),
     );
   }
-}
-
-class _WavePainter extends CustomPainter {
-  final Color lineColor;
-  final List<Color> gradientColors;
-
-  _WavePainter({required this.lineColor, required this.gradientColors});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final path = Path();
-    path.moveTo(0, size.height * 0.7);
-    
-    // Curvas suaves
-    path.cubicTo(
-      size.width * 0.25, size.height * 0.4,
-      size.width * 0.35, size.height * 0.9,
-      size.width * 0.5, size.height * 0.6,
-    );
-    path.cubicTo(
-      size.width * 0.65, size.height * 0.3,
-      size.width * 0.8, size.height * 0.8,
-      size.width, size.height * 0.2,
-    );
-    
-    final paintLine = Paint()
-      ..color = lineColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0;
-      
-    canvas.drawPath(path, paintLine);
-
-    // Relleno gradiente
-    path.lineTo(size.width, size.height);
-    path.lineTo(0, size.height);
-    path.close();
-
-    final paintFill = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: gradientColors,
-      ).createShader(Rect.fromLTRB(0, 0, size.width, size.height));
-
-    canvas.drawPath(path, paintFill);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _AlertItem extends StatelessWidget {

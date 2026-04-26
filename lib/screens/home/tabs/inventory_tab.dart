@@ -5,6 +5,7 @@ import '../../../models/product_model.dart';
 import '../../../services/product_service.dart';
 import '../../../widgets/product_card.dart';
 import '../../inventory/add_product_screen.dart';
+import '../home_screen.dart';
 
 /// Tab de Inventario — vista completa con búsqueda, filtros y lista de productos
 /// Conectada a Cloud Firestore en tiempo real
@@ -26,70 +27,81 @@ class _InventoryTabState extends State<InventoryTab> {
     super.dispose();
   }
 
-  /// Filtra la lista localmente por nombre, SKU o categoría
   List<ProductModel> _filterProducts(List<ProductModel> products) {
     if (_searchQuery.isEmpty) return products;
     final query = _searchQuery.toLowerCase();
     return products.where((p) {
-      return p.nombre.toLowerCase().contains(query);
+      final nameMatches = p.nombre.toLowerCase().contains(query);
+      final skuMatches = p.codigoBarras?.toLowerCase().contains(query) ?? false;
+      final categoryMatches =
+          p.categoria?.toLowerCase().contains(query) ?? false;
+      final idMatches = p.id.toLowerCase().contains(query);
+
+      return nameMatches || skuMatches || categoryMatches || idMatches;
     }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
     return Column(
-        children: [
-
-          // ── Barra de búsqueda ──
-          _buildSearchBar(),
-
-          // ── Contenido principal: lee de Firestore en tiempo real ──
-          Expanded(
-            child: StreamBuilder<List<ProductModel>>(
-              stream: _productService.getProductsStream(),
-              builder: (context, snapshot) {
-                // Estado de carga
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(
-                    child: CircularProgressIndicator(
-                      color: AppTheme.primaryGreen,
-                      strokeWidth: 2.5,
-                    ),
-                  );
-                }
-
-                // Error
-                if (snapshot.hasError) {
-                  return _buildErrorState(snapshot.error.toString());
-                }
-
-                // Obtener productos y filtrar
-                final allProducts = snapshot.data ?? [];
-                final filteredProducts = _filterProducts(allProducts);
-
+      children: [
+        // ── Contenido principal: lee de Firestore en tiempo real ──
+        Expanded(
+          child: StreamBuilder<List<ProductModel>>(
+            stream: _productService.getProductsStream(),
+            builder: (context, snapshot) {
+              // Estado de carga
+              if (snapshot.connectionState == ConnectionState.waiting) {
                 return Column(
                   children: [
-                    // ── Título de sección + conteo + filtro ──
-                    _buildSectionHeader(
-                      total: allProducts.length,
-                      showing: filteredProducts.length,
-                    ),
-
-                    // ── Lista o estado vacío ──
-                    Expanded(
-                      child: filteredProducts.isEmpty
-                          ? _buildEmptyState(hasProducts: allProducts.isNotEmpty)
-                          : _buildProductList(filteredProducts),
+                    _buildSectionHeader(total: 0, showing: 0),
+                    _buildSearchBar(),
+                    const Expanded(
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: AppTheme.primaryGreen,
+                          strokeWidth: 2.5,
+                        ),
+                      ),
                     ),
                   ],
                 );
-              },
-            ),
+              }
+
+              // Error
+              if (snapshot.hasError) {
+                return _buildErrorState(snapshot.error.toString());
+              }
+
+              // Obtener productos y filtrar
+              final allProducts = snapshot.data ?? [];
+              final filteredProducts = _filterProducts(allProducts);
+
+              return Column(
+                children: [
+                  // ── Título de sección + conteo + filtro ──
+                  _buildSectionHeader(
+                    total: allProducts.length,
+                    showing: filteredProducts.length,
+                  ),
+
+                  // ── Barra de búsqueda ──
+                  _buildSearchBar(),
+
+                  // ── Lista o estado vacío ──
+                  Expanded(
+                    child: filteredProducts.isEmpty
+                        ? _buildEmptyState(hasProducts: allProducts.isNotEmpty)
+                        : _buildProductList(filteredProducts),
+                  ),
+                ],
+              );
+            },
           ),
+        ),
       ],
     );
   }
-
 
   /// Barra de búsqueda con ícono de filtro/escanear
   Widget _buildSearchBar() {
@@ -105,11 +117,7 @@ class _InventoryTabState extends State<InventoryTab> {
         child: Row(
           children: [
             const SizedBox(width: 14),
-            Icon(
-              Icons.search_rounded,
-              size: 22,
-              color: AppTheme.textHint,
-            ),
+            Icon(Icons.search_rounded, size: 22, color: AppTheme.textHint),
             const SizedBox(width: 10),
             Expanded(
               child: TextField(
@@ -120,16 +128,13 @@ class _InventoryTabState extends State<InventoryTab> {
                   });
                 },
                 decoration: const InputDecoration(
-                  hintText: 'Buscar productos, SKU...',
+                  hintText: 'Buscar productos...',
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,
                   contentPadding: EdgeInsets.zero,
                   isDense: true,
-                  hintStyle: TextStyle(
-                    fontSize: 14,
-                    color: AppTheme.textHint,
-                  ),
+                  hintStyle: TextStyle(fontSize: 14, color: AppTheme.textHint),
                 ),
                 style: const TextStyle(
                   fontSize: 14,
@@ -137,26 +142,7 @@ class _InventoryTabState extends State<InventoryTab> {
                 ),
               ),
             ),
-            // Botón de escanear/código de barras
-            GestureDetector(
-              onTap: () {
-                // TODO: Implementar escáner de código de barras
-              },
-              child: Container(
-                width: 40,
-                height: 40,
-                margin: const EdgeInsets.only(right: 4),
-                decoration: BoxDecoration(
-                  color: AppTheme.backgroundGrey,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.qr_code_scanner_rounded,
-                  size: 20,
-                  color: AppTheme.textSecondary,
-                ),
-              ),
-            ),
+            const SizedBox(width: 8), // Pequeño margen derecho para equilibrar
           ],
         ),
       ),
@@ -173,7 +159,7 @@ class _InventoryTabState extends State<InventoryTab> {
           const Text(
             'Inventario',
             style: TextStyle(
-              fontSize: 24,
+              fontSize: 28,
               fontWeight: FontWeight.w800,
               color: AppTheme.textPrimary,
             ),
@@ -276,9 +262,7 @@ class _InventoryTabState extends State<InventoryTab> {
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  isSearching
-                      ? 'Sin resultados'
-                      : 'Tu inventario está vacío',
+                  isSearching ? 'Sin resultados' : 'Tu inventario está vacío',
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
@@ -304,10 +288,17 @@ class _InventoryTabState extends State<InventoryTab> {
                     width: 200,
                     child: ElevatedButton.icon(
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const AddProductScreen()),
-                        );
+                        final homeState = HomeScreen.of(context);
+                        if (homeState != null) {
+                          homeState.showAddProduct();
+                        } else {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const AddProductScreen(),
+                            ),
+                          );
+                        }
                       },
                       icon: const Icon(Icons.add_rounded, size: 20),
                       label: const Text('Agregar producto'),
@@ -371,10 +362,15 @@ class _InventoryTabState extends State<InventoryTab> {
       bottom: 20,
       child: GestureDetector(
         onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AddProductScreen()),
-          );
+          final homeState = HomeScreen.of(context);
+          if (homeState != null) {
+            homeState.showAddProduct();
+          } else {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const AddProductScreen()),
+            );
+          }
         },
         child: Container(
           width: 56,
@@ -390,11 +386,7 @@ class _InventoryTabState extends State<InventoryTab> {
               ),
             ],
           ),
-          child: const Icon(
-            Icons.add_rounded,
-            size: 28,
-            color: AppTheme.white,
-          ),
+          child: const Icon(Icons.add_rounded, size: 28, color: AppTheme.white),
         ),
       ),
     );
