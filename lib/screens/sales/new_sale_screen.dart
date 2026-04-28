@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../config/app_theme.dart';
 import '../../models/product_model.dart';
+import '../../services/product_service.dart';
 import '../home/home_screen.dart';
+import 'checkout_screen.dart';
 
 class NewSaleScreen extends StatefulWidget {
   const NewSaleScreen({super.key});
@@ -13,7 +15,14 @@ class NewSaleScreen extends StatefulWidget {
 
 class _NewSaleScreenState extends State<NewSaleScreen> {
   final MobileScannerController _scannerController = MobileScannerController();
+  final ProductService _productService = ProductService();
   bool _isFlashOn = false;
+  bool _isProcessing = false;
+
+  // --- MODO DEMO (Para Presentaciones) ---
+  // Cambiar a "false" para que funcione como la app real.
+  // Si está en "true", el botón "Continuar" siempre funcionará e inyectará datos de prueba.
+  final bool _isDemoMode = true;
 
   // Lista de productos escaneados
   final List<Map<String, dynamic>> _scannedItems = [];
@@ -38,6 +47,91 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       _isFlashOn = !_isFlashOn;
       _scannerController.toggleTorch();
     });
+  }
+
+  void _onDetectBarcode(BarcodeCapture capture) async {
+    if (_isProcessing) return;
+    
+    final List<Barcode> barcodes = capture.barcodes;
+    if (barcodes.isEmpty) return;
+
+    final String? barcode = barcodes.first.rawValue;
+    if (barcode == null || barcode.isEmpty) return;
+
+    setState(() => _isProcessing = true);
+
+    try {
+      // 1. Revisar si ya está en el carrito
+      int index = _scannedItems.indexWhere((item) => item['sku'] == barcode);
+      if (index >= 0) {
+        setState(() {
+          _scannedItems[index]['quantity']++;
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Cantidad de ${_scannedItems[index]['name']} aumentada'),
+            backgroundColor: AppTheme.primaryGreen,
+            duration: const Duration(milliseconds: 800),
+          ),
+        );
+      } else {
+        // 2. Buscar en Firestore
+        final product = await _productService.getProductByBarcode(barcode);
+        
+        if (product != null) {
+          setState(() {
+            _scannedItems.add({
+              'id': product.id,
+              'name': product.nombre,
+              'sku': barcode,
+              'price': product.precio,
+              'quantity': 1,
+              'image': Icons.inventory_2_rounded,
+            });
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${product.nombre} agregado al ticket'),
+              backgroundColor: AppTheme.primaryGreen,
+              duration: const Duration(milliseconds: 800),
+            ),
+          );
+        } else {
+          // 3. Mostrar advertencia si no está en BD
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.warning_amber_rounded, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text('Producto no encontrado en inventario ($barcode)'),
+                  ),
+                ],
+              ),
+              backgroundColor: Colors.redAccent.shade700,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              duration: const Duration(seconds: 3),
+              action: SnackBarAction(
+                label: 'CERRAR',
+                textColor: Colors.white,
+                onPressed: () {
+                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                },
+              ),
+            ),
+          );
+        }
+      }
+    } finally {
+      // Pequeña pausa para no escanear el mismo código múltiples veces seguidas muy rápido
+      await Future.delayed(const Duration(seconds: 1));
+      if (mounted) {
+        setState(() => _isProcessing = false);
+      }
+    }
   }
 
   double get _totalPrice {
@@ -183,9 +277,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                 children: [
                   MobileScanner(
                     controller: _scannerController,
-                    onDetect: (capture) {
-                      // TODO: Manejar detección para agregar a la lista
-                    },
+                    onDetect: _onDetectBarcode,
                   ),
                   // Línea láser animada (estática por ahora para diseño)
                   Container(
@@ -513,8 +605,42 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
               ),
               const SizedBox(height: 4),
               ElevatedButton(
-                onPressed: () {
-                  // TODO: Continuar proceso de pago
+                onPressed: (_scannedItems.isEmpty && !_isDemoMode) ? null : () async {
+                  // Si estamos en modo demo y no hay productos, inyectamos los del mockup
+                  if (_isDemoMode && _scannedItems.isEmpty) {
+                    _scannedItems.addAll([
+                      {
+                        'id': 'demo_1',
+                        'name': 'Auriculares Inalámbricos Pro',
+                        'sku': '849302A',
+                        'price': 149.00,
+                        'quantity': 1,
+                        'image': Icons.headphones_rounded,
+                      },
+                      {
+                        'id': 'demo_2',
+                        'name': 'Funda Silicona Premium',
+                        'sku': '11294BC',
+                        'price': 24.50,
+                        'quantity': 2,
+                        'image': Icons.phone_iphone_rounded,
+                      }
+                    ]);
+                  }
+
+                  final updatedItems = await Navigator.push<List<Map<String, dynamic>>>(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CheckoutScreen(scannedItems: _scannedItems),
+                    ),
+                  );
+                  
+                  if (updatedItems != null) {
+                    setState(() {
+                      _scannedItems.clear();
+                      _scannedItems.addAll(updatedItems);
+                    });
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,

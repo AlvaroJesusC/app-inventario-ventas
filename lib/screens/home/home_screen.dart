@@ -41,6 +41,15 @@ class HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  void setTab(int index) {
+    setState(() {
+      _currentIndex = index;
+      _showProfile = false;
+      _showAddProduct = false;
+      _showNewSale = false;
+    });
+  }
+
   void showAddProduct() {
     setState(() {
       _showAddProduct = true;

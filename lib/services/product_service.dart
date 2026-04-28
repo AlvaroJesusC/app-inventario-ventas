@@ -59,4 +59,17 @@ class ProductService {
   Future<void> updateStock(String productId, int newStock) async {
     await _productosRef.doc(productId).update({'stock': newStock});
   }
+
+  // ─── BÚSQUEDA ──────────────────────────────────────────────
+
+  /// Obtener un producto por código de barras
+  Future<ProductModel?> getProductByBarcode(String barcode) async {
+    final snapshot = await _productosRef
+        .where('codigoBarras', isEqualTo: barcode)
+        .limit(1)
+        .get();
+    
+    if (snapshot.docs.isEmpty) return null;
+    return ProductModel.fromMap(snapshot.docs.first.data(), snapshot.docs.first.id);
+  }
 }
