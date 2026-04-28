@@ -19,9 +19,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   bool _isFlashOn = false;
   bool _isProcessing = false;
 
-  // --- MODO DEMO (Para Presentaciones) ---
-  // Cambiar a "false" para que funcione como la app real.
-  // Si está en "true", el botón "Continuar" siempre funcionará e inyectará datos de prueba.
+  // Modo demo
   final bool _isDemoMode = true;
 
   // Lista de productos escaneados
@@ -51,7 +49,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
 
   void _onDetectBarcode(BarcodeCapture capture) async {
     if (_isProcessing) return;
-    
+
     final List<Barcode> barcodes = capture.barcodes;
     if (barcodes.isEmpty) return;
 
@@ -67,10 +65,12 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         setState(() {
           _scannedItems[index]['quantity']++;
         });
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Cantidad de ${_scannedItems[index]['name']} aumentada'),
+            content: Text(
+              'Cantidad de ${_scannedItems[index]['name']} aumentada',
+            ),
             backgroundColor: AppTheme.primaryGreen,
             duration: const Duration(milliseconds: 800),
           ),
@@ -78,7 +78,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       } else {
         // 2. Buscar en Firestore
         final product = await _productService.getProductByBarcode(barcode);
-        
+
         if (product != null) {
           setState(() {
             _scannedItems.add({
@@ -106,13 +106,17 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                   const Icon(Icons.warning_amber_rounded, color: Colors.white),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Text('Producto no encontrado en inventario ($barcode)'),
+                    child: Text(
+                      'Producto no encontrado en inventario ($barcode)',
+                    ),
                   ),
                 ],
               ),
               backgroundColor: Colors.redAccent.shade700,
               behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
               duration: const Duration(seconds: 3),
               action: SnackBarAction(
                 label: 'CERRAR',
@@ -135,11 +139,17 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   }
 
   double get _totalPrice {
-    return _scannedItems.fold(0.0, (sum, item) => sum + (item['price'] * item['quantity']));
+    return _scannedItems.fold(
+      0.0,
+      (sum, item) => sum + (item['price'] * item['quantity']),
+    );
   }
 
   int get _totalItems {
-    return _scannedItems.fold(0, (sum, item) => sum + (item['quantity'] as int));
+    return _scannedItems.fold(
+      0,
+      (sum, item) => sum + (item['quantity'] as int),
+    );
   }
 
   @override
@@ -153,10 +163,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
-                  children: [
-                    _buildScannerBox(),
-                    _buildScannedList(),
-                  ],
+                  children: [_buildScannerBox(), _buildScannedList()],
                 ),
               ),
             ),
@@ -200,7 +207,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
               color: AppTheme.primaryGreen,
               size: 18,
             ),
-          )
+          ),
         ],
       ),
     );
@@ -230,7 +237,11 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             children: [
               Row(
                 children: [
-                  Icon(Icons.barcode_reader, color: Colors.white.withValues(alpha: 0.7), size: 18),
+                  Icon(
+                    Icons.barcode_reader,
+                    color: Colors.white.withValues(alpha: 0.7),
+                    size: 18,
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     'Apunta al código de barras',
@@ -251,7 +262,9 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    _isFlashOn ? Icons.flash_on_rounded : Icons.flash_off_rounded,
+                    _isFlashOn
+                        ? Icons.flash_on_rounded
+                        : Icons.flash_off_rounded,
                     color: Colors.white,
                     size: 16,
                   ),
@@ -260,7 +273,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          
+
           // Scanner Camera
           Expanded(
             child: Container(
@@ -300,7 +313,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          
+
           // Bottom Info Text
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -310,7 +323,11 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             ),
             child: Row(
               children: [
-                Icon(Icons.info_outline_rounded, color: Colors.white.withValues(alpha: 0.6), size: 16),
+                Icon(
+                  Icons.info_outline_rounded,
+                  color: Colors.white.withValues(alpha: 0.6),
+                  size: 16,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -354,7 +371,11 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                 },
                 child: Row(
                   children: [
-                    Icon(Icons.delete_outline_rounded, size: 16, color: Colors.red.shade400),
+                    Icon(
+                      Icons.delete_outline_rounded,
+                      size: 16,
+                      color: Colors.red.shade400,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       'Vaciar todo',
@@ -376,10 +397,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
               child: Center(
                 child: Text(
                   'Escanea productos para agregarlos al ticket',
-                  style: TextStyle(
-                    color: AppTheme.textHint,
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(color: AppTheme.textHint, fontSize: 14),
                 ),
               ),
             )
@@ -418,10 +436,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         child: Row(
           children: [
             // Borde verde izquierdo
-            Container(
-              width: 4,
-              color: AppTheme.primaryGreen,
-            ),
+            Container(width: 4, color: AppTheme.primaryGreen),
             // Imagen
             Container(
               width: 72,
@@ -461,7 +476,11 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                               _scannedItems.remove(item);
                             });
                           },
-                          child: const Icon(Icons.close_rounded, size: 18, color: AppTheme.textHint),
+                          child: const Icon(
+                            Icons.close_rounded,
+                            size: 18,
+                            color: AppTheme.textHint,
+                          ),
                         ),
                       ],
                     ),
@@ -501,8 +520,15 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                                   }
                                 },
                                 child: const Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                  child: Icon(Icons.remove_rounded, size: 16, color: AppTheme.textPrimary),
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
+                                  child: Icon(
+                                    Icons.remove_rounded,
+                                    size: 16,
+                                    color: AppTheme.textPrimary,
+                                  ),
                                 ),
                               ),
                               Text(
@@ -518,8 +544,15 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                                   setState(() => item['quantity']++);
                                 },
                                 child: const Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                  child: Icon(Icons.add_rounded, size: 16, color: AppTheme.textPrimary),
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
+                                  child: Icon(
+                                    Icons.add_rounded,
+                                    size: 16,
+                                    color: AppTheme.textPrimary,
+                                  ),
                                 ),
                               ),
                             ],
@@ -605,43 +638,25 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
               ),
               const SizedBox(height: 4),
               ElevatedButton(
-                onPressed: (_scannedItems.isEmpty && !_isDemoMode) ? null : () async {
-                  // Si estamos en modo demo y no hay productos, inyectamos los del mockup
-                  if (_isDemoMode && _scannedItems.isEmpty) {
-                    _scannedItems.addAll([
-                      {
-                        'id': 'demo_1',
-                        'name': 'Auriculares Inalámbricos Pro',
-                        'sku': '849302A',
-                        'price': 149.00,
-                        'quantity': 1,
-                        'image': Icons.headphones_rounded,
-                      },
-                      {
-                        'id': 'demo_2',
-                        'name': 'Funda Silicona Premium',
-                        'sku': '11294BC',
-                        'price': 24.50,
-                        'quantity': 2,
-                        'image': Icons.phone_iphone_rounded,
-                      }
-                    ]);
-                  }
+                onPressed: (_scannedItems.isEmpty && !_isDemoMode)
+                    ? null
+                    : () async {
+                        final updatedItems =
+                            await Navigator.push<List<Map<String, dynamic>>>(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    CheckoutScreen(scannedItems: _scannedItems),
+                              ),
+                            );
 
-                  final updatedItems = await Navigator.push<List<Map<String, dynamic>>>(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => CheckoutScreen(scannedItems: _scannedItems),
-                    ),
-                  );
-                  
-                  if (updatedItems != null) {
-                    setState(() {
-                      _scannedItems.clear();
-                      _scannedItems.addAll(updatedItems);
-                    });
-                  }
-                },
+                        if (updatedItems != null) {
+                          setState(() {
+                            _scannedItems.clear();
+                            _scannedItems.addAll(updatedItems);
+                          });
+                        }
+                      },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: AppTheme.primaryGreen,

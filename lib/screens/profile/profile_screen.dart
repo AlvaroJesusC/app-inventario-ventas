@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../config/app_constants.dart';
 import '../../config/app_theme.dart';
@@ -118,6 +118,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             return const Center(child: Text('Error: No se encontró perfil'));
           }
 
+          final bool isAdmin = user.rol.toLowerCase().contains('admin');
+
           return Column(
             children: [
               Expanded(
@@ -197,64 +199,103 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                       const SizedBox(height: 32),
 
-                      // ConfiguraciÃ³n de Cuenta
+                      // Configuración de Cuenta
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 24),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'Configuración de Cuenta',
+                              'Cuenta',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                                 color: AppTheme.textPrimary,
                               ),
                             ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Gestiona tu información personal y preferencias',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppTheme.textHint.withValues(alpha: 0.8),
+                              ),
+                            ),
                             const SizedBox(height: 16),
 
-                            _buildSettingsCard(
-                              icon: Icons.person_outline_rounded,
-                              iconColor: AppTheme.primaryGreen,
-                              iconBg: AppTheme.primaryGreenLight,
-                              title: 'Nombre de Usuario',
-                              subtitle: user.nombre,
-                              onTap: () => _showEditNameDialog(user.nombre),
-                            ),
-
-                            const SizedBox(height: 12),
-
-                            _buildSettingsCard(
-                              icon: Icons.mail_outline_rounded,
-                              iconColor: AppTheme.primaryGreen,
-                              iconBg: AppTheme.primaryGreenLight,
-                              title: 'Correo Electrónico',
-                              subtitle: user.email,
-                              onTap: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'El correo principal no se puede cambiar por seguridad en esta versión.',
-                                    ),
+                            Container(
+                              decoration: BoxDecoration(
+                                color: AppTheme.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: AppTheme.divider),
+                              ),
+                              child: Column(
+                                children: [
+                                  _buildSettingsItem(
+                                    icon: Icons.person_outline_rounded,
+                                    iconColor: const Color(0xFF1976D2), // Azul
+                                    iconBg: const Color(0xFFE3F2FD),
+                                    title: 'Información Personal',
+                                    subtitle: 'Nombre, usuario y datos personales',
+                                    onTap: () => _showEditNameDialog(user.nombre),
                                   ),
-                                );
-                              },
-                            ),
-
-                            const SizedBox(height: 12),
-
-                            _buildSettingsCard(
-                              icon: Icons.lock_outline_rounded,
-                              iconColor: AppTheme.primaryGreen,
-                              iconBg: AppTheme.primaryGreenLight,
-                              title: 'Cambiar Contraseña',
-                              subtitle: 'Se te enviará un correo',
-                              onTap: () => _handlePasswordReset(user.email),
+                                  _buildSettingsItem(
+                                    icon: Icons.mail_outline_rounded,
+                                    iconColor: const Color(0xFF388E3C), // Verde
+                                    iconBg: const Color(0xFFE8F5E9),
+                                    title: 'Correo Electrónico',
+                                    subtitle: 'Actualiza tu correo electrónico',
+                                    onTap: () {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('El correo no se puede cambiar en esta versión.'),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  _buildSettingsItem(
+                                    icon: Icons.lock_outline_rounded,
+                                    iconColor: const Color(0xFF7B1FA2), // Morado
+                                    iconBg: const Color(0xFFF3E5F5),
+                                    title: 'Cambiar Contraseña',
+                                    subtitle: 'Mantén tu cuenta segura',
+                                    showDivider: true, // Siempre hay al menos otra opción abajo
+                                    onTap: () => _handlePasswordReset(user.email),
+                                  ),
+                                  if (isAdmin)
+                                    _buildSettingsItem(
+                                      icon: Icons.people_outline_rounded,
+                                      iconColor: const Color(0xFFF57C00), // Naranja
+                                      iconBg: const Color(0xFFFFF3E0),
+                                      title: 'Gestionar Usuarios',
+                                      subtitle: 'Administra los usuarios del sistema',
+                                      showNewBadge: true,
+                                      onTap: () {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('Próximamente...')),
+                                        );
+                                      },
+                                    ),
+                                  _buildSettingsItem(
+                                    icon: Icons.settings_outlined,
+                                    iconColor: const Color(0xFF616161), // Gris
+                                    iconBg: const Color(0xFFF5F5F5),
+                                    title: 'Configuración General',
+                                    subtitle: 'Preferencias y configuraciones del sistema',
+                                    showDivider: false, // Es la última opción
+                                    onTap: () {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Próximamente...')),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
                             ),
 
                             const SizedBox(height: 32),
 
-                            // BotÃ³n de Cerrar SesiÃ³n
+                            // Botón de Cerrar Sesión
                             SizedBox(
                               width: double.infinity,
                               height: 56,
@@ -293,65 +334,95 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildSettingsCard({
+  Widget _buildSettingsItem({
     required IconData icon,
     required Color iconColor,
     required Color iconBg,
     required String title,
     required String subtitle,
     required VoidCallback onTap,
+    bool showNewBadge = false,
+    bool showDivider = true,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-        decoration: BoxDecoration(
-          color: AppTheme.white,
+    return Column(
+      children: [
+        InkWell(
+          onTap: onTap,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.divider),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: iconBg,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: iconColor, size: 24),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.textPrimary,
-                    ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: iconBg,
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      color: AppTheme.textSecondary,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  child: Icon(icon, color: iconColor, size: 24),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              title,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.textPrimary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (showNewBadge) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE3F2FD),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Text(
+                                'Nuevo',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF1976D2),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w400,
+                          color: AppTheme.textSecondary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+                const Icon(Icons.chevron_right_rounded, color: AppTheme.textHint),
+              ],
             ),
-            const Icon(Icons.chevron_right_rounded, color: AppTheme.textHint),
-          ],
+          ),
         ),
-      ),
+        if (showDivider)
+          const Divider(height: 1, color: AppTheme.divider, indent: 16, endIndent: 16),
+      ],
     );
   }
 }
