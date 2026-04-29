@@ -8,6 +8,7 @@ import '../profile/profile_screen.dart';
 import '../../widgets/global_header.dart';
 import '../inventory/add_product_screen.dart';
 import '../sales/new_sale_screen.dart';
+import '../profile/user_management_screen.dart';
 
 /// Pantalla principal con navegación inferior
 class HomeScreen extends StatefulWidget {
@@ -26,12 +27,14 @@ class HomeScreenState extends State<HomeScreen> {
   bool _showProfile = false;
   bool _showAddProduct = false;
   bool _showNewSale = false;
+  bool _showUserManagement = false;
 
   void showProfile() {
     setState(() {
       _showProfile = true;
       _showAddProduct = false;
       _showNewSale = false;
+      _showUserManagement = false;
     });
   }
 
@@ -47,6 +50,7 @@ class HomeScreenState extends State<HomeScreen> {
       _showProfile = false;
       _showAddProduct = false;
       _showNewSale = false;
+      _showUserManagement = false;
     });
   }
 
@@ -55,6 +59,7 @@ class HomeScreenState extends State<HomeScreen> {
       _showAddProduct = true;
       _showProfile = false;
       _showNewSale = false;
+      _showUserManagement = false;
     });
   }
 
@@ -69,12 +74,29 @@ class HomeScreenState extends State<HomeScreen> {
       _showNewSale = true;
       _showAddProduct = false;
       _showProfile = false;
+      _showUserManagement = false;
     });
   }
 
   void hideNewSale() {
     setState(() {
       _showNewSale = false;
+    });
+  }
+
+  void showUserManagement() {
+    setState(() {
+      _showUserManagement = true;
+      _showProfile = false;
+      _showAddProduct = false;
+      _showNewSale = false;
+    });
+  }
+
+  void hideUserManagement() {
+    setState(() {
+      _showUserManagement = false;
+      _showProfile = true; // Return to profile since we came from there
     });
   }
 
@@ -88,12 +110,14 @@ class HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: !_showAddProduct && !_showProfile && !_showNewSale,
+      canPop: !_showAddProduct && !_showProfile && !_showNewSale && !_showUserManagement,
       onPopInvoked: (didPop) {
         if (didPop) return;
         
         if (_showAddProduct) {
           hideAddProduct();
+        } else if (_showUserManagement) {
+          hideUserManagement();
         } else if (_showProfile) {
           hideProfile();
         } else if (_showNewSale) {
@@ -109,13 +133,15 @@ class HomeScreenState extends State<HomeScreen> {
             Expanded(
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 250),
-                child: _showProfile 
-                    ? const ProfileScreen() 
-                    : _showAddProduct 
-                        ? const AddProductScreen() 
-                        : _showNewSale
-                            ? const NewSaleScreen()
-                            : _tabs[_currentIndex],
+                child: _showUserManagement
+                    ? const UserManagementScreen()
+                    : _showProfile 
+                        ? const ProfileScreen() 
+                        : _showAddProduct 
+                            ? const AddProductScreen() 
+                            : _showNewSale
+                                ? const NewSaleScreen()
+                                : _tabs[_currentIndex],
               ),
             ),
           ],
@@ -187,7 +213,7 @@ class HomeScreenState extends State<HomeScreen> {
     required String label,
     required int index,
   }) {
-    final bool isActive = !_showProfile && !_showAddProduct && !_showNewSale && _currentIndex == index;
+    final bool isActive = !_showProfile && !_showAddProduct && !_showNewSale && !_showUserManagement && _currentIndex == index;
 
     return GestureDetector(
       onTap: () {
@@ -196,6 +222,7 @@ class HomeScreenState extends State<HomeScreen> {
           _showProfile = false;
           _showAddProduct = false;
           _showNewSale = false;
+          _showUserManagement = false;
         });
       },
       behavior: HitTestBehavior.opaque,

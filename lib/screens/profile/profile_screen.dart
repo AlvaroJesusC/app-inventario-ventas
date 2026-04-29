@@ -6,6 +6,7 @@ import '../../models/user_model.dart';
 import '../../services/auth_service.dart';
 import '../../services/user_service.dart';
 import '../home/home_screen.dart';
+import 'user_management_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -109,7 +110,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           FirebaseAuth.instance.currentUser?.email ?? '',
         ),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
 
@@ -271,9 +272,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       subtitle: 'Administra los usuarios del sistema',
                                       showNewBadge: true,
                                       onTap: () {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(content: Text('Próximamente...')),
-                                        );
+                                        HomeScreen.of(context)?.showUserManagement();
                                       },
                                     ),
                                   _buildSettingsItem(

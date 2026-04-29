@@ -284,7 +284,7 @@ class _SalesTabState extends State<SalesTab> {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  '\$0.00',
+                  'S/. 0.00',
                   style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.w800,

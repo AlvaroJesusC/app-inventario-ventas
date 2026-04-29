@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// Tema principal de StockApp
+/// es el tema principal de la ap
 class AppTheme {
-  // Colores principales
+  // colores principales
   static const Color primaryGreen = Color(0xFF2E7D32);
   static const Color primaryGreenLight = Color(0xFFE8F5E9);
   static const Color primaryGreenDark = Color(0xFF1B5E20);
@@ -32,7 +32,10 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: const Color(0xFFF9F9F9),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 16,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: divider),
@@ -45,10 +48,7 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: primaryGreen, width: 2),
         ),
-        hintStyle: const TextStyle(
-          color: textHint,
-          fontSize: 14,
-        ),
+        hintStyle: const TextStyle(color: textHint, fontSize: 14),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -58,10 +58,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          textStyle: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
+          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           elevation: 0,
         ),
       ),

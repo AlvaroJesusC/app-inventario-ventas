@@ -1,6 +1,6 @@
 /// Constantes generales de la aplicación
 class AppConstants {
-  static const String appName = 'StockApp';
+  static const String appName = 'PymeVision AI';
   static const String appSubtitle = 'Gestión para tu negocio';
 
   // API (para futuro uso)

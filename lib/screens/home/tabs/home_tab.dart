@@ -31,7 +31,7 @@ class _HomeTabState extends State<HomeTab> {
           StreamBuilder<UserModel?>(
             stream: _userService.getUserProfileStream(uid, email),
             builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
+              if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
                 return const _GreetingSkeleton();
               }
               final user = snapshot.data;
@@ -102,7 +102,7 @@ class _HomeTabState extends State<HomeTab> {
                       Expanded(
                         child: _DashboardCard(
                           title: 'VENTAS DIARIAS',
-                          value: '\$0.00',
+                          value: 'S/. 0.00',
                           icon: Icons.shopping_bag_outlined,
                           iconColor: AppTheme.primaryGreen,
                           iconBg: AppTheme.primaryGreen.withValues(alpha: 0.1),
@@ -184,7 +184,7 @@ class _HomeTabState extends State<HomeTab> {
                   ),
                   const SizedBox(height: 16),
 
-                  if (snapshot.connectionState == ConnectionState.waiting)
+                  if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData)
                     const Center(child: Padding(
                       padding: EdgeInsets.all(32.0),
                       child: CircularProgressIndicator(),

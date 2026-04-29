@@ -255,7 +255,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          '\$${item['price'].toStringAsFixed(2)}',
+                          'S/. ${item['price'].toStringAsFixed(2)}',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
@@ -378,7 +378,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             AppTheme.primaryGreenLight,
             AppTheme.primaryGreen,
             'Subtotal ($_totalItems artículos)',
-            '\$${_subtotal.toStringAsFixed(2)}',
+            'S/. ${_subtotal.toStringAsFixed(2)}',
           ),
           const SizedBox(height: 16),
           _buildSummaryRow(
@@ -386,7 +386,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             AppTheme.primaryGreenLight,
             AppTheme.primaryGreen,
             'Impuestos (18%)',
-            '\$${_taxes.toStringAsFixed(2)}',
+            'S/. ${_taxes.toStringAsFixed(2)}',
           ),
           const SizedBox(height: 16),
           _buildSummaryRow(
@@ -394,7 +394,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             const Color(0xFFFBE9E7),
             const Color(0xFFD84315),
             'Descuento',
-            '-\$0.00',
+            '-S/. 0.00',
             isDiscount: true,
           ),
           const Padding(
@@ -426,7 +426,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 ],
               ),
               Text(
-                '\$${_total.toStringAsFixed(2)}',
+                'S/. ${_total.toStringAsFixed(2)}',
                 style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w900,

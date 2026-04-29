@@ -50,8 +50,8 @@ class _InventoryTabState extends State<InventoryTab> {
           child: StreamBuilder<List<ProductModel>>(
             stream: _productService.getProductsStream(),
             builder: (context, snapshot) {
-              // Estado de carga
-              if (snapshot.connectionState == ConnectionState.waiting) {
+              // Estado de carga SOLO en la carga inicial (sin datos previos)
+              if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
                 return Column(
                   children: [
                     _buildSectionHeader(total: 0, showing: 0),

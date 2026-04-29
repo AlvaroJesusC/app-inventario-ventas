@@ -307,7 +307,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                         decimal: true,
                                       ),
                                   decoration: const InputDecoration(
-                                    hintText: 'S/ 0.00',
+                                    hintText: 'S/. 0.00',
                                   ),
                                   validator: (value) {
                                     if (value == null || value.isEmpty)

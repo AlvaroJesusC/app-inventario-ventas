@@ -498,7 +498,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          'S/ ${item['price'].toStringAsFixed(2)}',
+                          'S/. ${item['price'].toStringAsFixed(2)}',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
@@ -629,7 +629,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'S/ ${_totalPrice.toStringAsFixed(2)}',
+                'S/. ${_totalPrice.toStringAsFixed(2)}',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 20,

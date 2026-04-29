@@ -36,4 +36,13 @@ class UserService {
   Future<void> updateField(String uid, String field, dynamic value) async {
     await _usersRef.doc(uid).update({field: value});
   }
+
+  /// Obtener todos los usuarios
+  Stream<List<UserModel>> getAllUsersStream() {
+    return _usersRef.snapshots().map((snapshot) {
+      return snapshot.docs
+          .map((doc) => UserModel.fromMap(doc.data(), doc.id))
+          .toList();
+    });
+  }
 }

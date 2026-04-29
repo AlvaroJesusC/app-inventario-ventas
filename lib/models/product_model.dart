@@ -1,4 +1,4 @@
-/// Modelo de producto para el inventario
+/// el modelo de producto para el inventario
 class ProductModel {
   final String id;
   final String nombre;
@@ -16,21 +16,21 @@ class ProductModel {
     this.codigoBarras,
   });
 
-  /// Estado de stock del producto
+  // estado de stock del producto
   String get stockLabel {
     if (stock <= 0) return 'Agotado';
     if (stock <= 10) return 'Bajo: $stock';
     return '$stock en stock';
   }
 
-  /// Tipo de estado para colores en la UI
+  //tipo de estado para colores en la ui
   StockStatus get stockStatus {
     if (stock <= 0) return StockStatus.empty;
     if (stock <= 10) return StockStatus.low;
     return StockStatus.inStock;
   }
 
-  /// Convierte desde un documento de Firestore → ProductModel
+  //convierte desde un documento de firestore → productmodel
   factory ProductModel.fromMap(Map<String, dynamic> map, String documentId) {
     return ProductModel(
       id: documentId,
@@ -42,7 +42,7 @@ class ProductModel {
     );
   }
 
-  /// Convierte de ProductModel → Map para guardar en Firestore
+  //convierte de productmodel → map para guardar en firestore
   Map<String, dynamic> toMap() {
     return {
       'nombre': nombre,
@@ -54,9 +54,9 @@ class ProductModel {
   }
 }
 
-/// Estados posibles del stock
+//Estados posibles del stock
 enum StockStatus {
-  inStock,  // stock > 10
-  low,      // stock entre 1 y 10
-  empty,    // stock = 0
+  inStock, // stock > 10
+  low, // stock entre 1 y 10
+  empty, // stock = 0
 }

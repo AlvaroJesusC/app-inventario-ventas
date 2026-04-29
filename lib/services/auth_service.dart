@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_model.dart';
 import 'user_service.dart';
@@ -48,6 +49,48 @@ class AuthService {
       return credential;
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
+    }
+  }
+
+  /// Registrar nuevo empleado sin cerrar la sesión del admin actual
+  Future<void> registerEmployee({
+    required String email,
+    required String password,
+    required String nombre,
+    required String rol,
+  }) async {
+    try {
+      // Usamos una app secundaria para no desloguear al admin
+      FirebaseApp secondaryApp = await Firebase.initializeApp(
+        name: 'SecondaryApp_${DateTime.now().millisecondsSinceEpoch}',
+        options: Firebase.app().options,
+      );
+
+      final secondaryAuth = FirebaseAuth.instanceFor(app: secondaryApp);
+      
+      final credential = await secondaryAuth.createUserWithEmailAndPassword(
+        email: email.trim(),
+        password: password,
+      );
+      
+      if (credential.user != null) {
+        final userService = UserService();
+        final newUser = UserModel(
+          uid: credential.user!.uid,
+          nombre: nombre.trim(),
+          email: email.trim(),
+          rol: rol,
+          activo: true,
+        );
+        await userService.saveUserProfile(newUser);
+      }
+      
+      await secondaryAuth.signOut();
+      await secondaryApp.delete();
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    } catch (e) {
+      throw Exception('Error inesperado: $e');
     }
   }
 
