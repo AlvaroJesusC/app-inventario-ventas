@@ -11,6 +11,8 @@ import '../home/home_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../models/user_model.dart';
 import '../../services/user_service.dart';
+import '../../models/category_model.dart';
+import '../../services/category_service.dart';
 
 class AddProductScreen extends StatefulWidget {
   const AddProductScreen({super.key});
@@ -32,16 +34,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   String? _scannedBarcode;
   bool _isLoading = false;
 
-  final List<String> _categorias = [
-    'Abarrotes',
-    'Bebidas',
-    'Lácteos',
-    'Limpieza',
-    'Snacks',
-    'Hogar',
-    'Cuidado Personal',
-    'Otros',
-  ];
+
 
   @override
   void dispose() {
@@ -275,20 +268,44 @@ class _AddProductScreenState extends State<AddProductScreen> {
                       _buildInputLabel('Categoría'),
                       const SizedBox(height: 8),
                       // initialValue en lugar de value por deprecación
-                      DropdownButtonFormField<String>(
-                        value: _selectedCategory,
-                        decoration: const InputDecoration(
-                          hintText: 'Seleccionar categoría...',
-                        ),
-                        icon: const Icon(Icons.keyboard_arrow_down_rounded),
-                        items: _categorias.map((cat) {
-                          return DropdownMenuItem(value: cat, child: Text(cat));
-                        }).toList(),
-                        onChanged: (val) {
-                          setState(() {
-                            _selectedCategory = val;
-                          });
-                        },
+                      StreamBuilder<List<CategoryModel>>(
+                        stream: CategoryService().getCategoriesStream(),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return const SizedBox(
+                              height: 56,
+                              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                            );
+                          }
+                          
+                          final allCategories = snapshot.data ?? [];
+                          
+                          // 1. Filtrar duplicados: El Dropdown se rompe si hay dos items con el mismo 'value'
+                          final uniqueNames = <String>{};
+                          final categorias = allCategories.where((c) => uniqueNames.add(c.nombre)).toList();
+                          
+                          // 2. Evitar error si la categoría auto-seleccionada no está en la BD
+                          // Usamos una variable local para el value en vez de mutar el estado durante el build
+                          final String? currentValue = categorias.any((c) => c.nombre == _selectedCategory) 
+                              ? _selectedCategory 
+                              : null;
+
+                          return DropdownButtonFormField<String>(
+                            value: currentValue,
+                            decoration: const InputDecoration(
+                              hintText: 'Seleccionar categoría...',
+                            ),
+                            icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                            items: categorias.map((cat) {
+                              return DropdownMenuItem(value: cat.nombre, child: Text(cat.nombre));
+                            }).toList(),
+                            onChanged: (val) {
+                              setState(() {
+                                _selectedCategory = val;
+                              });
+                            },
+                          );
+                        }
                       ),
                       const SizedBox(height: 20),
 

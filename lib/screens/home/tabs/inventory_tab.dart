@@ -5,6 +5,7 @@ import '../../../models/product_model.dart';
 import '../../../services/product_service.dart';
 import '../../../widgets/product_card.dart';
 import '../../inventory/add_product_screen.dart';
+import '../../inventory/category_management_screen.dart';
 import '../home_screen.dart';
 
 /// Tab de Inventario — vista completa con búsqueda, filtros y lista de productos
@@ -355,39 +356,49 @@ class _InventoryTabState extends State<InventoryTab> {
     );
   }
 
-  /// Botón flotante para agregar producto (esquina inferior derecha)
+  /// Botones flotantes (Añadir Producto y Categoría)
   Widget _buildAddButton() {
     return Positioned(
       right: 20,
       bottom: 20,
-      child: GestureDetector(
-        onTap: () {
-          final homeState = HomeScreen.of(context);
-          if (homeState != null) {
-            homeState.showAddProduct();
-          } else {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const AddProductScreen()),
-            );
-          }
-        },
-        child: Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            color: AppTheme.primaryGreen,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.primaryGreen.withValues(alpha: 0.35),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          // Botón Añadir Categoría
+          FloatingActionButton.extended(
+            heroTag: "btn_add_category",
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const CategoryManagementScreen()),
+              );
+            },
+            backgroundColor: AppTheme.white,
+            foregroundColor: AppTheme.primaryGreen,
+            icon: const Icon(Icons.category_outlined, size: 20),
+            label: const Text('Añadir Categoría', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
-          child: const Icon(Icons.add_rounded, size: 28, color: AppTheme.white),
-        ),
+          const SizedBox(height: 12),
+          // Botón Añadir Producto
+          FloatingActionButton.extended(
+            heroTag: "btn_add_product",
+            onPressed: () {
+              final homeState = HomeScreen.of(context);
+              if (homeState != null) {
+                homeState.showAddProduct();
+              } else {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const AddProductScreen()),
+                );
+              }
+            },
+            backgroundColor: AppTheme.primaryGreen,
+            icon: const Icon(Icons.add_rounded, size: 24, color: AppTheme.white),
+            label: const Text('Añadir Producto', style: TextStyle(color: AppTheme.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
       ),
     );
   }
