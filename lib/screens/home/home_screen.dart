@@ -102,8 +102,8 @@ class HomeScreenState extends State<HomeScreen> {
 
   final List<Widget> _tabs = const [
     HomeTab(),
-    InventoryTab(),
     SalesTab(),
+    InventoryTab(),
     ReportsTab(),
   ];
 
@@ -186,19 +186,24 @@ class HomeScreenState extends State<HomeScreen> {
                   index: 0,
                 ),
                 _buildNavItem(
-                  icon: Icons.inventory_2_rounded,
-                  label: 'Inventario',
+                  icon: Icons.point_of_sale_rounded,
+                  label: 'Ventas',
                   index: 1,
                 ),
                 _buildNavItem(
-                  icon: Icons.point_of_sale_rounded,
-                  label: 'Ventas',
+                  icon: Icons.inventory_2_rounded,
+                  label: 'Inventario',
                   index: 2,
                 ),
                 _buildNavItem(
                   icon: Icons.bar_chart_rounded,
                   label: 'Reportes',
                   index: 3,
+                ),
+                _buildNavItem(
+                  icon: Icons.more_horiz_rounded,
+                  label: 'Más',
+                  index: 4,
                 ),
               ],
             ),
@@ -213,17 +218,23 @@ class HomeScreenState extends State<HomeScreen> {
     required String label,
     required int index,
   }) {
-    final bool isActive = !_showProfile && !_showAddProduct && !_showNewSale && !_showUserManagement && _currentIndex == index;
+    final bool isActive = index == 4
+        ? (_showProfile || _showUserManagement)
+        : (!_showProfile && !_showAddProduct && !_showNewSale && !_showUserManagement && _currentIndex == index);
 
     return GestureDetector(
       onTap: () {
-        setState(() {
-          _currentIndex = index;
-          _showProfile = false;
-          _showAddProduct = false;
-          _showNewSale = false;
-          _showUserManagement = false;
-        });
+        if (index == 4) {
+          showProfile();
+        } else {
+          setState(() {
+            _currentIndex = index;
+            _showProfile = false;
+            _showAddProduct = false;
+            _showNewSale = false;
+            _showUserManagement = false;
+          });
+        }
       },
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(

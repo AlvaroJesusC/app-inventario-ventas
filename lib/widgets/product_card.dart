@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
 import '../config/app_theme.dart';
 import '../models/product_model.dart';
+import '../utils/formatters.dart';
 
 /// Tarjeta de producto para la lista de inventario
 class ProductCard extends StatelessWidget {
   final ProductModel product;
   final VoidCallback? onTap;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
   const ProductCard({
     super.key,
     required this.product,
     this.onTap,
+    this.onEdit,
+    this.onDelete,
   });
 
   @override
@@ -47,7 +52,7 @@ class ProductCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    product.nombre,
+                    product.nombre.capitalizeFirst(),
                     style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
@@ -57,16 +62,15 @@ class ProductCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    product.categoria != null 
-                        ? '${product.categoria} • ID: ${product.id.length > 5 ? product.id.substring(0, 5) : product.id}'
-                        : 'ID: ${product.id.length > 5 ? product.id.substring(0, 5) : product.id}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                      color: Colors.blue.shade400,
+                  if (product.categoria != null && product.categoria!.isNotEmpty)
+                    Text(
+                      product.categoria!,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        color: Colors.blue.shade400,
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -86,6 +90,66 @@ class ProductCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 _buildStockBadge(),
+              ],
+            ),
+            const SizedBox(width: 4),
+
+            // Botón de menú de opciones (3 puntos)
+            PopupMenuButton<String>(
+              icon: const Icon(
+                Icons.more_vert_rounded,
+                color: AppTheme.textSecondary,
+                size: 22,
+              ),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+              style: IconButton.styleFrom(
+                minimumSize: const Size(24, 24),
+                padding: EdgeInsets.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              onSelected: (value) {
+                if (value == 'edit') {
+                  onEdit?.call();
+                } else if (value == 'delete') {
+                  onDelete?.call();
+                }
+              },
+              itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                const PopupMenuItem<String>(
+                  value: 'edit',
+                  child: Row(
+                    children: [
+                      Icon(Icons.edit_outlined, size: 20, color: AppTheme.textPrimary),
+                      SizedBox(width: 10),
+                      Text(
+                        'Editar',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem<String>(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete_outline_rounded, size: 20, color: AppTheme.error),
+                      SizedBox(width: 10),
+                      Text(
+                        'Eliminar',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.error,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ],

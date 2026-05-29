@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../config/app_theme.dart';
@@ -16,7 +17,6 @@ class NewSaleScreen extends StatefulWidget {
 class _NewSaleScreenState extends State<NewSaleScreen> {
   final MobileScannerController _scannerController = MobileScannerController();
   final ProductService _productService = ProductService();
-  bool _isFlashOn = false;
   bool _isProcessing = false;
 
   // Modo demo
@@ -25,8 +25,28 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   // Lista de productos escaneados
   final List<Map<String, dynamic>> _scannedItems = [];
 
+  // Buscador
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  List<ProductModel> _allProducts = [];
+  StreamSubscription<List<ProductModel>>? _productsSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _productsSubscription = _productService.getProductsStream().listen((products) {
+      if (mounted) {
+        setState(() {
+          _allProducts = products;
+        });
+      }
+    });
+  }
+
   @override
   void dispose() {
+    _productsSubscription?.cancel();
+    _searchController.dispose();
     _scannerController.dispose();
     super.dispose();
   }
@@ -40,12 +60,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     }
   }
 
-  void _toggleFlash() {
-    setState(() {
-      _isFlashOn = !_isFlashOn;
-      _scannerController.toggleTorch();
-    });
-  }
+
 
   void _onDetectBarcode(BarcodeCapture capture) async {
     if (_isProcessing) return;
@@ -80,53 +95,39 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         final product = await _productService.getProductByBarcode(barcode);
 
         if (product != null) {
-          setState(() {
-            _scannedItems.add({
-              'id': product.id,
-              'name': product.nombre,
-              'sku': barcode,
-              'price': product.precio,
-              'quantity': 1,
-              'image': Icons.inventory_2_rounded,
-            });
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('${product.nombre} agregado al ticket'),
-              backgroundColor: AppTheme.primaryGreen,
-              duration: const Duration(milliseconds: 800),
-            ),
-          );
+          _addProductToCart(product);
         } else {
           // 3. Mostrar advertencia si no está en BD
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Icon(Icons.warning_amber_rounded, color: Colors.white),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Producto no encontrado en inventario ($barcode)',
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    const Icon(Icons.warning_amber_rounded, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Producto no encontrado en inventario ($barcode)',
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
+                backgroundColor: Colors.redAccent.shade700,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                duration: const Duration(seconds: 3),
+                action: SnackBarAction(
+                  label: 'CERRAR',
+                  textColor: Colors.white,
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                  },
+                ),
               ),
-              backgroundColor: Colors.redAccent.shade700,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              duration: const Duration(seconds: 3),
-              action: SnackBarAction(
-                label: 'CERRAR',
-                textColor: Colors.white,
-                onPressed: () {
-                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                },
-              ),
-            ),
-          );
+            );
+          }
         }
       }
     } finally {
@@ -136,6 +137,224 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         setState(() => _isProcessing = false);
       }
     }
+  }
+
+  void _addProductToCart(ProductModel product) {
+    int index = _scannedItems.indexWhere((item) => item['id'] == product.id);
+    if (index >= 0) {
+      setState(() {
+        _scannedItems[index]['quantity']++;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Cantidad de ${_scannedItems[index]['name']} aumentada'),
+          backgroundColor: AppTheme.primaryGreen,
+          duration: const Duration(milliseconds: 800),
+        ),
+      );
+    } else {
+      setState(() {
+        _scannedItems.add({
+          'id': product.id,
+          'name': product.nombre,
+          'sku': product.codigoBarras ?? '',
+          'price': product.precio,
+          'quantity': 1,
+          'image': Icons.inventory_2_rounded,
+        });
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${product.nombre} agregado al ticket'),
+          backgroundColor: AppTheme.primaryGreen,
+          duration: const Duration(milliseconds: 800),
+        ),
+      );
+    }
+  }
+
+  Widget _buildSearchBar() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          child: Container(
+            height: 48,
+            decoration: BoxDecoration(
+              color: AppTheme.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppTheme.divider),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.02),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                const SizedBox(width: 14),
+                const Icon(
+                  Icons.search_rounded,
+                  size: 20,
+                  color: AppTheme.textHint,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (value) {
+                      setState(() {
+                        _searchQuery = value;
+                      });
+                    },
+                    decoration: const InputDecoration(
+                      hintText: 'Buscar por nombre...',
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      contentPadding: EdgeInsets.zero,
+                      isDense: true,
+                      hintStyle: TextStyle(
+                        fontSize: 14,
+                        color: AppTheme.textHint,
+                      ),
+                    ),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                ),
+                if (_searchQuery.isNotEmpty)
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _searchController.clear();
+                        _searchQuery = '';
+                      });
+                    },
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 12),
+                      child: Icon(
+                        Icons.clear_rounded,
+                        size: 18,
+                        color: AppTheme.textHint,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        const Padding(
+          padding: EdgeInsets.only(left: 24, right: 24, bottom: 8),
+          child: Text(
+            'Alternativo al escáner. Se usa solo cuando el código de barras no puede escanearse.',
+            style: TextStyle(
+              fontSize: 11,
+              color: AppTheme.textSecondary,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSearchResults() {
+    if (_searchQuery.isEmpty) return const SizedBox.shrink();
+
+    final query = _searchQuery.toLowerCase();
+    final matchedProducts = _allProducts.where((p) {
+      return p.nombre.toLowerCase().contains(query);
+    }).toList();
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppTheme.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.divider),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: matchedProducts.isEmpty
+          ? const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Center(
+                child: Text(
+                  'No se encontraron productos por ese nombre',
+                  style: TextStyle(color: AppTheme.textHint, fontSize: 13),
+                ),
+              ),
+            )
+          : ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: matchedProducts.length > 5 ? 5 : matchedProducts.length,
+              separatorBuilder: (context, index) => const Divider(
+                height: 1,
+                color: AppTheme.divider,
+              ),
+              itemBuilder: (context, index) {
+                final product = matchedProducts[index];
+                return ListTile(
+                  dense: true,
+                  leading: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: AppTheme.backgroundGrey,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.inventory_2_rounded,
+                      color: AppTheme.textHint,
+                      size: 16,
+                    ),
+                  ),
+                  title: Text(
+                    product.nombre,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                  subtitle: Text(
+                    product.categoria ?? 'Sin categoría',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
+                  trailing: Text(
+                    'S/. ${product.precio.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.primaryGreen,
+                    ),
+                  ),
+                  onTap: () {
+                    _addProductToCart(product);
+                    setState(() {
+                      _searchController.clear();
+                      _searchQuery = '';
+                    });
+                  },
+                );
+              },
+            ),
+    );
   }
 
   double get _totalPrice {
@@ -163,7 +382,12 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
-                  children: [_buildScannerBox(), _buildScannedList()],
+                  children: [
+                    _buildScannerBox(),
+                    _buildSearchBar(),
+                    _buildSearchResults(),
+                    _buildScannedList(),
+                  ],
                 ),
               ),
             ),
@@ -216,127 +440,42 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   Widget _buildScannerBox() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      padding: const EdgeInsets.all(16),
-      height: 320,
+      height: 115,
       decoration: BoxDecoration(
-        color: const Color(0xFF1E242B), // Color oscuro premium
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(16),
       ),
-      child: Column(
+      clipBehavior: Clip.hardEdge,
+      child: Stack(
+        alignment: Alignment.center,
         children: [
-          // Top Row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.barcode_reader,
-                    color: Colors.white.withValues(alpha: 0.7),
-                    size: 18,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Apunta al código de barras',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.9),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-              GestureDetector(
-                onTap: _toggleFlash,
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    _isFlashOn
-                        ? Icons.flash_on_rounded
-                        : Icons.flash_off_rounded,
-                    color: Colors.white,
-                    size: 16,
-                  ),
-                ),
-              ),
-            ],
+          Positioned.fill(
+            child: MobileScanner(
+              controller: _scannerController,
+              onDetect: _onDetectBarcode,
+            ),
           ),
-          const SizedBox(height: 16),
-
-          // Scanner Camera
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: AppTheme.primaryGreen.withValues(alpha: 0.6),
-                  width: 2,
-                ),
-              ),
-              clipBehavior: Clip.hardEdge,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  MobileScanner(
-                    controller: _scannerController,
-                    onDetect: _onDetectBarcode,
-                  ),
-                  // Línea láser animada (estática por ahora para diseño)
-                  Container(
-                    height: 2,
-                    width: double.infinity,
-                    margin: const EdgeInsets.symmetric(horizontal: 24),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryGreen,
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppTheme.primaryGreen.withValues(alpha: 0.8),
-                          blurRadius: 8,
-                          spreadRadius: 2,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+          Positioned.fill(
+            child: CustomPaint(
+              painter: ScannerCornersPainter(
+                color: AppTheme.primaryGreen,
+                strokeWidth: 3.0,
+                cornerLength: 16.0,
+                borderRadius: 16.0,
               ),
             ),
           ),
-          const SizedBox(height: 16),
-
-          // Bottom Info Text
+          // Línea láser verde horizontal
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            height: 2,
+            width: double.infinity,
+            margin: const EdgeInsets.symmetric(horizontal: 24),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.info_outline_rounded,
-                  color: Colors.white.withValues(alpha: 0.6),
-                  size: 16,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Escanea el código de barras del producto para añadirlo al ticket',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.7),
-                      fontSize: 11,
-                    ),
-                  ),
+              color: AppTheme.primaryGreen,
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.primaryGreen.withValues(alpha: 0.8),
+                  blurRadius: 8,
+                  spreadRadius: 2,
                 ),
               ],
             ),
@@ -456,33 +595,15 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            item['name'],
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: AppTheme.textPrimary,
-                            ),
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _scannedItems.remove(item);
-                            });
-                          },
-                          child: const Icon(
-                            Icons.close_rounded,
-                            size: 18,
-                            color: AppTheme.textHint,
-                          ),
-                        ),
-                      ],
+                    Text(
+                      item['name'],
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.textPrimary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -498,7 +619,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          'S/. ${item['price'].toStringAsFixed(2)}',
+                          'S/. ${(item['price'] * item['quantity']).toStringAsFixed(2)}',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
@@ -561,6 +682,32 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                       ],
                     ),
                   ],
+                ),
+              ),
+            ),
+            // Botón de eliminar (ícono de basurero en rojo) al extremo derecho
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  _scannedItems.remove(item);
+                });
+              },
+              child: Container(
+                width: 52,
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50.withValues(alpha: 0.8),
+                  border: const Border(
+                    left: BorderSide(
+                      color: AppTheme.divider,
+                      width: 1,
+                    ),
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: const Icon(
+                  Icons.delete_outline_rounded,
+                  color: Colors.redAccent,
+                  size: 22,
                 ),
               ),
             ),
@@ -687,4 +834,58 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       ),
     );
   }
+}
+
+class ScannerCornersPainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+  final double cornerLength;
+  final double borderRadius;
+
+  ScannerCornersPainter({
+    required this.color,
+    this.strokeWidth = 3.0,
+    this.cornerLength = 16.0,
+    this.borderRadius = 16.0,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+
+    final path = Path();
+    
+    // Top Left Corner
+    path.moveTo(0, cornerLength);
+    path.lineTo(0, borderRadius);
+    path.quadraticBezierTo(0, 0, borderRadius, 0);
+    path.lineTo(cornerLength, 0);
+
+    // Top Right Corner
+    path.moveTo(size.width - cornerLength, 0);
+    path.lineTo(size.width - borderRadius, 0);
+    path.quadraticBezierTo(size.width, 0, size.width, borderRadius);
+    path.lineTo(size.width, cornerLength);
+
+    // Bottom Right Corner
+    path.moveTo(size.width, size.height - cornerLength);
+    path.lineTo(size.width, size.height - borderRadius);
+    path.quadraticBezierTo(size.width, size.height, size.width - borderRadius, size.height);
+    path.lineTo(size.width - cornerLength, size.height);
+
+    // Bottom Left Corner
+    path.moveTo(cornerLength, size.height);
+    path.lineTo(borderRadius, size.height);
+    path.quadraticBezierTo(0, size.height, 0, size.height - borderRadius);
+    path.lineTo(0, size.height - cornerLength);
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

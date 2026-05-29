@@ -15,7 +15,9 @@ import '../../models/category_model.dart';
 import '../../services/category_service.dart';
 
 class AddProductScreen extends StatefulWidget {
-  const AddProductScreen({super.key});
+  final ProductModel? product;
+
+  const AddProductScreen({super.key, this.product});
 
   @override
   State<AddProductScreen> createState() => _AddProductScreenState();
@@ -35,6 +37,18 @@ class _AddProductScreenState extends State<AddProductScreen> {
   bool _isLoading = false;
 
 
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.product != null) {
+      _nombreController.text = widget.product!.nombre;
+      _precioController.text = widget.product!.precio.toString();
+      _stockController.text = widget.product!.stock.toString();
+      _selectedCategory = widget.product!.categoria;
+      _scannedBarcode = widget.product!.codigoBarras;
+    }
+  }
 
   @override
   void dispose() {
@@ -180,7 +194,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
     try {
       final product = ProductModel(
-        id: '', // Se generará en Firestore
+        id: widget.product?.id ?? '', // Se conserva el ID si es edición
         nombre: _nombreController.text.trim(),
         precio: double.parse(_precioController.text.trim()),
         stock: int.parse(_stockController.text.trim()),
@@ -188,17 +202,23 @@ class _AddProductScreenState extends State<AddProductScreen> {
         codigoBarras: _scannedBarcode,
       );
 
-      await _productService.addProduct(product);
+      if (widget.product != null) {
+        await _productService.updateProduct(product);
+      } else {
+        await _productService.addProduct(product);
+      }
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Producto guardado correctamente'),
+        SnackBar(
+          content: Text(widget.product != null
+              ? 'Producto actualizado correctamente'
+              : 'Producto guardado correctamente'),
           backgroundColor: AppTheme.primaryGreen,
         ),
       );
       final homeState = HomeScreen.of(context);
-      if (homeState != null) {
+      if (homeState != null && widget.product == null) {
         homeState.hideAddProduct();
       } else {
         Navigator.pop(context);
@@ -238,9 +258,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Nuevo Producto',
-                        style: TextStyle(
+                      Text(
+                        widget.product != null ? 'Editar Producto' : 'Nuevo Producto',
+                        style: const TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.w800,
                           color: AppTheme.textPrimary,

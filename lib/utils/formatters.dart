@@ -1,1 +1,6 @@
-// TODO: Implementar formateadores (moneda, fecha, etc.)
+extension StringExtension on String {
+  String capitalizeFirst() {
+    if (isEmpty) return this;
+    return this[0].toUpperCase() + substring(1);
+  }
+}
