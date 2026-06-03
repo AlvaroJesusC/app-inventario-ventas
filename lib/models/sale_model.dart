@@ -6,6 +6,7 @@ class SaleItemModel {
   final String sku;
   final double price;
   final int quantity;
+  final String categoria;
 
   SaleItemModel({
     required this.id,
@@ -13,6 +14,7 @@ class SaleItemModel {
     required this.sku,
     required this.price,
     required this.quantity,
+    this.categoria = 'General',
   });
 
   factory SaleItemModel.fromMap(Map<String, dynamic> map) {
@@ -22,6 +24,7 @@ class SaleItemModel {
       sku: map['sku'] ?? '',
       price: (map['price'] ?? 0).toDouble(),
       quantity: (map['quantity'] ?? 0).toInt(),
+      categoria: map['categoria'] ?? 'General',
     );
   }
 
@@ -32,6 +35,7 @@ class SaleItemModel {
       'sku': sku,
       'price': price,
       'quantity': quantity,
+      'categoria': categoria,
     };
   }
 }
@@ -43,7 +47,7 @@ class SaleModel {
   final int totalItems;
   final String cashier;
   final String status;
-  final String type;
+  final String categoria;
   final List<SaleItemModel> items;
 
   SaleModel({
@@ -53,7 +57,7 @@ class SaleModel {
     required this.totalItems,
     required this.cashier,
     this.status = 'PAGADO',
-    this.type = 'MENUDEO',
+    required this.categoria,
     required this.items,
   });
 
@@ -79,7 +83,7 @@ class SaleModel {
       totalItems: (map['totalItems'] ?? 0).toInt(),
       cashier: map['cashier'] ?? 'Cajero',
       status: map['status'] ?? 'PAGADO',
-      type: map['type'] ?? 'MENUDEO',
+      categoria: map['categoria'] ?? map['type'] ?? 'General',
       items: saleItems,
     );
   }
@@ -91,7 +95,7 @@ class SaleModel {
       'totalItems': totalItems,
       'cashier': cashier,
       'status': status,
-      'type': type,
+      'categoria': categoria,
       'items': items.map((item) => item.toMap()).toList(),
     };
   }

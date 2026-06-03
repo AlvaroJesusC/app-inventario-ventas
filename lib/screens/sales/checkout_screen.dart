@@ -88,12 +88,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           sku: item['sku'] ?? '',
           price: (item['price'] ?? 0).toDouble(),
           quantity: (item['quantity'] ?? 0).toInt(),
+          categoria: item['category'] ?? 'General',
         );
       }).toList();
 
-      // Determinar si es mayoreo (más de 5 de un producto o total >= 10)
-      bool hasWholesaleQuantity = saleItems.any((item) => item.quantity >= 5) || _totalItems >= 10;
-      String saleType = hasWholesaleQuantity ? 'MAYOREO' : 'MENUDEO';
+      // Obtener categorías únicas de los productos vendidos
+      final uniqueCategories = saleItems.map((e) => e.categoria).toSet();
+      final String saleCategory = uniqueCategories.isEmpty 
+          ? 'General' 
+          : uniqueCategories.join(', ');
 
       // 3. Crear el modelo de venta
       final newSale = SaleModel(
@@ -103,7 +106,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         totalItems: _totalItems,
         cashier: cashierName,
         status: 'PAGADO',
-        type: saleType,
+        categoria: saleCategory,
         items: saleItems,
       );
 

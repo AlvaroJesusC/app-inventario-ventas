@@ -672,7 +672,7 @@ class _SalesTabState extends State<SalesTab> {
                 const SizedBox(height: 4),
                 Text('Cajero: ${sale.cashier}', style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
                 const SizedBox(height: 4),
-                Text('Tipo: ${sale.type}', style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
+                Text('Categoría: ${sale.categoria}', style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
                 const SizedBox(height: 16),
                 const Text(
                   'Productos',

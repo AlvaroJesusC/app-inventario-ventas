@@ -19,7 +19,7 @@ class SaleService {
     });
   }
 
-  /// Agregar una nueva venta y actualizar el stock de los productos vendidos
+  ///agrega una nueva venta y actualizar el stock de los productos vendidos
   Future<String> addSale(SaleModel sale) async {
     // 1. Agregar la venta a la colección 'ventas'
     final docRef = await _salesRef.add(sale.toMap());

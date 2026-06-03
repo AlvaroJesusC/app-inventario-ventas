@@ -169,6 +169,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
           'price': product.precio,
           'quantity': 1,
           'image': Icons.inventory_2_rounded,
+          'category': product.categoria ?? 'General',
         });
       });
       if (mounted) {
