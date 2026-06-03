@@ -32,6 +32,7 @@ class AuthService {
   Future<UserCredential> registerWithEmailAndPassword({
     required String email,
     required String password,
+    required String nombre,
   }) async {
     try {
       final credential = await _auth.createUserWithEmailAndPassword(
@@ -42,7 +43,13 @@ class AuthService {
       // Crear documento en Firestore para el nuevo usuario
       if (credential.user != null) {
         final userService = UserService();
-        final newUser = UserModel.empty(credential.user!.uid, email.trim());
+        final newUser = UserModel(
+          uid: credential.user!.uid,
+          nombre: nombre.trim(),
+          email: email.trim(),
+          rol: 'Administrador Principal',
+          activo: true,
+        );
         await userService.saveUserProfile(newUser);
       }
       

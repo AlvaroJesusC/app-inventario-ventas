@@ -3,7 +3,7 @@ import '../../config/app_theme.dart';
 import '../../config/app_constants.dart';
 import '../../services/auth_service.dart';
 
-/// Pantalla de inicio de sesión de StockApp
+/// Pantalla de inicio de sesión y registro de StockApp
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -13,12 +13,18 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen>
     with SingleTickerProviderStateMixin {
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   final _authService = AuthService();
+  
+  bool _isRegisterMode = false;
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
   bool _isLoading = false;
+  
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -50,23 +56,33 @@ class _LoginScreenState extends State<LoginScreen>
 
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     _animationController.dispose();
     super.dispose();
   }
 
-  Future<void> _handleLogin() async {
+  Future<void> _handleSubmit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_isLoading) return;
 
     setState(() => _isLoading = true);
 
     try {
-      await _authService.signInWithEmailAndPassword(
-        email: _emailController.text,
-        password: _passwordController.text,
-      );
+      if (_isRegisterMode) {
+        await _authService.registerWithEmailAndPassword(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+          nombre: _nameController.text.trim(),
+        );
+      } else {
+        await _authService.signInWithEmailAndPassword(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+        );
+      }
       // La navegación es automática gracias al AuthWrapper
     } catch (e) {
       if (!mounted) return;
@@ -138,6 +154,7 @@ class _LoginScreenState extends State<LoginScreen>
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      const SizedBox(height: 24),
                       // Logo / Ícono
                       _buildLogo(),
                       const SizedBox(height: 12),
@@ -146,7 +163,7 @@ class _LoginScreenState extends State<LoginScreen>
                       Text(
                         AppConstants.appName,
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.w800,
                           color: AppTheme.primaryGreen,
@@ -159,14 +176,65 @@ class _LoginScreenState extends State<LoginScreen>
                       Text(
                         AppConstants.appSubtitle,
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w400,
                           color: AppTheme.textSecondary,
                           letterSpacing: 0.2,
                         ),
                       ),
-                      const SizedBox(height: 48),
+                      const SizedBox(height: 32),
+
+                      // Título dinámico
+                      Text(
+                        _isRegisterMode ? 'Crear cuenta' : 'Iniciar sesión',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _isRegisterMode
+                            ? 'Completa tus datos para registrarte'
+                            : 'Ingresa tus credenciales para continuar',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          color: AppTheme.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 28),
+
+                      // Campo de Nombre Completo (solo en registro)
+                      if (_isRegisterMode) ...[
+                        TextFormField(
+                          controller: _nameController,
+                          keyboardType: TextInputType.name,
+                          textInputAction: TextInputAction.next,
+                          enabled: !_isLoading,
+                          decoration: const InputDecoration(
+                            hintText: 'Nombre completo',
+                            prefixIcon: Icon(
+                              Icons.person_outline,
+                              color: AppTheme.textHint,
+                              size: 20,
+                            ),
+                          ),
+                          validator: (value) {
+                            if (_isRegisterMode) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Ingresa tu nombre completo';
+                              }
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                      ],
 
                       // Campo de correo
                       TextFormField(
@@ -174,7 +242,7 @@ class _LoginScreenState extends State<LoginScreen>
                         keyboardType: TextInputType.emailAddress,
                         textInputAction: TextInputAction.next,
                         enabled: !_isLoading,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           hintText: 'Correo electrónico',
                           prefixIcon: Icon(
                             Icons.email_outlined,
@@ -198,12 +266,18 @@ class _LoginScreenState extends State<LoginScreen>
                       TextFormField(
                         controller: _passwordController,
                         obscureText: _obscurePassword,
-                        textInputAction: TextInputAction.done,
+                        textInputAction: _isRegisterMode
+                            ? TextInputAction.next
+                            : TextInputAction.done,
                         enabled: !_isLoading,
-                        onFieldSubmitted: (_) => _handleLogin(),
+                        onFieldSubmitted: (_) {
+                          if (!_isRegisterMode) {
+                            _handleSubmit();
+                          }
+                        },
                         decoration: InputDecoration(
                           hintText: 'Contraseña',
-                          prefixIcon: Icon(
+                          prefixIcon: const Icon(
                             Icons.lock_outline,
                             color: AppTheme.textHint,
                             size: 20,
@@ -233,11 +307,59 @@ class _LoginScreenState extends State<LoginScreen>
                           return null;
                         },
                       ),
-                      const SizedBox(height: 28),
+                      const SizedBox(height: 16),
 
-                      // Botón Ingresar
+                      // Campo de Confirmar Contraseña (solo en registro)
+                      if (_isRegisterMode) ...[
+                        TextFormField(
+                          controller: _confirmPasswordController,
+                          obscureText: _obscureConfirmPassword,
+                          textInputAction: TextInputAction.done,
+                          enabled: !_isLoading,
+                          onFieldSubmitted: (_) => _handleSubmit(),
+                          decoration: InputDecoration(
+                            hintText: 'Confirmar contraseña',
+                            prefixIcon: const Icon(
+                              Icons.lock_outline,
+                              color: AppTheme.textHint,
+                              size: 20,
+                            ),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscureConfirmPassword
+                                    ? Icons.visibility_off_outlined
+                                    : Icons.visibility_outlined,
+                                color: AppTheme.textHint,
+                                size: 20,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _obscureConfirmPassword =
+                                      !_obscureConfirmPassword;
+                                });
+                              },
+                            ),
+                          ),
+                          validator: (value) {
+                            if (_isRegisterMode) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Confirma tu contraseña';
+                              }
+                              if (value != _passwordController.text) {
+                                return 'Las contraseñas no coinciden';
+                              }
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+
+                      const SizedBox(height: 12),
+
+                      // Botón principal
                       ElevatedButton(
-                        onPressed: _isLoading ? null : _handleLogin,
+                        onPressed: _isLoading ? null : _handleSubmit,
                         child: _isLoading
                             ? const SizedBox(
                                 width: 22,
@@ -247,24 +369,89 @@ class _LoginScreenState extends State<LoginScreen>
                                   color: Colors.white,
                                 ),
                               )
-                            : const Text('Ingresar'),
+                            : Text(_isRegisterMode ? 'Registrarse' : 'Ingresar'),
                       ),
                       const SizedBox(height: 20),
 
-                      // Enlace de olvidaste contraseña
-                      Center(
-                        child: TextButton(
-                          onPressed: _isLoading ? null : _handleForgotPassword,
-                          style: TextButton.styleFrom(
-                            foregroundColor: AppTheme.textSecondary,
-                            textStyle: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w400,
+                      // ¿Olvidaste tu contraseña? (solo en login)
+                      if (!_isRegisterMode) ...[
+                        Center(
+                          child: TextButton(
+                            onPressed: _isLoading ? null : _handleForgotPassword,
+                            style: TextButton.styleFrom(
+                              foregroundColor: AppTheme.textSecondary,
+                              textStyle: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                            child: const Text('¿Olvidaste tu contraseña?'),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+
+                      // Divisor "o"
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Divider(color: AppTheme.divider),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Text(
+                              'o',
+                              style: TextStyle(
+                                color: AppTheme.textHint,
+                                fontSize: 14,
+                              ),
                             ),
                           ),
-                          child: const Text('¿Olvidaste tu contraseña?'),
-                        ),
+                          const Expanded(
+                            child: Divider(color: AppTheme.divider),
+                          ),
+                        ],
                       ),
+                      const SizedBox(height: 24),
+
+                      // Enlace inferior para alternar modos
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            _isRegisterMode
+                                ? '¿Ya tienes una cuenta? '
+                                : '¿No tienes una cuenta? ',
+                            style: const TextStyle(
+                              color: AppTheme.textSecondary,
+                              fontSize: 14,
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: _isLoading
+                                ? null
+                                : () {
+                                    setState(() {
+                                      _isRegisterMode = !_isRegisterMode;
+                                      _formKey.currentState?.reset();
+                                      _nameController.clear();
+                                      _emailController.clear();
+                                      _passwordController.clear();
+                                      _confirmPasswordController.clear();
+                                    });
+                                  },
+                            child: Text(
+                              _isRegisterMode ? 'Iniciar sesión' : 'Registrarse',
+                              style: const TextStyle(
+                                color: AppTheme.primaryGreen,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
                     ],
                   ),
                 ),
@@ -292,7 +479,7 @@ class _LoginScreenState extends State<LoginScreen>
             ),
           ],
         ),
-        child: Icon(
+        child: const Icon(
           Icons.inventory_2_rounded,
           size: 40,
           color: AppTheme.primaryGreen,
