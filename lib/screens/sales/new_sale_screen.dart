@@ -81,15 +81,18 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
           _scannedItems[index]['quantity']++;
         });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Cantidad de ${_scannedItems[index]['name']} aumentada',
+        if (mounted) {
+          ScaffoldMessenger.of(context).clearSnackBars();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Cantidad de ${_scannedItems[index]['name']} aumentada',
+              ),
+              backgroundColor: AppTheme.primaryGreen,
+              duration: const Duration(milliseconds: 800),
             ),
-            backgroundColor: AppTheme.primaryGreen,
-            duration: const Duration(milliseconds: 800),
-          ),
-        );
+          );
+        }
       } else {
         // 2. Buscar en Firestore
         final product = await _productService.getProductByBarcode(barcode);
@@ -99,7 +102,8 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         } else {
           // 3. Mostrar advertencia si no está en BD
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
+            ScaffoldMessenger.of(context).clearSnackBars();
+            final snackBarController = ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Row(
                   children: [
@@ -122,11 +126,12 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                   label: 'CERRAR',
                   textColor: Colors.white,
                   onPressed: () {
-                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    ScaffoldMessenger.of(context).clearSnackBars();
                   },
                 ),
               ),
             );
+            await snackBarController.closed;
           }
         }
       }
@@ -145,13 +150,16 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       setState(() {
         _scannedItems[index]['quantity']++;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Cantidad de ${_scannedItems[index]['name']} aumentada'),
-          backgroundColor: AppTheme.primaryGreen,
-          duration: const Duration(milliseconds: 800),
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Cantidad de ${_scannedItems[index]['name']} aumentada'),
+            backgroundColor: AppTheme.primaryGreen,
+            duration: const Duration(milliseconds: 800),
+          ),
+        );
+      }
     } else {
       setState(() {
         _scannedItems.add({
@@ -163,13 +171,16 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
           'image': Icons.inventory_2_rounded,
         });
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${product.nombre} agregado al ticket'),
-          backgroundColor: AppTheme.primaryGreen,
-          duration: const Duration(milliseconds: 800),
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${product.nombre} agregado al ticket'),
+            backgroundColor: AppTheme.primaryGreen,
+            duration: const Duration(milliseconds: 800),
+          ),
+        );
+      }
     }
   }
 

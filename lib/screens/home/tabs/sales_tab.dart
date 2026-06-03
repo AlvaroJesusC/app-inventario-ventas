@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../config/app_theme.dart';
 import '../home_screen.dart';
 import '../../sales/new_sale_screen.dart';
+import '../../../services/sale_service.dart';
+import '../../../models/sale_model.dart';
 
 class SalesTab extends StatefulWidget {
   const SalesTab({super.key});
@@ -15,144 +17,176 @@ class _SalesTabState extends State<SalesTab> {
 
   final List<String> _filters = ['Hoy', 'Esta semana', 'Mes'];
 
-  // Mock data for sales history
-  final List<Map<String, dynamic>> _mockSales = [];
-
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.only(left: 20, right: 20, top: 16, bottom: 80),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Título y Subtítulo ──
-          const Text(
-            'Ventas',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w800,
-              color: AppTheme.textPrimary,
-              letterSpacing: -0.5,
+    return StreamBuilder<List<SaleModel>>(
+      stream: SaleService().getSalesStream(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(40),
+              child: CircularProgressIndicator(),
             ),
-          ),
-          const SizedBox(height: 4),
-          const Text(
-            'Resumen de transacciones y operaciones.',
-            style: TextStyle(
-              fontSize: 14,
-              color: AppTheme.textSecondary,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-          const SizedBox(height: 24),
+          );
+        }
 
-          // ── Botón Nueva Venta ──
-          _buildNewSaleButton(),
-          const SizedBox(height: 24),
+        final allSales = snapshot.data ?? [];
 
-          // ── Tarjeta de Resumen ──
-          _buildSummaryCard(),
-          const SizedBox(height: 24),
+        // Lógica de filtrado
+        final now = DateTime.now();
+        List<SaleModel> filteredSales = allSales.where((sale) {
+          if (_selectedFilter == 'Hoy') {
+            return sale.fecha.year == now.year &&
+                sale.fecha.month == now.month &&
+                sale.fecha.day == now.day;
+          } else if (_selectedFilter == 'Esta semana') {
+            final difference = now.difference(sale.fecha).inDays;
+            return difference >= 0 && difference < 7;
+          } else if (_selectedFilter == 'Mes') {
+            return sale.fecha.year == now.year && sale.fecha.month == now.month;
+          }
+          return true;
+        }).toList();
 
-          // ── Filtros de Fecha ──
-          _buildFiltersRow(),
-          const SizedBox(height: 24),
+        final double totalSalesAmount = filteredSales.fold(0.0, (sum, s) => sum + s.total);
+        final int totalTransactions = filteredSales.length;
 
-          // ── Historial de Ventas Header ──
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
+        return SingleChildScrollView(
+          padding: const EdgeInsets.only(left: 20, right: 20, top: 16, bottom: 80),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // ── Título y Subtítulo ──
               const Text(
-                'Historial de Ventas',
+                'Ventas',
                 style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
                   color: AppTheme.textPrimary,
+                  letterSpacing: -0.5,
                 ),
               ),
-              GestureDetector(
-                onTap: () {},
-                child: Row(
-                  children: [
-                    Text(
-                      'Ver reporte completo',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.blue.shade600,
+              const SizedBox(height: 4),
+              const Text(
+                'Resumen de transacciones y operaciones.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppTheme.textSecondary,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // ── Botón Nueva Venta ──
+              _buildNewSaleButton(),
+              const SizedBox(height: 24),
+
+              // ── Tarjeta de Resumen ──
+              _buildSummaryCard(totalSalesAmount, totalTransactions),
+              const SizedBox(height: 24),
+
+              // ── Filtros de Fecha ──
+              _buildFiltersRow(),
+              const SizedBox(height: 24),
+
+              // ── Historial de Ventas Header ──
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Text(
+                    'Historial de Ventas',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () {},
+                    child: Row(
+                      children: [
+                        Text(
+                          'Ver reporte completo',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.blue.shade600,
+                          ),
+                        ),
+                        const SizedBox(width: 2),
+                        Icon(Icons.chevron_right_rounded, size: 16, color: Colors.blue.shade600),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // ── Lista de Transacciones ──
+              filteredSales.isEmpty
+                  ? _buildEmptyState()
+                  : Container(
+                      decoration: BoxDecoration(
+                        color: AppTheme.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppTheme.divider),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.02),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: filteredSales.length,
+                        separatorBuilder: (context, index) => const Divider(height: 1, color: AppTheme.divider),
+                        itemBuilder: (context, index) {
+                          return _buildTransactionItem(filteredSales[index]);
+                        },
                       ),
                     ),
-                    const SizedBox(width: 2),
-                    Icon(Icons.chevron_right_rounded, size: 16, color: Colors.blue.shade600),
-                  ],
+              const SizedBox(height: 16),
+
+              // ── Botón Ver todas ──
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: OutlinedButton(
+                  onPressed: () {},
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: AppTheme.divider),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    backgroundColor: AppTheme.white,
+                    elevation: 0,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Ver todas las transacciones',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.blue.shade600,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(Icons.chevron_right_rounded, size: 18, color: Colors.blue.shade600),
+                    ],
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-
-          // ── Lista de Transacciones ──
-          _mockSales.isEmpty
-              ? _buildEmptyState()
-              : Container(
-                  decoration: BoxDecoration(
-                    color: AppTheme.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppTheme.divider),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.02),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: _mockSales.length,
-                    separatorBuilder: (context, index) => const Divider(height: 1, color: AppTheme.divider),
-                    itemBuilder: (context, index) {
-                      return _buildTransactionItem(_mockSales[index]);
-                    },
-                  ),
-                ),
-          const SizedBox(height: 16),
-
-          // ── Botón Ver todas ──
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: OutlinedButton(
-              onPressed: () {},
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: AppTheme.divider),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                backgroundColor: AppTheme.white,
-                elevation: 0,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Ver todas las transacciones',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.blue.shade600,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Icon(Icons.chevron_right_rounded, size: 18, color: Colors.blue.shade600),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -249,7 +283,7 @@ class _SalesTabState extends State<SalesTab> {
     );
   }
 
-  Widget _buildSummaryCard() {
+  Widget _buildSummaryCard(double totalAmount, int count) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -274,7 +308,7 @@ class _SalesTabState extends State<SalesTab> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'TOTAL VENTAS (HOY)',
+                  'TOTAL VENTAS (FILTRADO)',
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
@@ -283,9 +317,9 @@ class _SalesTabState extends State<SalesTab> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'S/. 0.00',
-                  style: TextStyle(
+                Text(
+                  'S/. ${totalAmount.toStringAsFixed(2)}',
+                  style: const TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.w800,
                     color: AppTheme.textPrimary,
@@ -359,9 +393,9 @@ class _SalesTabState extends State<SalesTab> {
                         child: Icon(Icons.receipt_long_rounded, size: 16, color: Colors.blue.shade600),
                       ),
                       const SizedBox(height: 12),
-                      const Text(
-                        '0',
-                        style: TextStyle(
+                      Text(
+                        '$count',
+                        style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
                           color: AppTheme.textPrimary,
@@ -473,12 +507,44 @@ class _SalesTabState extends State<SalesTab> {
     );
   }
 
-  Widget _buildTransactionItem(Map<String, dynamic> data) {
-    final bool isMayoreo = data['type'] == 'MAYOREO';
-    final bool isPagado = data['status'] == 'PAGADO';
+  String _formatSaleDate(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = DateTime(now.year, now.month, now.day - 1);
+    final saleDay = DateTime(date.year, date.month, date.day);
+
+    String dateStr;
+    if (saleDay == today) {
+      dateStr = "Hoy";
+    } else if (saleDay == yesterday) {
+      dateStr = "Ayer";
+    } else {
+      dateStr = "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}";
+    }
+
+    final hours = date.hour.toString().padLeft(2, '0');
+    final minutes = date.minute.toString().padLeft(2, '0');
+    return "$dateStr, $hours:$minutes";
+  }
+
+  Widget _buildTransactionItem(SaleModel sale) {
+    // 1. Determinar título con nombre de producto
+    String titleText = "Sin productos";
+    if (sale.items.isNotEmpty) {
+      if (sale.items.length == 1) {
+        titleText = "${sale.items.first.name} (x${sale.items.first.quantity})";
+      } else {
+        titleText = "${sale.items.first.name} y ${sale.items.length - 1} prod.";
+      }
+    }
+
+    // 2. Determinar subtítulo con fecha formateada y cajero
+    final String subtitleText = "${_formatSaleDate(sale.fecha)} • ${sale.cashier}";
 
     return InkWell(
-      onTap: () {},
+      onTap: () {
+        _showSaleDetailDialog(sale);
+      },
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Row(
@@ -488,12 +554,12 @@ class _SalesTabState extends State<SalesTab> {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: isMayoreo ? Colors.orange.shade50 : AppTheme.primaryGreenLight,
-                borderRadius: BorderRadius.circular(10),
+                color: AppTheme.primaryGreen.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(
-                data['icon'],
-                color: isMayoreo ? Colors.orange.shade700 : AppTheme.primaryGreen,
+              child: const Icon(
+                Icons.shopping_bag_rounded,
+                color: AppTheme.primaryGreen,
                 size: 22,
               ),
             ),
@@ -504,37 +570,19 @@ class _SalesTabState extends State<SalesTab> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Text(
-                        data['id'],
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: isMayoreo ? Colors.orange.shade50 : Colors.blue.shade50,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          data['type'],
-                          style: TextStyle(
-                            fontSize: 8,
-                            fontWeight: FontWeight.w700,
-                            color: isMayoreo ? Colors.orange.shade700 : Colors.blue.shade700,
-                          ),
-                        ),
-                      ),
-                    ],
+                  Text(
+                    titleText,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.textPrimary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${data['time']} • ${data['cashier']}',
+                    subtitleText,
                     style: const TextStyle(
                       fontSize: 12,
                       color: AppTheme.textSecondary,
@@ -545,15 +593,15 @@ class _SalesTabState extends State<SalesTab> {
               ),
             ),
             
-            // Monto y Estado
+            // Monto y Cantidad
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  data['amount'],
+                  'S/. ${sale.total.toStringAsFixed(2)}',
                   style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
                     color: AppTheme.textPrimary,
                   ),
                 ),
@@ -561,15 +609,15 @@ class _SalesTabState extends State<SalesTab> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: isPagado ? AppTheme.primaryGreenLight : Colors.orange.shade50,
-                    borderRadius: BorderRadius.circular(12),
+                    color: AppTheme.backgroundGrey,
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    data['status'],
-                    style: TextStyle(
-                      fontSize: 8,
+                    '${sale.totalItems} und.',
+                    style: const TextStyle(
+                      fontSize: 9,
                       fontWeight: FontWeight.w700,
-                      color: isPagado ? AppTheme.primaryGreen : Colors.orange.shade700,
+                      color: AppTheme.textSecondary,
                     ),
                   ),
                 ),
@@ -584,6 +632,137 @@ class _SalesTabState extends State<SalesTab> {
       ),
     );
   }
+
+  void _showSaleDetailDialog(SaleModel sale) {
+    final String dateStr = "${sale.fecha.day}/${sale.fecha.month}/${sale.fecha.year} ${sale.fecha.hour.toString().padLeft(2, '0')}:${sale.fecha.minute.toString().padLeft(2, '0')}";
+    
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Detalle de Venta',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                const Divider(),
+                const SizedBox(height: 8),
+                Text('Fecha: $dateStr', style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
+                const SizedBox(height: 4),
+                Text('Cajero: ${sale.cashier}', style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
+                const SizedBox(height: 4),
+                Text('Tipo: ${sale.type}', style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
+                const SizedBox(height: 16),
+                const Text(
+                  'Productos',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(context).size.height * 0.3,
+                  ),
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: sale.items.length,
+                    itemBuilder: (context, idx) {
+                      final item = sale.items[idx];
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    item.name,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppTheme.textPrimary,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${item.quantity} x S/. ${item.price.toStringAsFixed(2)}',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: AppTheme.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Text(
+                              'S/. ${(item.price * item.quantity).toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.primaryGreen,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const Divider(),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Total General',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      'S/. ${sale.total.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        color: AppTheme.primaryGreen,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildEmptyState() {
     return Container(
       width: double.infinity,

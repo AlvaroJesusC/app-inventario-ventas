@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../config/app_theme.dart';
 import '../home/home_screen.dart';
+import '../../services/user_service.dart';
+import '../../services/sale_service.dart';
+import '../../models/sale_model.dart';
 
 class CheckoutScreen extends StatefulWidget {
   final List<Map<String, dynamic>> scannedItems;
@@ -16,6 +20,7 @@ class CheckoutScreen extends StatefulWidget {
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
   late List<Map<String, dynamic>> items;
+  bool _isSaving = false;
 
   @override
   void initState() {
@@ -55,6 +60,208 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     setState(() {
       items.removeAt(index);
     });
+  }
+
+  void _procesarCobro() async {
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      // 1. Obtener el usuario actual
+      final user = FirebaseAuth.instance.currentUser;
+      String cashierName = 'Cajero';
+      if (user != null) {
+        final userProfile = await UserService().getUserProfile(user.uid);
+        if (userProfile != null) {
+          cashierName = userProfile.nombre;
+        } else {
+          cashierName = user.email ?? 'Cajero';
+        }
+      }
+
+      // 2. Preparar los productos vendidos
+      final saleItems = items.map((item) {
+        return SaleItemModel(
+          id: item['id'] ?? '',
+          name: item['name'] ?? '',
+          sku: item['sku'] ?? '',
+          price: (item['price'] ?? 0).toDouble(),
+          quantity: (item['quantity'] ?? 0).toInt(),
+        );
+      }).toList();
+
+      // Determinar si es mayoreo (más de 5 de un producto o total >= 10)
+      bool hasWholesaleQuantity = saleItems.any((item) => item.quantity >= 5) || _totalItems >= 10;
+      String saleType = hasWholesaleQuantity ? 'MAYOREO' : 'MENUDEO';
+
+      // 3. Crear el modelo de venta
+      final newSale = SaleModel(
+        id: '', // Firestore generará el ID automáticamente
+        fecha: DateTime.now(),
+        total: _total,
+        totalItems: _totalItems,
+        cashier: cashierName,
+        status: 'PAGADO',
+        type: saleType,
+        items: saleItems,
+      );
+
+      // 4. Guardar la venta en Firestore
+      await SaleService().addSale(newSale);
+
+      if (!mounted) return;
+
+      setState(() {
+        _isSaving = false;
+      });
+
+      // 5. Mostrar diálogo de éxito
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext dialogContext) {
+          return Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryGreen.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.check_circle_rounded,
+                      color: AppTheme.primaryGreen,
+                      size: 48,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    '¡Venta Realizada!',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.textPrimary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'La transacción se ha registrado exitosamente.',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: AppTheme.textSecondary,
+                      height: 1.4,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppTheme.backgroundGrey,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Productos',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppTheme.textSecondary,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            Text(
+                              '$_totalItems und.',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: AppTheme.textPrimary,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Total Cobrado',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: AppTheme.textSecondary,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            Text(
+                              'S/. ${_total.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                color: AppTheme.primaryGreen,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(dialogContext); // Cierra el modal
+                      Navigator.popUntil(context, (route) => route.isFirst); // Sale del checkout
+                      HomeScreen.of(context)?.setTab(1); // Lleva al inicio de ventas (SalesTab)
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryGreen,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 54),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      'Volver a Ventas',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al realizar la venta: $e'),
+            backgroundColor: AppTheme.error,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -491,15 +698,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ],
       ),
       child: ElevatedButton(
-        onPressed: items.isEmpty ? null : () {
-          // TODO: Procesar pago final
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Procesando pago...'),
-              backgroundColor: AppTheme.primaryGreen,
-            ),
-          );
-        },
+        onPressed: (items.isEmpty || _isSaving) ? null : _procesarCobro,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppTheme.primaryGreen,
           disabledBackgroundColor: AppTheme.primaryGreen.withValues(alpha: 0.5),
@@ -510,20 +709,29 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             borderRadius: BorderRadius.circular(16),
           ),
         ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.point_of_sale_rounded, size: 24),
-            SizedBox(width: 8),
-            Text(
-              'Cobrar Venta',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
+        child: _isSaving
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+              )
+            : const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.point_of_sale_rounded, size: 24),
+                  SizedBox(width: 8),
+                  Text(
+                    'Cobrar Venta',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -562,20 +770,25 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   index: 0,
                 ),
                 _buildNavItem(
-                  icon: Icons.inventory_2_rounded,
-                  label: 'Inventario',
-                  index: 1,
-                ),
-                _buildNavItem(
                   icon: Icons.point_of_sale_rounded,
                   label: 'Ventas',
-                  index: 2, // Venta está activo
+                  index: 1, // Ventas está activo
                   isActive: true,
+                ),
+                _buildNavItem(
+                  icon: Icons.inventory_2_rounded,
+                  label: 'Inventario',
+                  index: 2,
                 ),
                 _buildNavItem(
                   icon: Icons.bar_chart_rounded,
                   label: 'Reportes',
                   index: 3,
+                ),
+                _buildNavItem(
+                  icon: Icons.more_horiz_rounded,
+                  label: 'Más',
+                  index: 4,
                 ),
               ],
             ),
@@ -595,10 +808,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       onTap: () {
         // Pop del checkout
         Navigator.popUntil(context, (route) => route.isFirst);
-        // Cambiar tab si no es ventas
-        if (index != 2) {
-          HomeScreen.of(context)?.setTab(index);
-        }
+        HomeScreen.of(context)?.setTab(index);
       },
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
