@@ -19,13 +19,13 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   final ProductService _productService = ProductService();
   bool _isProcessing = false;
 
-  // Modo demo
+  // modo demo
   final bool _isDemoMode = true;
 
-  // Lista de productos escaneados
+  // lista de productos escaneados
   final List<Map<String, dynamic>> _scannedItems = [];
 
-  // Buscador
+  // buscador
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   List<ProductModel> _allProducts = [];
@@ -74,7 +74,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     setState(() => _isProcessing = true);
 
     try {
-      // 1. Revisar si ya está en el carrito
+      // revisar si ya está en el carrito
       int index = _scannedItems.indexWhere((item) => item['sku'] == barcode);
       if (index >= 0) {
         setState(() {
@@ -94,13 +94,13 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
           );
         }
       } else {
-        // 2. Buscar en Firestore
+        // buscar en Firestore
         final product = await _productService.getProductByBarcode(barcode);
 
         if (product != null) {
           _addProductToCart(product);
         } else {
-          // 3. Mostrar advertencia si no está en BD
+          // mostrar advertencia si no está en laa BD
           if (mounted) {
             ScaffoldMessenger.of(context).clearSnackBars();
             final snackBarController = ScaffoldMessenger.of(context).showSnackBar(
@@ -136,7 +136,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         }
       }
     } finally {
-      // Pequeña pausa para no escanear el mismo código múltiples veces seguidas muy rápido
+      // pequeña pausa para no escanear el mismo código múltiples veces seguidas muy rápido
       await Future.delayed(const Duration(seconds: 1));
       if (mounted) {
         setState(() => _isProcessing = false);

@@ -5,15 +5,15 @@ import '../models/product_model.dart';
 class InventoryFilterBottomSheet extends StatefulWidget {
   final List<ProductModel> allProducts;
   final String? initialCategoryFilter;
-  final StockStatus? initialStockFilter;
+  final StockFilter initialStockFilter;
   final String initialPriceSortOrder;
-  final Function(String?, StockStatus?, String) onApplyFilters;
+  final Function(String?, StockFilter, String) onApplyFilters;
 
   const InventoryFilterBottomSheet({
     super.key,
     required this.allProducts,
     this.initialCategoryFilter,
-    this.initialStockFilter,
+    required this.initialStockFilter,
     required this.initialPriceSortOrder,
     required this.onApplyFilters,
   });
@@ -24,8 +24,9 @@ class InventoryFilterBottomSheet extends StatefulWidget {
 
 class _InventoryFilterBottomSheetState extends State<InventoryFilterBottomSheet> {
   String? _selectedCategoryFilter;
-  StockStatus? _selectedStockFilter;
+  StockFilter _selectedStockFilter = StockFilter.all;
   String _priceSortOrder = 'none';
+  late final List<String> _categories;
 
   @override
   void initState() {
@@ -33,18 +34,19 @@ class _InventoryFilterBottomSheetState extends State<InventoryFilterBottomSheet>
     _selectedCategoryFilter = widget.initialCategoryFilter;
     _selectedStockFilter = widget.initialStockFilter;
     _priceSortOrder = widget.initialPriceSortOrder;
-  }
 
-  @override
-  Widget build(BuildContext context) {
-    // Extraer categorías únicas de los productos actuales
-    final categories = widget.allProducts
+    // Extraer categorías únicas de los productos actuales una sola vez al inicializar
+    _categories = widget.allProducts
         .map((p) => p.categoria)
         .whereType<String>()
         .where((c) => c.isNotEmpty)
         .toSet()
         .toList()
         ..sort();
+  }
+
+  @override
+  Widget build(BuildContext context) {
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.75,
@@ -86,7 +88,7 @@ class _InventoryFilterBottomSheetState extends State<InventoryFilterBottomSheet>
                   onPressed: () {
                     setState(() {
                       _selectedCategoryFilter = null;
-                      _selectedStockFilter = null;
+                      _selectedStockFilter = StockFilter.all;
                       _priceSortOrder = 'none';
                     });
                   },
@@ -160,23 +162,28 @@ class _InventoryFilterBottomSheetState extends State<InventoryFilterBottomSheet>
                   children: [
                     _buildChoiceChip(
                       label: 'Todos',
-                      isSelected: _selectedStockFilter == null,
-                      onSelected: (val) => setState(() => _selectedStockFilter = null),
+                      isSelected: _selectedStockFilter == StockFilter.all,
+                      onSelected: (val) => setState(() => _selectedStockFilter = StockFilter.all),
                     ),
                     _buildChoiceChip(
                       label: 'En Stock',
-                      isSelected: _selectedStockFilter == StockStatus.inStock,
-                      onSelected: (val) => setState(() => _selectedStockFilter = StockStatus.inStock),
+                      isSelected: _selectedStockFilter == StockFilter.inStock,
+                      onSelected: (val) => setState(() => _selectedStockFilter = StockFilter.inStock),
                     ),
                     _buildChoiceChip(
                       label: 'Stock Bajo',
-                      isSelected: _selectedStockFilter == StockStatus.low,
-                      onSelected: (val) => setState(() => _selectedStockFilter = StockStatus.low),
+                      isSelected: _selectedStockFilter == StockFilter.low,
+                      onSelected: (val) => setState(() => _selectedStockFilter = StockFilter.low),
                     ),
                     _buildChoiceChip(
                       label: 'Agotado',
-                      isSelected: _selectedStockFilter == StockStatus.empty,
-                      onSelected: (val) => setState(() => _selectedStockFilter = StockStatus.empty),
+                      isSelected: _selectedStockFilter == StockFilter.empty,
+                      onSelected: (val) => setState(() => _selectedStockFilter = StockFilter.empty),
+                    ),
+                    _buildChoiceChip(
+                      label: 'Crítico',
+                      isSelected: _selectedStockFilter == StockFilter.critical,
+                      onSelected: (val) => setState(() => _selectedStockFilter = StockFilter.critical),
                     ),
                   ],
                 ),
@@ -197,7 +204,7 @@ class _InventoryFilterBottomSheetState extends State<InventoryFilterBottomSheet>
                       isSelected: _selectedCategoryFilter == null,
                       onSelected: (val) => setState(() => _selectedCategoryFilter = null),
                     ),
-                    ...categories.map((cat) => _buildChoiceChip(
+                    ..._categories.map((cat) => _buildChoiceChip(
                       label: cat,
                       isSelected: _selectedCategoryFilter == cat,
                       onSelected: (val) => setState(() => _selectedCategoryFilter = cat),

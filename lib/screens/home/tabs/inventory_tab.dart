@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../config/app_theme.dart';
-import '../../../config/app_constants.dart';
 import '../../../models/product_model.dart';
 import '../../../services/product_service.dart';
 import '../../../widgets/product_card.dart';
@@ -15,10 +14,10 @@ class InventoryTab extends StatefulWidget {
   const InventoryTab({super.key});
 
   @override
-  State<InventoryTab> createState() => _InventoryTabState();
+  State<InventoryTab> createState() => InventoryTabState();
 }
 
-class _InventoryTabState extends State<InventoryTab>
+class InventoryTabState extends State<InventoryTab>
     with SingleTickerProviderStateMixin {
   final _searchController = TextEditingController();
   final _productService = ProductService();
@@ -26,8 +25,14 @@ class _InventoryTabState extends State<InventoryTab>
 
   // Filter & Sort State
   String? _selectedCategoryFilter;
-  StockStatus? _selectedStockFilter;
+  StockFilter _selectedStockFilter = StockFilter.all;
   String _priceSortOrder = 'none'; // 'none', 'asc', 'desc'
+
+  void applyStockFilter(StockFilter filter) {
+    setState(() {
+      _selectedStockFilter = filter;
+    });
+  }
 
   late AnimationController _animationController;
   late Animation<double> _item1Animation;
@@ -90,13 +95,38 @@ class _InventoryTabState extends State<InventoryTab>
           .toList();
     }
 
-    if (_selectedStockFilter != null) {
-      filtered = filtered
-          .where((p) => p.stockStatus == _selectedStockFilter)
-          .toList();
+    switch (_selectedStockFilter) {
+      case StockFilter.all:
+        break;
+      case StockFilter.inStock:
+        filtered = filtered.where((p) => p.stockStatus == StockStatus.inStock).toList();
+        break;
+      case StockFilter.low:
+        filtered = filtered.where((p) => p.stockStatus == StockStatus.low).toList();
+        break;
+      case StockFilter.empty:
+        filtered = filtered.where((p) => p.stockStatus == StockStatus.empty).toList();
+        break;
+      case StockFilter.critical:
+        filtered = filtered.where((p) => p.stockStatus == StockStatus.low || p.stockStatus == StockStatus.empty).toList();
+        break;
     }
 
-    if (_priceSortOrder != 'none') {
+    if (_selectedStockFilter == StockFilter.critical) {
+      filtered.sort((a, b) {
+        final aVal = a.stockStatus == StockStatus.empty ? 0 : 1;
+        final bVal = b.stockStatus == StockStatus.empty ? 0 : 1;
+        if (aVal != bVal) {
+          return aVal.compareTo(bVal);
+        }
+        if (_priceSortOrder == 'asc') {
+          return a.precio.compareTo(b.precio);
+        } else if (_priceSortOrder == 'desc') {
+          return b.precio.compareTo(a.precio);
+        }
+        return a.stock.compareTo(b.stock);
+      });
+    } else if (_priceSortOrder != 'none') {
       filtered.sort((a, b) {
         if (_priceSortOrder == 'asc') {
           return a.precio.compareTo(b.precio);
@@ -278,7 +308,9 @@ class _InventoryTabState extends State<InventoryTab>
               onPressed: _toggleMenu,
               backgroundColor: AppTheme.primaryGreen,
               elevation: 4,
-              shape: const CircleBorder(),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: AnimatedBuilder(
                 animation: _animationController,
                 builder: (context, child) {
@@ -360,7 +392,7 @@ class _InventoryTabState extends State<InventoryTab>
     // Verificar si hay filtros activos
     final bool hasActiveFilters =
         _selectedCategoryFilter != null ||
-        _selectedStockFilter != null ||
+        _selectedStockFilter != StockFilter.all ||
         _priceSortOrder != 'none';
 
     return Padding(
@@ -706,7 +738,7 @@ class _InventoryTabState extends State<InventoryTab>
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(100),
+                borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.08),
@@ -732,7 +764,7 @@ class _InventoryTabState extends State<InventoryTab>
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
+                borderRadius: BorderRadius.circular(12),
                 color: color,
                 boxShadow: [
                   BoxShadow(

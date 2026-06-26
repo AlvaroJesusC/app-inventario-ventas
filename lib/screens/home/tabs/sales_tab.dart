@@ -13,9 +13,10 @@ class SalesTab extends StatefulWidget {
 }
 
 class _SalesTabState extends State<SalesTab> {
-  String _selectedFilter = 'Hoy';
+  String _selectedFilter = 'Esta semana';
 
-  final List<String> _filters = ['Hoy', 'Esta semana', 'Mes'];
+  final List<String> _filters = ['Esta semana', 'Mes', 'Hoy'];
+  DateTime? _selectedCustomDate;
 
   @override
   Widget build(BuildContext context) {
@@ -45,15 +46,28 @@ class _SalesTabState extends State<SalesTab> {
             return difference >= 0 && difference < 7;
           } else if (_selectedFilter == 'Mes') {
             return sale.fecha.year == now.year && sale.fecha.month == now.month;
+          } else if (_selectedFilter == 'custom' &&
+              _selectedCustomDate != null) {
+            return sale.fecha.year == _selectedCustomDate!.year &&
+                sale.fecha.month == _selectedCustomDate!.month &&
+                sale.fecha.day == _selectedCustomDate!.day;
           }
           return true;
         }).toList();
 
-        final double totalSalesAmount = filteredSales.fold(0.0, (sum, s) => sum + s.total);
+        final double totalSalesAmount = filteredSales.fold(
+          0.0,
+          (sum, s) => sum + s.total,
+        );
         final int totalTransactions = filteredSales.length;
 
         return SingleChildScrollView(
-          padding: const EdgeInsets.only(left: 20, right: 20, top: 16, bottom: 80),
+          padding: const EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 16,
+            bottom: 80,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -116,7 +130,11 @@ class _SalesTabState extends State<SalesTab> {
                           ),
                         ),
                         const SizedBox(width: 2),
-                        Icon(Icons.chevron_right_rounded, size: 16, color: Colors.blue.shade600),
+                        Icon(
+                          Icons.chevron_right_rounded,
+                          size: 16,
+                          color: Colors.blue.shade600,
+                        ),
                       ],
                     ),
                   ),
@@ -144,7 +162,8 @@ class _SalesTabState extends State<SalesTab> {
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: filteredSales.length,
-                        separatorBuilder: (context, index) => const Divider(height: 1, color: AppTheme.divider),
+                        separatorBuilder: (context, index) =>
+                            const Divider(height: 1, color: AppTheme.divider),
                         itemBuilder: (context, index) {
                           return _buildTransactionItem(filteredSales[index]);
                         },
@@ -178,7 +197,11 @@ class _SalesTabState extends State<SalesTab> {
                         ),
                       ),
                       const SizedBox(width: 4),
-                      Icon(Icons.chevron_right_rounded, size: 18, color: Colors.blue.shade600),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        size: 18,
+                        color: Colors.blue.shade600,
+                      ),
                     ],
                   ),
                 ),
@@ -216,7 +239,10 @@ class _SalesTabState extends State<SalesTab> {
             if (homeState != null) {
               homeState.showNewSale();
             } else {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const NewSaleScreen()));
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const NewSaleScreen()),
+              );
             }
           },
           borderRadius: BorderRadius.circular(16),
@@ -330,7 +356,10 @@ class _SalesTabState extends State<SalesTab> {
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: AppTheme.backgroundGrey,
                         borderRadius: BorderRadius.circular(4),
@@ -338,7 +367,11 @@ class _SalesTabState extends State<SalesTab> {
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.remove_rounded, size: 10, color: AppTheme.textHint),
+                          Icon(
+                            Icons.remove_rounded,
+                            size: 10,
+                            color: AppTheme.textHint,
+                          ),
                           SizedBox(width: 4),
                           Text(
                             '0.0%',
@@ -365,7 +398,7 @@ class _SalesTabState extends State<SalesTab> {
               ],
             ),
           ),
-          
+
           // Divisor vertical
           Container(
             height: 70,
@@ -373,7 +406,7 @@ class _SalesTabState extends State<SalesTab> {
             color: AppTheme.divider,
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           ),
-          
+
           // Stats Adicionales
           Expanded(
             flex: 4,
@@ -390,7 +423,11 @@ class _SalesTabState extends State<SalesTab> {
                           color: Colors.blue.shade50,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Icon(Icons.receipt_long_rounded, size: 16, color: Colors.blue.shade600),
+                        child: Icon(
+                          Icons.receipt_long_rounded,
+                          size: 16,
+                          color: Colors.blue.shade600,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       Text(
@@ -426,7 +463,11 @@ class _SalesTabState extends State<SalesTab> {
                           color: Colors.blue.shade50,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Icon(Icons.person_outline_rounded, size: 16, color: Colors.blue.shade600),
+                        child: Icon(
+                          Icons.person_outline_rounded,
+                          size: 16,
+                          color: Colors.blue.shade600,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       const Text(
@@ -471,12 +512,86 @@ class _SalesTabState extends State<SalesTab> {
           ),
         ),
         const SizedBox(width: 12),
-        ..._filters.map((filter) => _buildFilterChip(filter)),
+        Expanded(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                ..._filters.map((filter) => _buildFilterChip(filter)),
+                if (_selectedCustomDate != null) _buildFilterChip('custom'),
+                _buildCalendarButton(),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }
 
+  Widget _buildCalendarButton() {
+    final bool isCustomSelected = _selectedFilter == 'custom';
+    return GestureDetector(
+      onTap: _selectCustomDate,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isCustomSelected ? Colors.blue.shade50 : AppTheme.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isCustomSelected ? Colors.blue.shade300 : AppTheme.divider,
+            width: isCustomSelected ? 1.5 : 1,
+          ),
+        ),
+        child: Icon(
+          Icons.calendar_today_rounded,
+          size: 16,
+          color: isCustomSelected
+              ? Colors.blue.shade700
+              : AppTheme.textSecondary,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _selectCustomDate() async {
+    final DateTime now = DateTime.now();
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedCustomDate ?? now,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(now.year + 5),
+      locale: const Locale('es', 'ES'),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: Colors.blue.shade600,
+              onPrimary: Colors.white,
+              onSurface: AppTheme.textPrimary,
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.blue.shade600,
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() {
+        _selectedCustomDate = picked;
+        _selectedFilter = 'custom';
+      });
+    }
+  }
+
   Widget _buildFilterChip(String label) {
+    final String displayLabel = label == 'custom' && _selectedCustomDate != null
+        ? "${_selectedCustomDate!.day.toString().padLeft(2, '0')}/${_selectedCustomDate!.month.toString().padLeft(2, '0')}/${_selectedCustomDate!.year}"
+        : label;
+
     final bool isSelected = _selectedFilter == label;
     return GestureDetector(
       onTap: () {
@@ -496,7 +611,7 @@ class _SalesTabState extends State<SalesTab> {
           ),
         ),
         child: Text(
-          label,
+          displayLabel,
           style: TextStyle(
             fontSize: 12,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
@@ -519,7 +634,8 @@ class _SalesTabState extends State<SalesTab> {
     } else if (saleDay == yesterday) {
       dateStr = "Ayer";
     } else {
-      dateStr = "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}";
+      dateStr =
+          "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}";
     }
 
     final hours = date.hour.toString().padLeft(2, '0');
@@ -539,7 +655,8 @@ class _SalesTabState extends State<SalesTab> {
     }
 
     // 2. Determinar subtítulo con fecha formateada y cajero
-    final String subtitleText = "${_formatSaleDate(sale.fecha)} • ${sale.cashier}";
+    final String subtitleText =
+        "${_formatSaleDate(sale.fecha)} • ${sale.cashier}";
 
     return InkWell(
       onTap: () {
@@ -564,7 +681,7 @@ class _SalesTabState extends State<SalesTab> {
               ),
             ),
             const SizedBox(width: 16),
-            
+
             // Textos Centrales
             Expanded(
               child: Column(
@@ -592,7 +709,7 @@ class _SalesTabState extends State<SalesTab> {
                 ],
               ),
             ),
-            
+
             // Monto y Cantidad
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -607,7 +724,10 @@ class _SalesTabState extends State<SalesTab> {
                 ),
                 const SizedBox(height: 4),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: AppTheme.backgroundGrey,
                     borderRadius: BorderRadius.circular(8),
@@ -624,9 +744,13 @@ class _SalesTabState extends State<SalesTab> {
               ],
             ),
             const SizedBox(width: 12),
-            
+
             // Flecha
-            const Icon(Icons.chevron_right_rounded, color: AppTheme.textHint, size: 20),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: AppTheme.textHint,
+              size: 20,
+            ),
           ],
         ),
       ),
@@ -634,8 +758,9 @@ class _SalesTabState extends State<SalesTab> {
   }
 
   void _showSaleDetailDialog(SaleModel sale) {
-    final String dateStr = "${sale.fecha.day}/${sale.fecha.month}/${sale.fecha.year} ${sale.fecha.hour.toString().padLeft(2, '0')}:${sale.fecha.minute.toString().padLeft(2, '0')}";
-    
+    final String dateStr =
+        "${sale.fecha.day}/${sale.fecha.month}/${sale.fecha.year} ${sale.fecha.hour.toString().padLeft(2, '0')}:${sale.fecha.minute.toString().padLeft(2, '0')}";
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -668,11 +793,29 @@ class _SalesTabState extends State<SalesTab> {
                 ),
                 const Divider(),
                 const SizedBox(height: 8),
-                Text('Fecha: $dateStr', style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
+                Text(
+                  'Fecha: $dateStr',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text('Cajero: ${sale.cashier}', style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
+                Text(
+                  'Cajero: ${sale.cashier}',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text('Categoría: ${sale.categoria}', style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
+                Text(
+                  'Categoría: ${sale.categoria}',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
                 const SizedBox(height: 16),
                 const Text(
                   'Productos',
@@ -800,10 +943,7 @@ class _SalesTabState extends State<SalesTab> {
           const Text(
             'Registra tu primera venta para ver el historial.',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 13,
-              color: AppTheme.textSecondary,
-            ),
+            style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
           ),
         ],
       ),

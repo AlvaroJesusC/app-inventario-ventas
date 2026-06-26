@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../config/app_theme.dart';
+import '../../models/product_model.dart';
 import '../home/tabs/home_tab.dart';
 import '../home/tabs/inventory_tab.dart';
 import '../home/tabs/sales_tab.dart';
@@ -29,6 +30,20 @@ class HomeScreenState extends State<HomeScreen> {
   bool _showNewSale = false;
   bool _showUserManagement = false;
 
+  final _inventoryTabKey = GlobalKey<InventoryTabState>();
+  late final List<Widget> _tabs;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabs = [
+      const HomeTab(),
+      const SalesTab(),
+      InventoryTab(key: _inventoryTabKey),
+      const ReportsTab(),
+    ];
+  }
+
   void showProfile() {
     setState(() {
       _showProfile = true;
@@ -51,6 +66,24 @@ class HomeScreenState extends State<HomeScreen> {
       _showAddProduct = false;
       _showNewSale = false;
       _showUserManagement = false;
+    });
+    if (index == 2) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _inventoryTabKey.currentState?.applyStockFilter(StockFilter.all);
+      });
+    }
+  }
+
+  void showCriticalInventory() {
+    setState(() {
+      _currentIndex = 2; // Inventory tab
+      _showProfile = false;
+      _showAddProduct = false;
+      _showNewSale = false;
+      _showUserManagement = false;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _inventoryTabKey.currentState?.applyStockFilter(StockFilter.critical);
     });
   }
 
@@ -99,13 +132,6 @@ class HomeScreenState extends State<HomeScreen> {
       _showProfile = true; // Return to profile since we came from there
     });
   }
-
-  final List<Widget> _tabs = const [
-    HomeTab(),
-    SalesTab(),
-    InventoryTab(),
-    ReportsTab(),
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -234,6 +260,11 @@ class HomeScreenState extends State<HomeScreen> {
             _showNewSale = false;
             _showUserManagement = false;
           });
+          if (index == 2) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _inventoryTabKey.currentState?.applyStockFilter(StockFilter.all);
+            });
+          }
         }
       },
       behavior: HitTestBehavior.opaque,

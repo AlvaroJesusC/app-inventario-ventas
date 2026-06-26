@@ -19,8 +19,8 @@ class ProductModel {
   // estado de stock del producto
   String get stockLabel {
     if (stock <= 0) return 'Agotado';
-    if (stock <= 10) return 'Bajo: $stock';
-    return '$stock en stock';
+    if (stock <= 10) return '$stock: Bajo Stock';
+    return '$stock: En Stock';
   }
 
   //tipo de estado para colores en la ui
@@ -59,4 +59,12 @@ enum StockStatus {
   inStock, // stock > 10
   low, // stock entre 1 y 10
   empty, // stock = 0
+}
+
+enum StockFilter {
+  all,
+  inStock,
+  low,
+  empty,
+  critical,
 }

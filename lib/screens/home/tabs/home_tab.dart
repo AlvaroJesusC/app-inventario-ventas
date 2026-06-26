@@ -5,6 +5,7 @@ import '../../../models/user_model.dart';
 import '../../../models/product_model.dart';
 import '../../../services/user_service.dart';
 import '../../../services/product_service.dart';
+import '../home_screen.dart';
 
 class HomeTab extends StatefulWidget {
   const HomeTab({super.key});
@@ -128,7 +129,9 @@ class _HomeTabState extends State<HomeTab> {
                           indicatorBg: Colors.red.shade50,
                           indicatorIcon: null,
                           actionText: 'Reabastecer',
-                          onAction: () {},
+                          onAction: () {
+                            HomeScreen.of(context)?.showCriticalInventory();
+                          },
                           leftBorderColor: Colors.redAccent,
                         ),
                       ),
@@ -164,7 +167,9 @@ class _HomeTabState extends State<HomeTab> {
                         ],
                       ),
                       GestureDetector(
-                        onTap: () {},
+                        onTap: () {
+                          HomeScreen.of(context)?.showCriticalInventory();
+                        },
                         child: Row(
                           children: [
                             Text(

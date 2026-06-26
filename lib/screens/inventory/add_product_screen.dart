@@ -36,8 +36,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
   String? _scannedBarcode;
   bool _isLoading = false;
 
-
-
   @override
   void initState() {
     super.initState();
@@ -59,22 +57,21 @@ class _AddProductScreenState extends State<AddProductScreen> {
     super.dispose();
   }
 
-  /// Lógica principal para buscar el producto online
+  /// Log - es principal para buscar el producto online
   Future<void> _fetchProductFromBarcode(String barcode) async {
     setState(() {
       _isLoading = true;
     });
 
     try {
-      // 1. Intentar en OpenFoodFacts (Comida)
+      //openFoodFacts (Comida)
       bool found = await _tryOpenFoodFacts(barcode, isBeauty: false);
-      
-      // 2. Si no, intentar en OpenBeautyFacts (Shampoos, desodorantes)
+
+      //openBeautyFacts (Shampoos, desodorantes)
       if (!found) {
         found = await _tryOpenFoodFacts(barcode, isBeauty: true);
       }
-      
-      // 3. Si no, intentar en MercadoLibre Perú (Cosas de casa, electrónica, etc)
+
       if (!found) {
         found = await _tryMercadoLibre(barcode);
       }
@@ -107,9 +104,14 @@ class _AddProductScreenState extends State<AddProductScreen> {
     }
   }
 
-  /// Busca en OpenFoodFacts u OpenBeautyFacts
-  Future<bool> _tryOpenFoodFacts(String barcode, {required bool isBeauty}) async {
-    final domain = isBeauty ? 'world.openbeautyfacts.org' : 'world.openfoodfacts.org';
+  // openFoodFacts u openBeautyFacts
+  Future<bool> _tryOpenFoodFacts(
+    String barcode, {
+    required bool isBeauty,
+  }) async {
+    final domain = isBeauty
+        ? 'world.openbeautyfacts.org'
+        : 'world.openfoodfacts.org';
     try {
       final url = Uri.parse('https://$domain/api/v0/product/$barcode.json');
       final response = await http.get(url).timeout(const Duration(seconds: 5));
@@ -119,14 +121,15 @@ class _AddProductScreenState extends State<AddProductScreen> {
         if (data['status'] == 1 && data['product'] != null) {
           final producto = data['product'];
           setState(() {
-            if (producto['product_name'] != null && producto['product_name'].toString().isNotEmpty) {
+            if (producto['product_name'] != null &&
+                producto['product_name'].toString().isNotEmpty) {
               _nombreController.text = producto['product_name'];
             } else if (producto['product_name_es'] != null) {
               _nombreController.text = producto['product_name_es'];
             }
 
             if (isBeauty) {
-               _selectedCategory = 'Cuidado Personal';
+              _selectedCategory = 'Cuidado Personal';
             } else if (producto['categories'] != null) {
               String cat = producto['categories'].toString().toLowerCase();
               if (cat.contains('beverage') || cat.contains('bebida')) {
@@ -151,7 +154,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
   Future<bool> _tryMercadoLibre(String barcode) async {
     try {
       // MPE es el sitio de Perú en MercadoLibre
-      final url = Uri.parse('https://api.mercadolibre.com/sites/MPE/search?q=$barcode');
+      final url = Uri.parse(
+        'https://api.mercadolibre.com/sites/MPE/search?q=$barcode',
+      );
       final response = await http.get(url).timeout(const Duration(seconds: 5));
 
       if (response.statusCode == 200) {
@@ -159,15 +164,15 @@ class _AddProductScreenState extends State<AddProductScreen> {
         if (data['results'] != null && (data['results'] as List).isNotEmpty) {
           final firstResult = data['results'][0];
           setState(() {
-             _nombreController.text = firstResult['title'] ?? '';
-             
-             // Como MercadoLibre tiene de todo, asignamos "Otros" por defecto
-             _selectedCategory = 'Otros';
-             
-             // Opcional: Extraer precio sugerido
-             if (firstResult['price'] != null) {
-                _precioController.text = firstResult['price'].toString();
-             }
+            _nombreController.text = firstResult['title'] ?? '';
+
+            // Como MercadoLibre tiene de todo, asignamos "Otros" por defecto
+            _selectedCategory = 'Otros';
+
+            // Opcional: Extraer precio sugerido
+            if (firstResult['price'] != null) {
+              _precioController.text = firstResult['price'].toString();
+            }
           });
           return true;
         }
@@ -211,9 +216,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(widget.product != null
-              ? 'Producto actualizado correctamente'
-              : 'Producto guardado correctamente'),
+          content: Text(
+            widget.product != null
+                ? 'Producto actualizado correctamente'
+                : 'Producto guardado correctamente',
+          ),
           backgroundColor: AppTheme.primaryGreen,
         ),
       );
@@ -259,7 +266,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        widget.product != null ? 'Editar Producto' : 'Nuevo Producto',
+                        widget.product != null
+                            ? 'Editar Producto'
+                            : 'Nuevo Producto',
                         style: const TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.w800,
@@ -291,23 +300,33 @@ class _AddProductScreenState extends State<AddProductScreen> {
                       StreamBuilder<List<CategoryModel>>(
                         stream: CategoryService().getCategoriesStream(),
                         builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
                             return const SizedBox(
                               height: 56,
-                              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
                             );
                           }
-                          
+
                           final allCategories = snapshot.data ?? [];
-                          
+
                           // 1. Filtrar duplicados: El Dropdown se rompe si hay dos items con el mismo 'value'
                           final uniqueNames = <String>{};
-                          final categorias = allCategories.where((c) => uniqueNames.add(c.nombre)).toList();
-                          
+                          final categorias = allCategories
+                              .where((c) => uniqueNames.add(c.nombre))
+                              .toList();
+
                           // 2. Evitar error si la categoría auto-seleccionada no está en la BD
                           // Usamos una variable local para el value en vez de mutar el estado durante el build
-                          final String? currentValue = categorias.any((c) => c.nombre == _selectedCategory) 
-                              ? _selectedCategory 
+                          final String? currentValue =
+                              categorias.any(
+                                (c) => c.nombre == _selectedCategory,
+                              )
+                              ? _selectedCategory
                               : null;
 
                           return DropdownButtonFormField<String>(
@@ -317,7 +336,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
                             ),
                             icon: const Icon(Icons.keyboard_arrow_down_rounded),
                             items: categorias.map((cat) {
-                              return DropdownMenuItem(value: cat.nombre, child: Text(cat.nombre));
+                              return DropdownMenuItem(
+                                value: cat.nombre,
+                                child: Text(cat.nombre),
+                              );
                             }).toList(),
                             onChanged: (val) {
                               setState(() {
@@ -325,7 +347,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               });
                             },
                           );
-                        }
+                        },
                       ),
                       const SizedBox(height: 20),
 
@@ -471,7 +493,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppTheme.divider, style: BorderStyle.solid),
       ),
-      clipBehavior: Clip.hardEdge, // Para que la cámara respete el borde redondeado
+      clipBehavior:
+          Clip.hardEdge, // Para que la cámara respete el borde redondeado
       child: Stack(
         children: [
           // 1. La Cámara
@@ -479,7 +502,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
             controller: _scannerController,
             onDetect: (capture) async {
               if (_isLoading || _scannedBarcode != null) return;
-              
+
               final List<Barcode> barcodes = capture.barcodes;
               if (barcodes.isNotEmpty) {
                 final String code = barcodes.first.rawValue ?? '';
@@ -494,14 +517,14 @@ class _AddProductScreenState extends State<AddProductScreen> {
               }
             },
           ),
-          
+
           // 2. Overlay decorativo (Borde y mira)
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
                 border: Border.all(
-                  color: _scannedBarcode != null 
-                      ? AppTheme.primaryGreen 
+                  color: _scannedBarcode != null
+                      ? AppTheme.primaryGreen
                       : Colors.blue.withValues(alpha: 0.5),
                   width: 4,
                 ),
@@ -540,35 +563,35 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
-                      color: _scannedBarcode != null 
-                          ? AppTheme.primaryGreenLight 
+                      color: _scannedBarcode != null
+                          ? AppTheme.primaryGreenLight
                           : Colors.white,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   if (_scannedBarcode != null) ...[
-                     const SizedBox(height: 8),
-                     ElevatedButton.icon(
-                       onPressed: () {
-                         setState(() {
-                           _scannedBarcode = null;
-                         });
-                         _scannerController.start();
-                       },
-                       icon: const Icon(Icons.refresh_rounded, size: 16),
-                       label: const Text('Escanear de nuevo'),
-                       style: ElevatedButton.styleFrom(
-                         backgroundColor: Colors.white.withValues(alpha: 0.2),
-                         foregroundColor: Colors.white,
-                         elevation: 0,
-                         minimumSize: const Size(0, 36),
-                         padding: const EdgeInsets.symmetric(horizontal: 16),
-                         shape: RoundedRectangleBorder(
-                           borderRadius: BorderRadius.circular(8)
-                         )
-                       ),
-                     )
-                  ]
+                    const SizedBox(height: 8),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          _scannedBarcode = null;
+                        });
+                        _scannerController.start();
+                      },
+                      icon: const Icon(Icons.refresh_rounded, size: 16),
+                      label: const Text('Escanear de nuevo'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white.withValues(alpha: 0.2),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        minimumSize: const Size(0, 36),
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -626,7 +649,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
               } else {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const ProfileScreen(),
+                  ),
                 );
               }
             },
@@ -650,11 +675,22 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   ),
                   child: Center(
                     child: initials.isEmpty
-                        ? const Icon(Icons.person_rounded, size: 22, color: AppTheme.primaryGreen)
-                        : Text(initials, style: const TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.bold, fontSize: 14)),
+                        ? const Icon(
+                            Icons.person_rounded,
+                            size: 22,
+                            color: AppTheme.primaryGreen,
+                          )
+                        : Text(
+                            initials,
+                            style: const TextStyle(
+                              color: AppTheme.primaryGreen,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
                   ),
                 );
-              }
+              },
             ),
           ),
         ],
