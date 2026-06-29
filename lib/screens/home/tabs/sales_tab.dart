@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../config/app_theme.dart';
 import '../home_screen.dart';
 import '../../sales/new_sale_screen.dart';
+import '../../sales/sales_breakdown_screen.dart';
 import '../../../services/sale_service.dart';
 import '../../../models/sale_model.dart';
 
@@ -133,7 +134,14 @@ class _SalesTabState extends State<SalesTab> {
                     ),
                   ),
                   GestureDetector(
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SalesBreakdownScreen(),
+                        ),
+                      );
+                    },
                     child: Row(
                       children: [
                         Text(
@@ -191,7 +199,14 @@ class _SalesTabState extends State<SalesTab> {
                 width: double.infinity,
                 height: 52,
                 child: OutlinedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SalesBreakdownScreen(),
+                      ),
+                    );
+                  },
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: AppTheme.divider),
                     shape: RoundedRectangleBorder(

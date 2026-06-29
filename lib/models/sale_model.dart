@@ -65,6 +65,7 @@ class SaleModel {
   final String estado;
   final String categoria;
   final List<SaleItemModel> articulos;
+  final String? metodoPago;
 
   SaleModel({
     required this.id,
@@ -75,6 +76,7 @@ class SaleModel {
     this.estado = 'PAGADO',
     required this.categoria,
     required this.articulos,
+    this.metodoPago,
   });
 
   factory SaleModel.fromMap(Map<String, dynamic> map, String documentId) {
@@ -118,6 +120,7 @@ class SaleModel {
       estado: map['estado'] ?? map['status'] ?? 'PAGADO',
       categoria: map['categoria'] ?? map['type'] ?? 'General',
       articulos: saleItems,
+      metodoPago: map['metodoPago'],
     );
   }
 
@@ -130,6 +133,7 @@ class SaleModel {
       'estado': estado,
       'categoria': categoria,
       'articulos': articulos.map((item) => item.toMap()).toList(),
+      'metodoPago': metodoPago,
     };
   }
 }

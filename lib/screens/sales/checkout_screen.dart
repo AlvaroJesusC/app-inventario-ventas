@@ -21,6 +21,7 @@ class CheckoutScreen extends StatefulWidget {
 class _CheckoutScreenState extends State<CheckoutScreen> {
   late List<Map<String, dynamic>> items;
   bool _isSaving = false;
+  final TextEditingController _montoRecibidoController = TextEditingController();
 
   @override
   void initState() {
@@ -29,6 +30,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     items = List<Map<String, dynamic>>.from(
       widget.scannedItems.map((item) => Map<String, dynamic>.from(item)),
     );
+  }
+
+  @override
+  void dispose() {
+    _montoRecibidoController.dispose();
+    super.dispose();
   }
 
   double get _subtotal {
@@ -62,7 +69,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     });
   }
 
-  void _procesarCobro() async {
+  void _procesarCobro(String metodoPago) async {
     setState(() {
       _isSaving = true;
     });
@@ -108,10 +115,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         estado: 'PAGADO',
         categoria: saleCategory,
         articulos: saleItems,
+        metodoPago: metodoPago,
       );
 
       // 4. Guardar la venta en Firestore
-      await SaleService().addSale(newSale);
+      final saleId = await SaleService().addSale(newSale);
 
       if (!mounted) return;
 
@@ -119,138 +127,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         _isSaving = false;
       });
 
-      // 5. Mostrar diálogo de éxito
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (BuildContext dialogContext) {
-          return Dialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 72,
-                    height: 72,
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryGreen.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.check_circle_rounded,
-                      color: AppTheme.primaryGreen,
-                      size: 48,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    '¡Venta Realizada!',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      color: AppTheme.textPrimary,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'La transacción se ha registrado exitosamente.',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: AppTheme.textSecondary,
-                      height: 1.4,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 24),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppTheme.backgroundGrey,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'Productos',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: AppTheme.textSecondary,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            Text(
-                              '$_totalItems und.',
-                              style: const TextStyle(
-                                fontSize: 13,
-                                color: AppTheme.textPrimary,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'Total Cobrado',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: AppTheme.textSecondary,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            Text(
-                              'S/. ${_total.toStringAsFixed(2)}',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                color: AppTheme.primaryGreen,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(dialogContext); // Cierra el modal
-                      Navigator.popUntil(context, (route) => route.isFirst); // Sale del checkout
-                      HomeScreen.of(context)?.setTab(1); // Lleva al inicio de ventas (SalesTab)
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryGreen,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(double.infinity, 54),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: const Text(
-                      'Volver a Ventas',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      );
+      // 5. Mostrar diálogo de éxito personalizado
+      _showSuccessDialog(saleId, newSale);
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -265,6 +143,985 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         );
       }
     }
+  }
+
+  void _showSuccessDialog(String saleId, SaleModel sale) {
+    final String shortId = saleId.length > 5 
+        ? saleId.substring(saleId.length - 5).toUpperCase() 
+        : saleId.toUpperCase();
+    final String transId = '#VTA-$shortId';
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icono Check Verde
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: const BoxDecoration(
+                    color: AppTheme.primaryGreen,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.check_rounded,
+                    color: Colors.white,
+                    size: 48,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                
+                // Título
+                const Text(
+                  '¡Venta completada!',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.textPrimary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+
+                // Detalle ID Transacción
+                const Text(
+                  'ID de transacción',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppTheme.textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  transId,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.primaryGreen,
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Método de Pago
+                const Text(
+                  'Método de pago',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppTheme.textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryGreenLight,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        sale.metodoPago == 'Yape/Plin' 
+                            ? Icons.qr_code_2_rounded 
+                            : Icons.payments_rounded,
+                        color: AppTheme.primaryGreen,
+                        size: 16,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      sale.metodoPago ?? 'Efectivo',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 32),
+
+                // Botones
+                OutlinedButton(
+                  onPressed: () {
+                    Navigator.pop(dialogContext); // Cierra el modal
+                    Navigator.pop(context, <Map<String, dynamic>>[]); // Sale del checkout indicando carrito vacío
+                    HomeScreen.of(context)?.setTab(1); // Lleva al inicio de ventas
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.primaryGreen,
+                    side: const BorderSide(color: AppTheme.primaryGreen, width: 1.5),
+                    minimumSize: const Size(double.infinity, 54),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: const Text(
+                    'Nueva Venta',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                
+                ElevatedButton(
+                  onPressed: () {
+                    _showComprobanteDialog(dialogContext, transId, sale);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryGreen,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 54),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'Ver comprobante',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showComprobanteDialog(BuildContext successDialogContext, String transId, SaleModel sale) {
+    final localFecha = sale.fecha.toLocal();
+    final String dateStr =
+        "${localFecha.day.toString().padLeft(2, '0')}/${localFecha.month.toString().padLeft(2, '0')}/${localFecha.year} ${localFecha.hour.toString().padLeft(2, '0')}:${localFecha.minute.toString().padLeft(2, '0')}";
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Comprobante',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                  const Divider(color: AppTheme.divider),
+                  const SizedBox(height: 12),
+                  
+                  const Center(
+                    child: Text(
+                      'TICKET DE VENTA',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.textSecondary,
+                        letterSpacing: 2,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  _buildTicketRow('Transacción:', transId, isBold: true),
+                  _buildTicketRow('Fecha/Hora:', dateStr),
+                  _buildTicketRow('Cajero:', sale.cajero),
+                  _buildTicketRow('Método de pago:', sale.metodoPago ?? 'Efectivo'),
+                  
+                  const SizedBox(height: 12),
+                  const Text(
+                    '- - - - - - - - - - - - - - - - - - - - - - - - - -',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: AppTheme.textHint, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+                  
+                  const Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Descripción',
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.textSecondary),
+                      ),
+                      Text(
+                        'Total',
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.textSecondary),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  
+                  ...sale.articulos.map((item) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  item.nombre,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.textPrimary,
+                                  ),
+                                ),
+                                Text(
+                                  'S/. ${item.precio.toStringAsFixed(2)} x ${item.cantidad}',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: AppTheme.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Text(
+                            'S/. ${(item.precio * item.cantidad).toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                  
+                  const SizedBox(height: 12),
+                  const Text(
+                    '- - - - - - - - - - - - - - - - - - - - - - - - - -',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: AppTheme.textHint, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+                  
+                  _buildTicketRow('Subtotal:', 'S/. ${(_subtotal).toStringAsFixed(2)}'),
+                  _buildTicketRow('Impuestos (18%):', 'S/. ${_taxes.toStringAsFixed(2)}'),
+                  _buildTicketRow('Descuento:', '-S/. 0.00'),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'TOTAL:',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        'S/. ${sale.total.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          color: AppTheme.primaryGreen,
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                  const SizedBox(height: 32),
+                  
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context); // Cierra comprobante
+                      Navigator.pop(successDialogContext); // Cierra éxito
+                      Navigator.pop(this.context, <Map<String, dynamic>>[]); // Sale del checkout indicando carrito vacío
+                      HomeScreen.of(context)?.setTab(1); // Regresa a ventas
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryGreen,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 54),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      'Finalizar y Volver',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTicketRow(String label, String value, {bool isBold = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: AppTheme.textSecondary,
+              fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 12,
+              color: AppTheme.textPrimary,
+              fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showMetodoPagoBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        String? selectedMethod;
+        int currentStep = 0; // 0: Selección de Pago, 1: Yape/Plin QR, 2: Efectivo
+
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setModalState) {
+            return Container(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(24),
+                ),
+              ),
+              child: SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: currentStep == 0
+                        ? _buildPaymentSelectionStep(
+                            selectedMethod,
+                            (method) {
+                              setModalState(() {
+                                selectedMethod = method;
+                              });
+                            },
+                            () {
+                              if (selectedMethod == 'Yape/Plin') {
+                                setModalState(() {
+                                  currentStep = 1;
+                                });
+                              } else if (selectedMethod == 'Efectivo') {
+                                setModalState(() {
+                                  _montoRecibidoController.text = _total.toStringAsFixed(2);
+                                  currentStep = 2;
+                                });
+                              }
+                            },
+                          )
+                        : currentStep == 1
+                            ? _buildQrStep(
+                                () {
+                                  // Regresar a selección
+                                  setModalState(() {
+                                    currentStep = 0;
+                                  });
+                                },
+                                () {
+                                  Navigator.pop(context); // Cierra bottom sheet
+                                  _procesarCobro('Yape/Plin');
+                                },
+                              )
+                            : _buildEfectivoStep(
+                                () {
+                                  // Regresar a selección
+                                  setModalState(() {
+                                    currentStep = 0;
+                                  });
+                                },
+                                () {
+                                  Navigator.pop(context); // Cierra bottom sheet
+                                  _procesarCobro('Efectivo');
+                                },
+                                setModalState,
+                              ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildEfectivoStep(
+    VoidCallback onBack,
+    VoidCallback onConfirm,
+    StateSetter setModalState,
+  ) {
+    final double receivedAmount = double.tryParse(_montoRecibidoController.text) ?? 0.0;
+    final double change = receivedAmount >= _total ? receivedAmount - _total : 0.0;
+    final bool canConfirm = receivedAmount >= _total;
+
+    return Column(
+      key: const ValueKey('efectivo_step'),
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            GestureDetector(
+              onTap: onBack,
+              child: const Icon(
+                Icons.arrow_back_rounded,
+                color: AppTheme.textPrimary,
+                size: 24,
+              ),
+            ),
+            const Expanded(
+              child: Text(
+                'Cobrar Venta',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+            ),
+            const SizedBox(width: 24),
+          ],
+        ),
+        const SizedBox(height: 12),
+        
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.payments_rounded,
+              color: AppTheme.primaryGreen,
+              size: 24,
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              'Efectivo',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.textPrimary,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+        
+        const Center(
+          child: Text(
+            'Total a cobrar',
+            style: TextStyle(
+              fontSize: 13,
+              color: AppTheme.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Center(
+          child: Text(
+            'S/. ${_total.toStringAsFixed(2)}',
+            style: const TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.w900,
+              color: AppTheme.primaryGreen,
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+        
+        const Text(
+          'Monto recibido',
+          style: TextStyle(
+            fontSize: 14,
+            color: AppTheme.textSecondary,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 8),
+        
+        TextField(
+          controller: _montoRecibidoController,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          autofocus: true,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.textPrimary,
+          ),
+          onChanged: (val) {
+            setModalState(() {});
+          },
+          decoration: InputDecoration(
+            prefixIcon: Container(
+              margin: const EdgeInsets.only(right: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              decoration: const BoxDecoration(
+                color: AppTheme.primaryGreenLight,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(12),
+                  bottomLeft: Radius.circular(12),
+                ),
+              ),
+              child: const Text(
+                'S/.',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.primaryGreen,
+                ),
+              ),
+            ),
+            prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+            contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: canConfirm ? AppTheme.primaryGreen : AppTheme.divider,
+                width: 1.5,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: canConfirm ? AppTheme.primaryGreen : AppTheme.divider,
+                width: 1.5,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: AppTheme.primaryGreen,
+                width: 2.0,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+        
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF4F6F4),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: const BoxDecoration(
+                  color: AppTheme.primaryGreenLight,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.autorenew_rounded,
+                  color: AppTheme.primaryGreen,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 16),
+              const Text(
+                'Vuelto:',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                'S/. ${change.toStringAsFixed(2)}',
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                  color: AppTheme.primaryGreen,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 32),
+        
+        ElevatedButton(
+          onPressed: canConfirm ? onConfirm : null,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppTheme.primaryGreen,
+            disabledBackgroundColor: AppTheme.primaryGreen.withValues(alpha: 0.5),
+            foregroundColor: Colors.white,
+            minimumSize: const Size(double.infinity, 56),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            elevation: 0,
+          ),
+          child: const Text(
+            'Confirmar pago',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPaymentSelectionStep(
+    String? selectedMethod,
+    Function(String) onSelect,
+    VoidCallback onConfirm,
+  ) {
+    return Column(
+      key: const ValueKey('payment_selection_step'),
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Center(
+          child: Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: AppTheme.divider,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+        
+        const Text(
+          'Cobrar Venta',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            color: AppTheme.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 16),
+        
+        const Text(
+          'Total a cobrar',
+          style: TextStyle(
+            fontSize: 13,
+            color: AppTheme.textSecondary,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'S/. ${_total.toStringAsFixed(2)}',
+          style: const TextStyle(
+            fontSize: 32,
+            fontWeight: FontWeight.w900,
+            color: AppTheme.primaryGreen,
+          ),
+        ),
+        const SizedBox(height: 24),
+        
+        const Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            'Selecciona el método de pago',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.textPrimary,
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        
+        Row(
+          children: [
+            Expanded(
+              child: _buildPaymentCard(
+                label: 'Efectivo',
+                icon: Icons.payments_rounded,
+                isSelected: selectedMethod == 'Efectivo',
+                onTap: () => onSelect('Efectivo'),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildPaymentCard(
+                label: 'Yape/Plin',
+                icon: Icons.qr_code_2_rounded,
+                isSelected: selectedMethod == 'Yape/Plin',
+                onTap: () => onSelect('Yape/Plin'),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 32),
+        
+        ElevatedButton(
+          onPressed: selectedMethod == null ? null : onConfirm,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppTheme.primaryGreen,
+            disabledBackgroundColor: AppTheme.primaryGreen.withValues(alpha: 0.5),
+            foregroundColor: Colors.white,
+            minimumSize: const Size(double.infinity, 56),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            elevation: 0,
+          ),
+          child: const Text(
+            'Confirmar método de pago',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPaymentCard({
+    required String label,
+    required IconData icon,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        decoration: BoxDecoration(
+          color: isSelected ? AppTheme.primaryGreenLight : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? AppTheme.primaryGreen : AppTheme.divider,
+            width: isSelected ? 2.0 : 1.0,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              size: 36,
+              color: AppTheme.primaryGreen,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.textPrimary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQrStep(
+    VoidCallback onBack,
+    VoidCallback onConfirm,
+  ) {
+    return Column(
+      key: const ValueKey('qr_step'),
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            GestureDetector(
+              onTap: onBack,
+              child: const Icon(
+                Icons.close_rounded,
+                color: AppTheme.textPrimary,
+                size: 24,
+              ),
+            ),
+            const Expanded(
+              child: Text(
+                'Yape/Plin',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+            ),
+            const SizedBox(width: 24),
+          ],
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Escanea y paga',
+          style: TextStyle(
+            fontSize: 13,
+            color: AppTheme.textSecondary,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 24),
+        
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: AppTheme.primaryGreen,
+              width: 1.5,
+            ),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Transform.scale(
+              scale: 1.25, // Zoom para recortar los bordes vacíos/blancos del QR
+              child: Image.asset(
+                'assets/images/qr_yape.png',
+                width: 200,
+                height: 200,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  return Transform.scale(
+                    scale: 0.8, // Compensa el 1.25 de zoom para mantener el placeholder en tamaño normal
+                    child: Container(
+                      width: 200,
+                      height: 200,
+                      color: const Color(0xFFF9F9F9),
+                      alignment: Alignment.center,
+                      child: const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.qr_code_2_rounded,
+                            size: 64,
+                            color: AppTheme.textHint,
+                          ),
+                          SizedBox(height: 8),
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            child: Text(
+                              'QR Yape/Plin\n(Coloca tu imagen en assets/images/qr_yape.png)',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: AppTheme.textSecondary,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+        
+        Text(
+          'S/. ${_total.toStringAsFixed(2)}',
+          style: const TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.w900,
+            color: AppTheme.primaryGreen,
+          ),
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          'Muestra este QR al cliente',
+          style: TextStyle(
+            fontSize: 13,
+            color: AppTheme.textSecondary,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 32),
+        
+        ElevatedButton(
+          onPressed: onConfirm,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppTheme.primaryGreen,
+            foregroundColor: Colors.white,
+            minimumSize: const Size(double.infinity, 56),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            elevation: 0,
+          ),
+          child: const Text(
+            'Confirmar pago recibido',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   @override
@@ -701,7 +1558,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ],
       ),
       child: ElevatedButton(
-        onPressed: (items.isEmpty || _isSaving) ? null : _procesarCobro,
+        onPressed: (items.isEmpty || _isSaving) ? null : _showMetodoPagoBottomSheet,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppTheme.primaryGreen,
           disabledBackgroundColor: AppTheme.primaryGreen.withValues(alpha: 0.5),

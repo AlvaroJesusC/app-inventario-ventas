@@ -41,8 +41,11 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
     return '$prefix$day de $month, $year';
   }
 
-  // Get payment method deterministically
+  // Get payment method from sale model or deterministically if not present
   String _getPaymentMethod(SaleModel sale, int index) {
+    if (sale.metodoPago != null && sale.metodoPago!.isNotEmpty) {
+      return sale.metodoPago!;
+    }
     final methods = ['Efectivo', 'Yape', 'Tarjeta', 'Plin'];
     final hash = sale.id.hashCode.abs();
     return methods[(hash + index) % methods.length];
@@ -697,14 +700,20 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
         separatorBuilder: (context, index) => const Divider(color: AppTheme.divider, height: 1),
         itemBuilder: (context, index) {
           final sale = displaySales[index];
-          // Use sequential format like #VTA-00125. The actual position starts from totalCount down.
-          final seqNumber = (totalCount - index).toString().padLeft(5, '0');
-          final String displayId = '#VTA-$seqNumber';
           final String paymentMethod = _getPaymentMethod(sale, index);
           final String timeStr = _formatTime(sale.fecha);
 
+          String titleText = "Sin productos";
+          if (sale.articulos.isNotEmpty) {
+            if (sale.articulos.length == 1) {
+              titleText = "${sale.articulos.first.nombre} (x${sale.articulos.first.cantidad})";
+            } else {
+              titleText = "${sale.articulos.first.nombre} y ${sale.articulos.length - 1} prod.";
+            }
+          }
+
           return InkWell(
-            onTap: () => _showSaleDetailDialog(sale, displayId),
+            onTap: () => _showSaleDetailDialog(sale),
             borderRadius: BorderRadius.circular(20),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -732,16 +741,18 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          displayId,
+                          titleText,
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
                             color: AppTheme.textPrimary,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '$timeStr  •  $paymentMethod',
+                          '$timeStr  •  ${sale.cajero}  •  $paymentMethod',
                           style: const TextStyle(
                             fontSize: 12,
                             color: AppTheme.textSecondary,
@@ -802,7 +813,7 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
     );
   }
 
-  void _showSaleDetailDialog(SaleModel sale, String displayId) {
+  void _showSaleDetailDialog(SaleModel sale) {
     final localFecha = sale.fecha.toLocal();
     final String dateStr =
         "${localFecha.day}/${localFecha.month}/${localFecha.year} ${localFecha.hour.toString().padLeft(2, '0')}:${localFecha.minute.toString().padLeft(2, '0')}";
@@ -823,9 +834,9 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Detalle de Venta $displayId',
-                      style: const TextStyle(
+                    const Text(
+                      'Detalle de Venta',
+                      style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
                         color: AppTheme.textPrimary,
