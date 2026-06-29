@@ -1,3 +1,5 @@
+import 'sku.dart';
+
 /// el modelo de producto para el inventario
 class ProductModel {
   final String id;
@@ -6,6 +8,7 @@ class ProductModel {
   final int stock;
   final String? categoria;
   final String? codigoBarras;
+  final String sku;
 
   ProductModel({
     required this.id,
@@ -14,6 +17,7 @@ class ProductModel {
     required this.stock,
     this.categoria,
     this.codigoBarras,
+    required this.sku,
   });
 
   // estado de stock del producto
@@ -32,13 +36,18 @@ class ProductModel {
 
   //convierte desde un documento de firestore → productmodel
   factory ProductModel.fromMap(Map<String, dynamic> map, String documentId) {
+    final String nombre = map['nombre'] ?? '';
+    final String categoria = map['categoria'] ?? 'General';
+    final String skuGenerado = Sku.generar(nombre: nombre, categoria: categoria).valor;
+
     return ProductModel(
       id: documentId,
-      nombre: map['nombre'] ?? '',
+      nombre: nombre,
       precio: (map['precio'] ?? 0).toDouble(),
       stock: (map['stock'] ?? 0).toInt(),
-      categoria: map['categoria'],
+      categoria: categoria,
       codigoBarras: map['codigoBarras'],
+      sku: map['sku'] ?? skuGenerado,
     );
   }
 
@@ -50,6 +59,7 @@ class ProductModel {
       'stock': stock,
       'categoria': categoria,
       'codigoBarras': codigoBarras,
+      'sku': sku,
     };
   }
 }

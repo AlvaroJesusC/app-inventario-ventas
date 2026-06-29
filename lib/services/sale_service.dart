@@ -26,11 +26,11 @@ class SaleService {
 
     // 2. Descontar stock de los productos vendidos en lote (batch)
     final batch = _firestore.batch();
-    for (var item in sale.items) {
+    for (var item in sale.articulos) {
       if (item.id.isNotEmpty) {
         final productDocRef = _firestore.collection('productos').doc(item.id);
         batch.update(productDocRef, {
-          'stock': FieldValue.increment(-item.quantity),
+          'stock': FieldValue.increment(-item.cantidad),
         });
       }
     }

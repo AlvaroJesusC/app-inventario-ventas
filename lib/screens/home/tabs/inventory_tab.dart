@@ -80,7 +80,8 @@ class InventoryTabState extends State<InventoryTab>
       filtered = filtered.where((p) {
         final nameMatches = p.nombre.toLowerCase().contains(query);
         final skuMatches =
-            p.codigoBarras?.toLowerCase().contains(query) ?? false;
+            p.sku.toLowerCase().contains(query) ||
+            (p.codigoBarras?.toLowerCase().contains(query) ?? false);
         final categoryMatches =
             p.categoria?.toLowerCase().contains(query) ?? false;
         final idMatches = p.id.toLowerCase().contains(query);

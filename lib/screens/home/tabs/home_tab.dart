@@ -3,8 +3,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../../config/app_theme.dart';
 import '../../../models/user_model.dart';
 import '../../../models/product_model.dart';
+import '../../../models/sale_model.dart';
 import '../../../services/user_service.dart';
 import '../../../services/product_service.dart';
+import '../../../services/sale_service.dart';
+import '../../sales/sales_breakdown_screen.dart';
 import '../home_screen.dart';
 
 class HomeTab extends StatefulWidget {
@@ -80,125 +83,196 @@ class _HomeTabState extends State<HomeTab> {
           const SizedBox(height: 24),
 
           // ── Tarjetas de Resumen ──
-          StreamBuilder<List<ProductModel>>(
-            stream: _productService.getProductsStream(),
-            builder: (context, snapshot) {
-              int criticalCount = 0;
-              List<ProductModel> criticalProducts = [];
-              
-              if (snapshot.hasData) {
-                criticalProducts = snapshot.data!
-                    .where((p) => p.stock <= 10)
-                    .toList();
-                // Ordenar para mostrar primero los que tienen menos stock
-                criticalProducts.sort((a, b) => a.stock.compareTo(b.stock));
-                criticalCount = criticalProducts.length;
+          StreamBuilder<List<SaleModel>>(
+            stream: SaleService().getSalesStream(),
+            builder: (context, salesSnapshot) {
+              if (salesSnapshot.hasError) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text('Error cargando ventas: ${salesSnapshot.error}', style: const TextStyle(color: Colors.red)),
+                  ),
+                );
+              }
+              final allSales = salesSnapshot.data ?? [];
+              final today = DateTime.now();
+
+              // Debug: Imprime todas las ventas en consola para ver fechas y montos en Firestore
+              debugPrint("Debug - Ventas totales en Firestore: ${allSales.length}");
+              for (var s in allSales) {
+                debugPrint("Debug - Venta ID: ${s.id}, Fecha original: ${s.fecha}, Fecha local: ${s.fecha.toLocal()}, Total: ${s.total}");
               }
 
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _DashboardCard(
-                          title: 'VENTAS DIARIAS',
-                          value: 'S/. 0.00',
-                          icon: Icons.shopping_bag_outlined,
-                          iconColor: AppTheme.primaryGreen,
-                          iconBg: AppTheme.primaryGreen.withValues(alpha: 0.1),
-                          indicatorText: '0.0% vs ayer',
-                          indicatorColor: AppTheme.textHint,
-                          indicatorBg: AppTheme.backgroundGrey,
-                          indicatorIcon: Icons.remove_rounded,
-                          actionText: 'Ver desglose',
-                          onAction: () {},
-                          leftBorderColor: AppTheme.primaryGreen,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _DashboardCard(
-                          title: 'ARTÍCULOS CRÍTICOS',
-                          value: criticalCount.toString(),
-                          icon: Icons.warning_amber_rounded,
-                          iconColor: Colors.redAccent,
-                          iconBg: Colors.red.shade50,
-                          indicatorText: 'Requieren atención inmediata',
-                          indicatorColor: Colors.redAccent,
-                          indicatorBg: Colors.red.shade50,
-                          indicatorIcon: null,
-                          actionText: 'Reabastecer',
-                          onAction: () {
-                            HomeScreen.of(context)?.showCriticalInventory();
-                          },
-                          leftBorderColor: Colors.redAccent,
-                        ),
-                      ),
-                    ],
-                  ),
-                  
-                  const SizedBox(height: 32),
+              // Filter sales for today (comparing in local time)
+              final todaySales = allSales.where((s) {
+                final saleLocal = s.fecha.toLocal();
+                final todayLocal = today.toLocal();
+                return saleLocal.year == todayLocal.year &&
+                    saleLocal.month == todayLocal.month &&
+                    saleLocal.day == todayLocal.day;
+              }).toList();
 
-                  // ── Alertas de Inventario ──
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.end,
+              final double todayTotal = todaySales.fold(0.0, (sum, s) => sum + s.total);
+
+              // Filter sales for yesterday
+              final yesterday = today.subtract(const Duration(days: 1));
+              final yesterdaySales = allSales.where((s) {
+                final saleLocal = s.fecha.toLocal();
+                final yesterdayLocal = yesterday.toLocal();
+                return saleLocal.year == yesterdayLocal.year &&
+                    saleLocal.month == yesterdayLocal.month &&
+                    saleLocal.day == yesterdayLocal.day;
+              }).toList();
+
+              final double yesterdayTotal = yesterdaySales.fold(0.0, (sum, s) => sum + s.total);
+
+              double trendPercent = 0.0;
+              if (yesterdayTotal > 0) {
+                trendPercent = ((todayTotal - yesterdayTotal) / yesterdayTotal) * 100;
+              } else if (todayTotal > 0) {
+                trendPercent = 100.0;
+              }
+
+              final bool isPositive = trendPercent >= 0;
+
+              return StreamBuilder<List<ProductModel>>(
+                stream: _productService.getProductsStream(),
+                builder: (context, snapshot) {
+                  int criticalCount = 0;
+                  List<ProductModel> criticalProducts = [];
+                  
+                  if (snapshot.hasData) {
+                    criticalProducts = snapshot.data!
+                        .where((p) => p.stock <= 10)
+                        .toList();
+                    // Ordenar para mostrar primero los que tienen menos stock
+                    criticalProducts.sort((a, b) => a.stock.compareTo(b.stock));
+                    criticalCount = criticalProducts.length;
+                  }
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      Row(
                         children: [
-                          Text(
-                            'Alertas de Inventario',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: AppTheme.textPrimary,
+                          Expanded(
+                            child: _DashboardCard(
+                              title: 'VENTAS DIARIAS',
+                              value: 'S/. ${todayTotal.toStringAsFixed(2)}',
+                              icon: Icons.shopping_bag_outlined,
+                              iconColor: AppTheme.primaryGreen,
+                              iconBg: AppTheme.primaryGreen.withValues(alpha: 0.1),
+                              indicatorText: todayTotal == 0 && yesterdayTotal == 0
+                                  ? '0.0% vs ayer'
+                                  : '${trendPercent.abs().toStringAsFixed(1)}% vs ayer',
+                              indicatorColor: todayTotal == 0 && yesterdayTotal == 0
+                                  ? AppTheme.textHint
+                                  : (isPositive ? AppTheme.primaryGreen : AppTheme.error),
+                              indicatorBg: todayTotal == 0 && yesterdayTotal == 0
+                                  ? AppTheme.backgroundGrey
+                                  : (isPositive 
+                                      ? AppTheme.primaryGreen.withValues(alpha: 0.1) 
+                                      : AppTheme.error.withValues(alpha: 0.1)),
+                              indicatorIcon: todayTotal == 0 && yesterdayTotal == 0
+                                  ? Icons.remove_rounded
+                                  : (isPositive ? Icons.trending_up_rounded : Icons.trending_down_rounded),
+                              actionText: 'Ver desglose',
+                              onAction: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const SalesBreakdownScreen(),
+                                  ),
+                                );
+                              },
+                              leftBorderColor: AppTheme.primaryGreen,
                             ),
                           ),
-                          SizedBox(height: 4),
-                          Text(
-                            'Artículos por debajo del punto de reorden',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: AppTheme.textSecondary,
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: _DashboardCard(
+                              title: 'ARTÍCULOS CRÍTICOS',
+                              value: criticalCount.toString(),
+                              icon: Icons.warning_amber_rounded,
+                              iconColor: Colors.redAccent,
+                              iconBg: Colors.red.shade50,
+                              indicatorText: 'Requieren atención inmediata',
+                              indicatorColor: Colors.redAccent,
+                              indicatorBg: Colors.red.shade50,
+                              indicatorIcon: null,
+                              actionText: 'Reabastecer',
+                              onAction: () {
+                                HomeScreen.of(context)?.showCriticalInventory();
+                              },
+                              leftBorderColor: Colors.redAccent,
                             ),
                           ),
                         ],
                       ),
-                      GestureDetector(
-                        onTap: () {
-                          HomeScreen.of(context)?.showCriticalInventory();
-                        },
-                        child: Row(
-                          children: [
-                            Text(
-                              'Ver todo',
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.primaryGreen,
-                              ),
-                            ),
-                            const SizedBox(width: 2),
-                            const Icon(Icons.chevron_right_rounded, size: 16, color: AppTheme.primaryGreen),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
+                      
+                      const SizedBox(height: 32),
 
-                  if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData)
-                    const Center(child: Padding(
-                      padding: EdgeInsets.all(32.0),
-                      child: CircularProgressIndicator(),
-                    ))
-                  else if (criticalProducts.isEmpty)
-                    _buildEmptyAlerts()
-                  else
-                    ...criticalProducts.take(5).map((product) => _AlertItem(product: product)),
-                ],
+                      // ── Alertas de Inventario ──
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          const Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Alertas de Inventario',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.textPrimary,
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                'Artículos por debajo del punto de reorden',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppTheme.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              HomeScreen.of(context)?.showCriticalInventory();
+                            },
+                            child: Row(
+                              children: [
+                                Text(
+                                  'Ver todo',
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.primaryGreen,
+                                  ),
+                                ),
+                                const SizedBox(width: 2),
+                                const Icon(Icons.chevron_right_rounded, size: 16, color: AppTheme.primaryGreen),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData)
+                        const Center(child: Padding(
+                          padding: EdgeInsets.all(32.0),
+                          child: CircularProgressIndicator(),
+                        ))
+                      else if (criticalProducts.isEmpty)
+                        _buildEmptyAlerts()
+                      else
+                        ...criticalProducts.take(5).map((product) => _AlertItem(product: product)),
+                    ],
+                  );
+                },
               );
             },
           ),
@@ -499,7 +573,7 @@ class _AlertItem extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'SKU: ${product.codigoBarras ?? product.id.substring(0, 8)}',
+                          'SKU: ${product.sku}${product.codigoBarras != null && product.codigoBarras!.isNotEmpty ? ' • ${product.codigoBarras}' : ''}',
                           style: const TextStyle(
                             fontSize: 10,
                             color: AppTheme.textSecondary,

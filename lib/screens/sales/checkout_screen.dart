@@ -84,10 +84,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       final saleItems = items.map((item) {
         return SaleItemModel(
           id: item['id'] ?? '',
-          name: item['name'] ?? '',
+          nombre: item['name'] ?? '',
           sku: item['sku'] ?? '',
-          price: (item['price'] ?? 0).toDouble(),
-          quantity: (item['quantity'] ?? 0).toInt(),
+          precio: (item['price'] ?? 0).toDouble(),
+          cantidad: (item['quantity'] ?? 0).toInt(),
           categoria: item['category'] ?? 'General',
         );
       }).toList();
@@ -103,11 +103,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         id: '', // Firestore generará el ID automáticamente
         fecha: DateTime.now(),
         total: _total,
-        totalItems: _totalItems,
-        cashier: cashierName,
-        status: 'PAGADO',
+        totalArticulos: _totalItems,
+        cajero: cashierName,
+        estado: 'PAGADO',
         categoria: saleCategory,
-        items: saleItems,
+        articulos: saleItems,
       );
 
       // 4. Guardar la venta en Firestore

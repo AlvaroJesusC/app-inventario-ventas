@@ -2,28 +2,44 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SaleItemModel {
   final String id;
-  final String name;
+  final String nombre;
   final String sku;
-  final double price;
-  final int quantity;
+  final double precio;
+  final int cantidad;
   final String categoria;
 
   SaleItemModel({
     required this.id,
-    required this.name,
+    required this.nombre,
     required this.sku,
-    required this.price,
-    required this.quantity,
+    required this.precio,
+    required this.cantidad,
     this.categoria = 'General',
   });
 
   factory SaleItemModel.fromMap(Map<String, dynamic> map) {
+    double parsedPrecio = 0.0;
+    var rawPrecio = map['precio'] ?? map['price'];
+    if (rawPrecio is num) {
+      parsedPrecio = rawPrecio.toDouble();
+    } else if (rawPrecio is String) {
+      parsedPrecio = double.tryParse(rawPrecio) ?? 0.0;
+    }
+
+    int parsedCantidad = 0;
+    var rawCantidad = map['cantidad'] ?? map['quantity'];
+    if (rawCantidad is num) {
+      parsedCantidad = rawCantidad.toInt();
+    } else if (rawCantidad is String) {
+      parsedCantidad = int.tryParse(rawCantidad) ?? 0;
+    }
+
     return SaleItemModel(
       id: map['id'] ?? '',
-      name: map['name'] ?? '',
+      nombre: map['nombre'] ?? map['name'] ?? '',
       sku: map['sku'] ?? '',
-      price: (map['price'] ?? 0).toDouble(),
-      quantity: (map['quantity'] ?? 0).toInt(),
+      precio: parsedPrecio,
+      cantidad: parsedCantidad,
       categoria: map['categoria'] ?? 'General',
     );
   }
@@ -31,10 +47,10 @@ class SaleItemModel {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'name': name,
+      'nombre': nombre,
       'sku': sku,
-      'price': price,
-      'quantity': quantity,
+      'precio': precio,
+      'cantidad': cantidad,
       'categoria': categoria,
     };
   }
@@ -44,47 +60,64 @@ class SaleModel {
   final String id;
   final DateTime fecha;
   final double total;
-  final int totalItems;
-  final String cashier;
-  final String status;
+  final int totalArticulos;
+  final String cajero;
+  final String estado;
   final String categoria;
-  final List<SaleItemModel> items;
+  final List<SaleItemModel> articulos;
 
   SaleModel({
     required this.id,
     required this.fecha,
     required this.total,
-    required this.totalItems,
-    required this.cashier,
-    this.status = 'PAGADO',
+    required this.totalArticulos,
+    required this.cajero,
+    this.estado = 'PAGADO',
     required this.categoria,
-    required this.items,
+    required this.articulos,
   });
 
   factory SaleModel.fromMap(Map<String, dynamic> map, String documentId) {
-    var rawItems = map['items'] as List<dynamic>? ?? [];
-    List<SaleItemModel> saleItems = rawItems
+    var rawItems = map['articulos'] ?? map['items'];
+    List<dynamic> itemList = rawItems is List ? rawItems : [];
+    List<SaleItemModel> saleItems = itemList
         .map((item) => SaleItemModel.fromMap(Map<String, dynamic>.from(item)))
         .toList();
 
     DateTime parsedDate;
     if (map['fecha'] is Timestamp) {
-      parsedDate = (map['fecha'] as Timestamp).toDate();
+      parsedDate = (map['fecha'] as Timestamp).toDate().toLocal();
     } else if (map['fecha'] is String) {
-      parsedDate = DateTime.tryParse(map['fecha']) ?? DateTime.now();
+      parsedDate = (DateTime.tryParse(map['fecha']) ?? DateTime.now()).toLocal();
     } else {
       parsedDate = DateTime.now();
+    }
+
+    double parsedTotal = 0.0;
+    var rawTotal = map['total'];
+    if (rawTotal is num) {
+      parsedTotal = rawTotal.toDouble();
+    } else if (rawTotal is String) {
+      parsedTotal = double.tryParse(rawTotal) ?? 0.0;
+    }
+
+    int parsedTotalArticulos = 0;
+    var rawTotalArt = map['totalArticulos'] ?? map['totalItems'];
+    if (rawTotalArt is num) {
+      parsedTotalArticulos = rawTotalArt.toInt();
+    } else if (rawTotalArt is String) {
+      parsedTotalArticulos = int.tryParse(rawTotalArt) ?? 0;
     }
 
     return SaleModel(
       id: documentId,
       fecha: parsedDate,
-      total: (map['total'] ?? 0).toDouble(),
-      totalItems: (map['totalItems'] ?? 0).toInt(),
-      cashier: map['cashier'] ?? 'Cajero',
-      status: map['status'] ?? 'PAGADO',
+      total: parsedTotal,
+      totalArticulos: parsedTotalArticulos,
+      cajero: map['cajero'] ?? map['cashier'] ?? 'Cajero',
+      estado: map['estado'] ?? map['status'] ?? 'PAGADO',
       categoria: map['categoria'] ?? map['type'] ?? 'General',
-      items: saleItems,
+      articulos: saleItems,
     );
   }
 
@@ -92,11 +125,11 @@ class SaleModel {
     return {
       'fecha': Timestamp.fromDate(fecha),
       'total': total,
-      'totalItems': totalItems,
-      'cashier': cashier,
-      'status': status,
+      'totalArticulos': totalArticulos,
+      'cajero': cajero,
+      'estado': estado,
       'categoria': categoria,
-      'items': items.map((item) => item.toMap()).toList(),
+      'articulos': articulos.map((item) => item.toMap()).toList(),
     };
   }
 }

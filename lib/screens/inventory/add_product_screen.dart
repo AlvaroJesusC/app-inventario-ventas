@@ -5,6 +5,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../config/app_constants.dart';
 import '../../config/app_theme.dart';
 import '../../models/product_model.dart';
+import '../../models/sku.dart';
 import '../../services/product_service.dart';
 import '../profile/profile_screen.dart';
 import '../home/home_screen.dart';
@@ -205,6 +206,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
         stock: int.parse(_stockController.text.trim()),
         categoria: _selectedCategory,
         codigoBarras: _scannedBarcode,
+        sku: widget.product?.sku ?? Sku.generar(
+          nombre: _nombreController.text.trim(),
+          categoria: _selectedCategory ?? 'General',
+        ).valor,
       );
 
       if (widget.product != null) {

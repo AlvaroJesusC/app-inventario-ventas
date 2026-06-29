@@ -23,6 +23,20 @@ class _SalesTabState extends State<SalesTab> {
     return StreamBuilder<List<SaleModel>>(
       stream: SaleService().getSalesStream(),
       builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          debugPrint("Error loading sales: ${snapshot.error}");
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(40),
+              child: Text(
+                'Error cargando ventas: ${snapshot.error}',
+                style: const TextStyle(color: AppTheme.error),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          );
+        }
+
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
             child: Padding(
@@ -37,20 +51,21 @@ class _SalesTabState extends State<SalesTab> {
         // Lógica de filtrado
         final now = DateTime.now();
         List<SaleModel> filteredSales = allSales.where((sale) {
+          final saleLocal = sale.fecha.toLocal();
           if (_selectedFilter == 'Hoy') {
-            return sale.fecha.year == now.year &&
-                sale.fecha.month == now.month &&
-                sale.fecha.day == now.day;
+            return saleLocal.year == now.year &&
+                saleLocal.month == now.month &&
+                saleLocal.day == now.day;
           } else if (_selectedFilter == 'Esta semana') {
-            final difference = now.difference(sale.fecha).inDays;
+            final difference = now.difference(saleLocal).inDays;
             return difference >= 0 && difference < 7;
           } else if (_selectedFilter == 'Mes') {
-            return sale.fecha.year == now.year && sale.fecha.month == now.month;
+            return saleLocal.year == now.year && saleLocal.month == now.month;
           } else if (_selectedFilter == 'custom' &&
               _selectedCustomDate != null) {
-            return sale.fecha.year == _selectedCustomDate!.year &&
-                sale.fecha.month == _selectedCustomDate!.month &&
-                sale.fecha.day == _selectedCustomDate!.day;
+            return saleLocal.year == _selectedCustomDate!.year &&
+                saleLocal.month == _selectedCustomDate!.month &&
+                saleLocal.day == _selectedCustomDate!.day;
           }
           return true;
         }).toList();
@@ -623,10 +638,11 @@ class _SalesTabState extends State<SalesTab> {
   }
 
   String _formatSaleDate(DateTime date) {
+    final localDate = date.toLocal();
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = DateTime(now.year, now.month, now.day - 1);
-    final saleDay = DateTime(date.year, date.month, date.day);
+    final saleDay = DateTime(localDate.year, localDate.month, localDate.day);
 
     String dateStr;
     if (saleDay == today) {
@@ -635,28 +651,28 @@ class _SalesTabState extends State<SalesTab> {
       dateStr = "Ayer";
     } else {
       dateStr =
-          "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}";
+          "${localDate.day.toString().padLeft(2, '0')}/${localDate.month.toString().padLeft(2, '0')}/${localDate.year}";
     }
 
-    final hours = date.hour.toString().padLeft(2, '0');
-    final minutes = date.minute.toString().padLeft(2, '0');
+    final hours = localDate.hour.toString().padLeft(2, '0');
+    final minutes = localDate.minute.toString().padLeft(2, '0');
     return "$dateStr, $hours:$minutes";
   }
 
   Widget _buildTransactionItem(SaleModel sale) {
     // 1. Determinar título con nombre de producto
     String titleText = "Sin productos";
-    if (sale.items.isNotEmpty) {
-      if (sale.items.length == 1) {
-        titleText = "${sale.items.first.name} (x${sale.items.first.quantity})";
+    if (sale.articulos.isNotEmpty) {
+      if (sale.articulos.length == 1) {
+        titleText = "${sale.articulos.first.nombre} (x${sale.articulos.first.cantidad})";
       } else {
-        titleText = "${sale.items.first.name} y ${sale.items.length - 1} prod.";
+        titleText = "${sale.articulos.first.nombre} y ${sale.articulos.length - 1} prod.";
       }
     }
 
     // 2. Determinar subtítulo con fecha formateada y cajero
     final String subtitleText =
-        "${_formatSaleDate(sale.fecha)} • ${sale.cashier}";
+        "${_formatSaleDate(sale.fecha)} • ${sale.cajero}";
 
     return InkWell(
       onTap: () {
@@ -733,7 +749,7 @@ class _SalesTabState extends State<SalesTab> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    '${sale.totalItems} und.',
+                    '${sale.totalArticulos} und.',
                     style: const TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.w700,
@@ -758,8 +774,9 @@ class _SalesTabState extends State<SalesTab> {
   }
 
   void _showSaleDetailDialog(SaleModel sale) {
+    final localFecha = sale.fecha.toLocal();
     final String dateStr =
-        "${sale.fecha.day}/${sale.fecha.month}/${sale.fecha.year} ${sale.fecha.hour.toString().padLeft(2, '0')}:${sale.fecha.minute.toString().padLeft(2, '0')}";
+        "${localFecha.day}/${localFecha.month}/${localFecha.year} ${localFecha.hour.toString().padLeft(2, '0')}:${localFecha.minute.toString().padLeft(2, '0')}";
 
     showDialog(
       context: context,
@@ -802,7 +819,7 @@ class _SalesTabState extends State<SalesTab> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Cajero: ${sale.cashier}',
+                  'Cajero: ${sale.cajero}',
                   style: const TextStyle(
                     fontSize: 13,
                     color: AppTheme.textSecondary,
@@ -832,9 +849,9 @@ class _SalesTabState extends State<SalesTab> {
                   ),
                   child: ListView.builder(
                     shrinkWrap: true,
-                    itemCount: sale.items.length,
+                    itemCount: sale.articulos.length,
                     itemBuilder: (context, idx) {
-                      final item = sale.items[idx];
+                      final item = sale.articulos[idx];
                       return Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4),
                         child: Row(
@@ -844,7 +861,7 @@ class _SalesTabState extends State<SalesTab> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    item.name,
+                                    item.nombre,
                                     style: const TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
@@ -852,7 +869,7 @@ class _SalesTabState extends State<SalesTab> {
                                     ),
                                   ),
                                   Text(
-                                    '${item.quantity} x S/. ${item.price.toStringAsFixed(2)}',
+                                    '${item.cantidad} x S/. ${item.precio.toStringAsFixed(2)}',
                                     style: const TextStyle(
                                       fontSize: 11,
                                       color: AppTheme.textSecondary,
@@ -862,7 +879,7 @@ class _SalesTabState extends State<SalesTab> {
                               ),
                             ),
                             Text(
-                              'S/. ${(item.price * item.quantity).toStringAsFixed(2)}',
+                              'S/. ${(item.precio * item.cantidad).toStringAsFixed(2)}',
                               style: const TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,

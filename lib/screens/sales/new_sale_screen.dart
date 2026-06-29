@@ -165,7 +165,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         _scannedItems.add({
           'id': product.id,
           'name': product.nombre,
-          'sku': product.codigoBarras ?? '',
+          'sku': product.sku,
           'price': product.precio,
           'quantity': 1,
           'image': Icons.inventory_2_rounded,
@@ -281,7 +281,10 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
 
     final query = _searchQuery.toLowerCase();
     final matchedProducts = _allProducts.where((p) {
-      return p.nombre.toLowerCase().contains(query);
+      final nameMatches = p.nombre.toLowerCase().contains(query);
+      final skuMatches = p.sku.toLowerCase().contains(query);
+      final barcodeMatches = p.codigoBarras?.toLowerCase().contains(query) ?? false;
+      return nameMatches || skuMatches || barcodeMatches;
     }).toList();
 
     return Container(
