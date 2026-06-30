@@ -56,7 +56,7 @@ class ProductService {
   // ─── STOCK ─────────────────────────────────────────────────
 
   /// Actualizar solo el stock
-  Future<void> updateStock(String productId, int newStock) async {
+  Future<void> updateStock(String productId, double newStock) async {
     await _productosRef.doc(productId).update({'stock': newStock});
   }
 

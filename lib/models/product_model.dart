@@ -5,10 +5,12 @@ class ProductModel {
   final String id;
   final String nombre;
   final double precio;
-  final int stock;
+  final double stock;
   final String? categoria;
   final String? codigoBarras;
   final String sku;
+  final bool ventaPorPeso;
+  final String unidadMedida;
 
   ProductModel({
     required this.id,
@@ -18,13 +20,17 @@ class ProductModel {
     this.categoria,
     this.codigoBarras,
     required this.sku,
+    this.ventaPorPeso = false,
+    this.unidadMedida = 'und',
   });
 
   // estado de stock del producto
   String get stockLabel {
+    final cleanStock = stock % 1 == 0 ? stock.toInt().toString() : stock.toString();
+    final suffix = unidadMedida.isNotEmpty ? unidadMedida : 'und';
     if (stock <= 0) return 'Agotado';
-    if (stock <= 10) return '$stock: Bajo Stock';
-    return '$stock: En Stock';
+    if (stock <= 10) return '$cleanStock $suffix: Bajo Stock';
+    return '$cleanStock $suffix: En Stock';
   }
 
   //tipo de estado para colores en la ui
@@ -44,10 +50,12 @@ class ProductModel {
       id: documentId,
       nombre: nombre,
       precio: (map['precio'] ?? 0).toDouble(),
-      stock: (map['stock'] ?? 0).toInt(),
+      stock: (map['stock'] ?? 0).toDouble(),
       categoria: categoria,
       codigoBarras: map['codigoBarras'],
       sku: map['sku'] ?? skuGenerado,
+      ventaPorPeso: map['ventaPorPeso'] ?? false,
+      unidadMedida: map['unidadMedida'] ?? 'und',
     );
   }
 
@@ -60,6 +68,8 @@ class ProductModel {
       'categoria': categoria,
       'codigoBarras': codigoBarras,
       'sku': sku,
+      'ventaPorPeso': ventaPorPeso,
+      'unidadMedida': unidadMedida,
     };
   }
 }
