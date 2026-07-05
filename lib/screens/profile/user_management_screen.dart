@@ -522,7 +522,7 @@ class _AddEmployeeBottomSheetState extends State<AddEmployeeBottomSheet> {
 
               // Rol
               DropdownButtonFormField<String>(
-                value: _selectedRole,
+                initialValue: _selectedRole,
                 decoration: InputDecoration(
                   labelText: 'Rol',
                   prefixIcon: const Icon(Icons.admin_panel_settings_outlined),

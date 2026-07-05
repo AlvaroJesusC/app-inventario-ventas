@@ -8,6 +8,7 @@ import '../home/tabs/reports_tab.dart';
 import '../profile/profile_screen.dart';
 import '../../widgets/global_header.dart';
 import '../inventory/add_product_screen.dart';
+import '../inventory/new_purchase_screen.dart';
 import '../sales/new_sale_screen.dart';
 import '../profile/user_management_screen.dart';
 
@@ -29,6 +30,7 @@ class HomeScreenState extends State<HomeScreen> {
   bool _showAddProduct = false;
   bool _showNewSale = false;
   bool _showUserManagement = false;
+  bool _showNewPurchase = false;
 
   final _inventoryTabKey = GlobalKey<InventoryTabState>();
   late final List<Widget> _tabs;
@@ -50,6 +52,7 @@ class HomeScreenState extends State<HomeScreen> {
       _showAddProduct = false;
       _showNewSale = false;
       _showUserManagement = false;
+      _showNewPurchase = false;
     });
   }
 
@@ -66,6 +69,7 @@ class HomeScreenState extends State<HomeScreen> {
       _showAddProduct = false;
       _showNewSale = false;
       _showUserManagement = false;
+      _showNewPurchase = false;
     });
     if (index == 2) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -81,6 +85,7 @@ class HomeScreenState extends State<HomeScreen> {
       _showAddProduct = false;
       _showNewSale = false;
       _showUserManagement = false;
+      _showNewPurchase = false;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _inventoryTabKey.currentState?.applyStockFilter(StockFilter.critical);
@@ -93,6 +98,7 @@ class HomeScreenState extends State<HomeScreen> {
       _showProfile = false;
       _showNewSale = false;
       _showUserManagement = false;
+      _showNewPurchase = false;
     });
   }
 
@@ -108,6 +114,7 @@ class HomeScreenState extends State<HomeScreen> {
       _showAddProduct = false;
       _showProfile = false;
       _showUserManagement = false;
+      _showNewPurchase = false;
     });
   }
 
@@ -123,6 +130,7 @@ class HomeScreenState extends State<HomeScreen> {
       _showProfile = false;
       _showAddProduct = false;
       _showNewSale = false;
+      _showNewPurchase = false;
     });
   }
 
@@ -133,11 +141,27 @@ class HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  void showNewPurchase() {
+    setState(() {
+      _showNewPurchase = true;
+      _showAddProduct = false;
+      _showProfile = false;
+      _showNewSale = false;
+      _showUserManagement = false;
+    });
+  }
+
+  void hideNewPurchase() {
+    setState(() {
+      _showNewPurchase = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: !_showAddProduct && !_showProfile && !_showNewSale && !_showUserManagement,
-      onPopInvoked: (didPop) {
+      canPop: !_showAddProduct && !_showProfile && !_showNewSale && !_showUserManagement && !_showNewPurchase,
+      onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
         
         if (_showAddProduct) {
@@ -148,6 +172,8 @@ class HomeScreenState extends State<HomeScreen> {
           hideProfile();
         } else if (_showNewSale) {
           hideNewSale();
+        } else if (_showNewPurchase) {
+          hideNewPurchase();
         }
       },
       child: Scaffold(
@@ -155,7 +181,7 @@ class HomeScreenState extends State<HomeScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            if (!_showAddProduct && !_showNewSale) const GlobalHeader(),
+            if (!_showAddProduct && !_showNewSale && !_showNewPurchase) const GlobalHeader(),
             Expanded(
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 250),
@@ -167,13 +193,15 @@ class HomeScreenState extends State<HomeScreen> {
                             ? const AddProductScreen() 
                             : _showNewSale
                                 ? const NewSaleScreen()
-                                : _tabs[_currentIndex],
+                                : _showNewPurchase
+                                    ? const NewPurchaseScreen()
+                                    : _tabs[_currentIndex],
               ),
             ),
           ],
         ),
       ),
-      bottomNavigationBar: _buildBottomNavBar(),
+      bottomNavigationBar: (_showAddProduct || _showNewSale || _showNewPurchase) ? null : _buildBottomNavBar(),
       ),
     );
   }

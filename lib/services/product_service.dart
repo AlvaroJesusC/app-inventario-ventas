@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models/inventory_movement_model.dart';
 import '../models/product_model.dart';
+import 'movement_service.dart';
 
 /// Servicio de productos con Cloud Firestore
 ///
@@ -8,6 +10,7 @@ import '../models/product_model.dart';
 /// El ID del documento lo genera Firestore automáticamente
 class ProductService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final MovementService _movementService = MovementService();
 
   /// Referencia a la colección "productos"
   CollectionReference<Map<String, dynamic>> get _productosRef {
@@ -40,6 +43,21 @@ class ProductService {
   /// Agregar un nuevo producto
   Future<String> addProduct(ProductModel product) async {
     final docRef = await _productosRef.add(product.toMap());
+
+    // Si Stock Inicial > 0, registrar trazabilidad Kardex (tipo: inventario_inicial)
+    if (product.stock > 0) {
+      final movement = MovementModel(
+        id: '',
+        productoId: docRef.id,
+        tipo: 'inventario_inicial',
+        cantidad: product.stock,
+        unidad: product.unidadMedida,
+        fecha: DateTime.now(),
+        referenciaId: null,
+      );
+      await _movementService.registrarMovimiento(movement);
+    }
+
     return docRef.id;
   }
 

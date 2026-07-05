@@ -136,7 +136,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                           width: 100,
                           height: 100,
                           decoration: BoxDecoration(
-                            color: AppTheme.primaryGreen.withOpacity(0.1),
+                            color: AppTheme.primaryGreen.withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
@@ -266,7 +266,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                         color: color,
                         shape: BoxShape.circle,
                         border: isSelected 
-                            ? Border.all(color: Colors.black.withOpacity(0.5), width: 2)
+                            ? Border.all(color: Colors.black.withValues(alpha: 0.5), width: 2)
                             : null,
                       ),
                       child: isSelected
@@ -282,7 +282,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryGreenLight.withOpacity(0.3),
+                  color: AppTheme.primaryGreenLight.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: AppTheme.primaryGreenLight),
                 ),

@@ -346,7 +346,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               : null;
 
                           return DropdownButtonFormField<String>(
-                            value: currentValue,
+                            initialValue: currentValue,
                             decoration: const InputDecoration(
                               hintText: 'Seleccionar categoría...',
                             ),
@@ -388,10 +388,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                     hintText: 'S/. 0.00',
                                   ),
                                   validator: (value) {
-                                    if (value == null || value.isEmpty)
+                                    if (value == null || value.isEmpty) {
                                       return 'Requerido';
-                                    if (double.tryParse(value) == null)
+                                    }
+                                    if (double.tryParse(value) == null) {
                                       return 'Inválido';
+                                    }
                                     return null;
                                   },
                                 ),

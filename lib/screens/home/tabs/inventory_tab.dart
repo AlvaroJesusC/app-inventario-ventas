@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import '../../../config/app_theme.dart';
 import '../../../models/product_model.dart';
+import '../../../models/purchase_model.dart';
 import '../../../services/product_service.dart';
+import '../../../services/purchase_service.dart';
 import '../../../widgets/product_card.dart';
 import '../../../widgets/inventory_filter_bottom_sheet.dart';
 import '../../inventory/add_product_screen.dart';
 import '../../inventory/category_management_screen.dart';
+import '../../inventory/new_purchase_screen.dart';
 import '../home_screen.dart';
 
-/// Tab de Inventario — vista completa con búsqueda, filtros y lista de productos
+/// Tab de Inventario — vista con sub-navegación entre [Productos] y [Compras]
 /// Conectada a Cloud Firestore en tiempo real
 class InventoryTab extends StatefulWidget {
   const InventoryTab({super.key});
@@ -19,8 +22,12 @@ class InventoryTab extends StatefulWidget {
 
 class InventoryTabState extends State<InventoryTab>
     with SingleTickerProviderStateMixin {
+  // 0: Productos, 1: Compras
+  int _selectedSubTab = 0;
+
   final _searchController = TextEditingController();
   final _productService = ProductService();
+  final _purchaseService = PurchaseService();
   String _searchQuery = '';
 
   // Filter & Sort State
@@ -30,6 +37,7 @@ class InventoryTabState extends State<InventoryTab>
 
   void applyStockFilter(StockFilter filter) {
     setState(() {
+      _selectedSubTab = 0; // Cambiar a la pestaña productos si entra por filtro
       _selectedStockFilter = filter;
     });
   }
@@ -47,14 +55,16 @@ class InventoryTabState extends State<InventoryTab>
       duration: const Duration(milliseconds: 250),
     );
 
-    // Reconstruye el árbol al terminar la animación para retirar el overlay invisible de la pantalla
+    _animationController.addListener(() {
+      setState(() {});
+    });
+
     _animationController.addStatusListener((status) {
       if (status == AnimationStatus.dismissed) {
         setState(() {});
       }
     });
 
-    // Animaciones escalonadas para las opciones del Speed Dial
     _item1Animation = CurvedAnimation(
       parent: _animationController,
       curve: const Interval(0.15, 1.0, curve: Curves.easeOutCubic),
@@ -151,11 +161,23 @@ class InventoryTabState extends State<InventoryTab>
     });
   }
 
+  void _navigateToNewPurchase() {
+    final homeState = HomeScreen.of(context);
+    if (homeState != null) {
+      homeState.showNewPurchase();
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const NewPurchaseScreen()),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
       canPop: !_isMenuOpen,
-      onPopInvoked: (didPop) {
+      onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
         if (_isMenuOpen) {
           _toggleMenu();
@@ -166,95 +188,32 @@ class InventoryTabState extends State<InventoryTab>
         children: [
           Column(
             children: [
-              // ── Contenido principal: lee de Firestore en tiempo real ──
               Expanded(
-                child: StreamBuilder<List<ProductModel>>(
-                  stream: _productService.getProductsStream(),
-                  builder: (context, snapshot) {
-                    // Estado de carga SOLO en la carga inicial (sin datos previos)
-                    if (snapshot.connectionState == ConnectionState.waiting &&
-                        !snapshot.hasData) {
-                      return Column(
-                        children: [
-                          _buildSectionHeader(
-                            total: 0,
-                            showing: 0,
-                            allProducts: [],
-                          ),
-                          _buildSearchBar(),
-                          const Expanded(
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                color: AppTheme.primaryGreen,
-                                strokeWidth: 2.5,
-                              ),
-                            ),
-                          ),
-                        ],
-                      );
-                    }
-
-                    // Error
-                    if (snapshot.hasError) {
-                      return _buildErrorState(snapshot.error.toString());
-                    }
-
-                    // Obtener productos y filtrar
-                    final allProducts = snapshot.data ?? [];
-                    final filteredProducts = _filterProducts(allProducts);
-
-                    return Column(
-                      children: [
-                        // ── Título de sección + conteo + filtro ──
-                        _buildSectionHeader(
-                          total: allProducts.length,
-                          showing: filteredProducts.length,
-                          allProducts: allProducts,
-                        ),
-
-                        // ── Barra de búsqueda ──
-                        _buildSearchBar(),
-
-                        // ── Lista o estado vacío ──
-                        Expanded(
-                          child: filteredProducts.isEmpty
-                              ? _buildEmptyState(
-                                  hasProducts: allProducts.isNotEmpty,
-                                )
-                              : _buildProductList(filteredProducts),
-                        ),
-                      ],
-                    );
-                  },
-                ),
+                child: _selectedSubTab == 0
+                    ? _buildProductsView()
+                    : _buildPurchasesView(),
               ),
             ],
           ),
 
-          // 1. Overlay de fondo oscuro semitransparente (solo interactivo si se muestra)
-          if (!_animationController.isDismissed)
+          // Speed dial solo visible en la pestaña Productos cuando está abierto o en animación
+          if (_selectedSubTab == 0 && (_isMenuOpen || _animationController.value > 0))
             Positioned.fill(
               child: GestureDetector(
                 onTap: _toggleMenu,
                 behavior: HitTestBehavior.opaque,
-                child: AnimatedBuilder(
-                  animation: _animationController,
-                  builder: (context, child) {
-                    return Container(
-                      color: Colors.black.withOpacity(
-                        0.4 * _animationController.value,
-                      ),
-                    );
-                  },
+                child: Container(
+                  color: Colors.black.withValues(
+                    alpha: 0.4 * _animationController.value,
+                  ),
                 ),
               ),
             ),
 
-          // 2. Menú flotante con las opciones
-          if (!_animationController.isDismissed)
+          if (_selectedSubTab == 0 && (_isMenuOpen || _animationController.value > 0))
             Positioned(
               right: 20,
-              bottom: 92, // Posición por encima del FAB principal
+              bottom: 92,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -300,37 +259,359 @@ class InventoryTabState extends State<InventoryTab>
               ),
             ),
 
-          // 3. Botón Flotante Principal (FAB)
-          Positioned(
-            right: 20,
-            bottom: 20,
-            child: FloatingActionButton(
-              heroTag: "speed_dial_main",
-              onPressed: _toggleMenu,
-              backgroundColor: AppTheme.primaryGreen,
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+          if (_selectedSubTab == 0)
+            Positioned(
+              right: 20,
+              bottom: 20,
+              child: FloatingActionButton(
+                heroTag: "speed_dial_main",
+                onPressed: _toggleMenu,
+                backgroundColor: AppTheme.primaryGreen,
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: AnimatedBuilder(
+                  animation: _animationController,
+                  builder: (context, child) {
+                    return Transform.rotate(
+                      angle: _animationController.value *
+                          (3 * 3.141592653589793 / 4),
+                      child: Icon(
+                        _animationController.value > 0.5
+                            ? Icons.close_rounded
+                            : Icons.add_rounded,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                    );
+                  },
+                ),
               ),
-              child: AnimatedBuilder(
-                animation: _animationController,
-                builder: (context, child) {
-                  return Transform.rotate(
-                    angle:
-                        _animationController.value *
-                        (3 *
-                            3.141592653589793 /
-                            4), // Rota 135 grados para formar la 'X'
-                    child: Icon(
-                      _animationController.value > 0.5
-                          ? Icons.close_rounded
-                          : Icons.add_rounded,
-                      color: Colors.white,
-                      size: 28,
+            ),
+        ],
+      ),
+    );
+  }
+
+  // ── PESTAÑA 1: PRODUCTOS ───────────────────────────────
+  Widget _buildProductsView() {
+    return StreamBuilder<List<ProductModel>>(
+      stream: _productService.getProductsStream(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            !snapshot.hasData) {
+          return Column(
+            children: [
+              _buildMainHeader(productCount: 0),
+              _buildSearchBar(),
+              const Expanded(
+                child: Center(
+                  child: CircularProgressIndicator(
+                    color: AppTheme.primaryGreen,
+                    strokeWidth: 2.5,
+                  ),
+                ),
+              ),
+            ],
+          );
+        }
+
+        if (snapshot.hasError) {
+          return _buildErrorState(snapshot.error.toString());
+        }
+
+        final allProducts = snapshot.data ?? [];
+        final filteredProducts = _filterProducts(allProducts);
+
+        return Column(
+          children: [
+            _buildMainHeader(
+              productCount: allProducts.length,
+              showingCount: filteredProducts.length,
+              allProducts: allProducts,
+            ),
+            _buildSearchBar(),
+            Expanded(
+              child: filteredProducts.isEmpty
+                  ? _buildEmptyState(hasProducts: allProducts.isNotEmpty)
+                  : _buildProductList(filteredProducts),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // ── PESTAÑA 2: COMPRAS (IMAGE 2) ───────────────────────
+  Widget _buildPurchasesView() {
+    return StreamBuilder<List<PurchaseModel>>(
+      stream: _purchaseService.getPurchasesStream(),
+      builder: (context, snapshot) {
+        final purchases = snapshot.data ?? [];
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildMainHeader(
+              productCount: purchases.length,
+              isPurchasesTab: true,
+            ),
+
+            // Botón "+ Nueva Compra" a la derecha (según Imagen 2)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              child: Row(
+                children: [
+                  const Spacer(),
+                  OutlinedButton.icon(
+                    onPressed: _navigateToNewPurchase,
+                    icon: const Icon(Icons.add_rounded, color: AppTheme.primaryGreen, size: 20),
+                    label: const Text(
+                      'Nueva Compra',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryGreen,
+                      ),
                     ),
-                  );
-                },
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      side: const BorderSide(color: AppTheme.primaryGreen, width: 1.5),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ],
               ),
+            ),
+
+            // Lista de Compras
+            Expanded(
+              child: snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData
+                  ? const Center(
+                      child: CircularProgressIndicator(color: AppTheme.primaryGreen),
+                    )
+                  : purchases.isEmpty
+                      ? _buildEmptyPurchasesState()
+                      : ListView.separated(
+                          padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+                          itemCount: purchases.length,
+                          separatorBuilder: (ctx, i) => const SizedBox(height: 12),
+                          itemBuilder: (ctx, index) {
+                            final purchase = purchases[index];
+                            return _buildPurchaseCard(purchase);
+                          },
+                        ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // ── ENCABEZADO PRINCIPAL CON TAB SELECTOR [Productos | Compras] ──
+  Widget _buildMainHeader({
+    required int productCount,
+    int? showingCount,
+    List<ProductModel>? allProducts,
+    bool isPurchasesTab = false,
+  }) {
+    final bool hasActiveFilters =
+        _selectedCategoryFilter != null ||
+        _selectedStockFilter != StockFilter.all ||
+        _priceSortOrder != 'none';
+
+    final countText = isPurchasesTab
+        ? '$productCount compras'
+        : (_searchQuery.isNotEmpty || hasActiveFilters)
+            ? '${showingCount ?? 0} de $productCount productos'
+            : '$productCount productos';
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Fila de Título + Conteo + Botón Filtrar (arriba en el espacio vacío) ──
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Inventario',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    countText,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              if (!isPurchasesTab && allProducts != null)
+                GestureDetector(
+                  onTap: () => _showFilterBottomSheet(context, allProducts),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: hasActiveFilters
+                          ? AppTheme.primaryGreen.withValues(alpha: 0.15)
+                          : AppTheme.primaryGreen.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: hasActiveFilters
+                            ? AppTheme.primaryGreen.withValues(alpha: 0.5)
+                            : AppTheme.primaryGreen.withValues(alpha: 0.2),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Text(
+                          'Filtrar',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: hasActiveFilters
+                                ? AppTheme.primaryGreen
+                                : AppTheme.primaryGreen.withValues(alpha: 0.8),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Icon(
+                          Icons.tune_rounded,
+                          size: 18,
+                          color: hasActiveFilters
+                              ? AppTheme.primaryGreen
+                              : AppTheme.primaryGreen.withValues(alpha: 0.8),
+                        ),
+                        if (hasActiveFilters) ...[
+                          const SizedBox(width: 4),
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: const BoxDecoration(
+                              color: AppTheme.primaryGreen,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
+
+          const SizedBox(height: 14),
+
+          // ── SEGMENTED TOGGLE (Sub-tabs [Productos] | [Compras]) a Ancho Completo ──
+          Container(
+            height: 48,
+            width: double.infinity,
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0F2F5),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Row(
+              children: [
+                // Sub-tab 1: Productos
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedSubTab = 0;
+                      });
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      decoration: BoxDecoration(
+                        color: _selectedSubTab == 0
+                            ? Colors.white
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: _selectedSubTab == 0
+                            ? [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.06),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ]
+                            : [],
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        'Productos',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: _selectedSubTab == 0
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color: _selectedSubTab == 0
+                              ? AppTheme.textPrimary
+                              : AppTheme.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Sub-tab 2: Compras
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedSubTab = 1;
+                      });
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      decoration: BoxDecoration(
+                        color: _selectedSubTab == 1
+                            ? Colors.white
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: _selectedSubTab == 1
+                            ? [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.06),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ]
+                            : [],
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        'Compras',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: _selectedSubTab == 1
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color: _selectedSubTab == 1
+                              ? AppTheme.primaryGreen
+                              : AppTheme.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -338,7 +619,163 @@ class InventoryTabState extends State<InventoryTab>
     );
   }
 
-  /// Barra de búsqueda con ícono de filtro/escanear
+  // ── TARJETA DE COMPRA (RECREADA SEGÚN LA IMAGEN 2) ──
+  Widget _buildPurchaseCard(PurchaseModel purchase) {
+    // Formato de fecha corto (ej: 28 Jun 2026)
+    final dateStr = '${purchase.fecha.day} ${_getMonthAbbr(purchase.fecha.month)} ${purchase.fecha.year}';
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppTheme.divider.withValues(alpha: 0.8)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: IntrinsicHeight(
+          child: Row(
+            children: [
+              // Barra acentuada verde en el borde izquierdo (Image 2)
+              Container(
+                width: 5,
+                color: AppTheme.primaryGreen,
+              ),
+
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Fila Superior: Nombre Proveedor, Fecha, Menú
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              purchase.proveedor,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.textPrimary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Text(
+                            dateStr,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: AppTheme.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          PopupMenuButton<String>(
+                            icon: const Icon(Icons.more_vert_rounded, size: 20, color: AppTheme.textSecondary),
+                            onSelected: (val) {
+                              if (val == 'delete') {
+                                _purchaseService.deletePurchase(purchase.id);
+                              }
+                            },
+                            itemBuilder: (ctx) => [
+                              const PopupMenuItem(
+                                value: 'delete',
+                                child: Text('Eliminar registro'),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+
+                      // Fila Central: Subtítulo (ej. 3 productos · 120 unidades)
+                      Text(
+                        '${purchase.totalProductos} productos · ${purchase.unidadesLabel}',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppTheme.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Fila Inferior: Total en Soles (ej: S/. 340.00)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Text(
+                            'S/. ${purchase.total.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.primaryGreen,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _getMonthAbbr(int month) {
+    const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Set', 'Oct', 'Nov', 'Dic'];
+    return months[(month - 1) % 12];
+  }
+
+  Widget _buildEmptyPurchasesState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 90,
+            height: 90,
+            decoration: BoxDecoration(
+              color: AppTheme.primaryGreenLight.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Icon(
+              Icons.shopping_bag_outlined,
+              size: 44,
+              color: AppTheme.primaryGreen.withValues(alpha: 0.6),
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'No hay compras registradas',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Registra compras para abastecer tu inventario automáticamente',
+            style: TextStyle(
+              fontSize: 13,
+              color: AppTheme.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── OTROS WIDGETS AUXILIARES ──
   Widget _buildSearchBar() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -352,7 +789,7 @@ class InventoryTabState extends State<InventoryTab>
         child: Row(
           children: [
             const SizedBox(width: 14),
-            Icon(Icons.search_rounded, size: 22, color: AppTheme.textHint),
+            const Icon(Icons.search_rounded, size: 22, color: AppTheme.textHint),
             const SizedBox(width: 10),
             Expanded(
               child: TextField(
@@ -377,110 +814,9 @@ class InventoryTabState extends State<InventoryTab>
                 ),
               ),
             ),
-            const SizedBox(width: 8), // Pequeño margen derecho para equilibrar
+            const SizedBox(width: 8),
           ],
         ),
-      ),
-    );
-  }
-
-  /// Encabezado de sección: título "Inventario", conteo de items y botón de filtro
-  Widget _buildSectionHeader({
-    required int total,
-    required int showing,
-    required List<ProductModel> allProducts,
-  }) {
-    // Verificar si hay filtros activos
-    final bool hasActiveFilters =
-        _selectedCategoryFilter != null ||
-        _selectedStockFilter != StockFilter.all ||
-        _priceSortOrder != 'none';
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Inventario',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w800,
-              color: AppTheme.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              Text(
-                _searchQuery.isNotEmpty || hasActiveFilters
-                    ? '$showing de $total productos'
-                    : '$total productos',
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w400,
-                  color: AppTheme.textSecondary,
-                ),
-              ),
-              const Spacer(),
-              // Botón de filtro
-              GestureDetector(
-                onTap: () => _showFilterBottomSheet(context, allProducts),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: hasActiveFilters
-                        ? AppTheme.primaryGreen.withValues(alpha: 0.15)
-                        : AppTheme.primaryGreen.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: hasActiveFilters
-                          ? AppTheme.primaryGreen.withValues(alpha: 0.5)
-                          : AppTheme.primaryGreen.withValues(alpha: 0.2),
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Text(
-                        'Filtrar',
-                        style: TextStyle(
-                          fontSize: 14, // Más grande
-                          fontWeight: FontWeight.w700, // Más grueso
-                          color: hasActiveFilters
-                              ? AppTheme.primaryGreen
-                              : AppTheme.primaryGreen.withValues(alpha: 0.8),
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Icon(
-                        Icons.tune_rounded,
-                        size: 20, // Más grande
-                        color: hasActiveFilters
-                              ? AppTheme.primaryGreen
-                              : AppTheme.primaryGreen.withValues(alpha: 0.8),
-                      ),
-                      if (hasActiveFilters) ...[
-                        const SizedBox(width: 6),
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            color: AppTheme.primaryGreen,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }
@@ -511,7 +847,6 @@ class InventoryTabState extends State<InventoryTab>
     );
   }
 
-  /// Lista de productos con scroll
   Widget _buildProductList(List<ProductModel> products) {
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 80),
@@ -520,9 +855,7 @@ class InventoryTabState extends State<InventoryTab>
         final product = products[index];
         return ProductCard(
           product: product,
-          onTap: () {
-            // TODO: Navegar a detalle de producto
-          },
+          onTap: () {},
           onEdit: () {
             Navigator.push(
               context,
@@ -537,7 +870,6 @@ class InventoryTabState extends State<InventoryTab>
     );
   }
 
-  /// Diálogo para confirmar la eliminación de un producto
   void _confirmDeleteProduct(BuildContext context, ProductModel product) {
     showDialog(
       context: context,
@@ -560,26 +892,23 @@ class InventoryTabState extends State<InventoryTab>
             ),
             TextButton(
               onPressed: () async {
-                Navigator.pop(context); // Cierra el diálogo
+                final messenger = ScaffoldMessenger.of(context);
+                Navigator.pop(context);
                 try {
                   await _productService.deleteProduct(product.id);
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Producto eliminado correctamente'),
-                        backgroundColor: AppTheme.primaryGreen,
-                      ),
-                    );
-                  }
+                  messenger.showSnackBar(
+                    const SnackBar(
+                      content: Text('Producto eliminado correctamente'),
+                      backgroundColor: AppTheme.primaryGreen,
+                    ),
+                  );
                 } catch (e) {
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Error al eliminar el producto: $e'),
-                        backgroundColor: AppTheme.error,
-                      ),
-                    );
-                  }
+                  messenger.showSnackBar(
+                    SnackBar(
+                      content: Text('Error al eliminar el producto: $e'),
+                      backgroundColor: AppTheme.error,
+                    ),
+                  );
                 }
               },
               child: const Text(
@@ -596,9 +925,7 @@ class InventoryTabState extends State<InventoryTab>
     );
   }
 
-  /// Estado vacío según contexto (sin productos o sin resultados de búsqueda)
   Widget _buildEmptyState({required bool hasProducts}) {
-    // Si tiene productos pero la búsqueda no encontró nada
     final bool isSearching = hasProducts && _searchQuery.isNotEmpty;
 
     return Center(
@@ -607,7 +934,6 @@ class InventoryTabState extends State<InventoryTab>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Ícono decorativo
             Container(
               width: 100,
               height: 100,
@@ -677,7 +1003,6 @@ class InventoryTabState extends State<InventoryTab>
     );
   }
 
-  /// Estado de error
   Widget _buildErrorState(String error) {
     return Center(
       child: Padding(
@@ -692,7 +1017,7 @@ class InventoryTabState extends State<InventoryTab>
             ),
             const SizedBox(height: 16),
             const Text(
-              'Error al cargar productos',
+              'Error al cargar datos',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -714,7 +1039,6 @@ class InventoryTabState extends State<InventoryTab>
     );
   }
 
-  /// Helper widget para las opciones del Speed Dial
   Widget _buildSpeedDialItem({
     required String label,
     required IconData icon,
@@ -742,7 +1066,7 @@ class InventoryTabState extends State<InventoryTab>
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
+                    color: Colors.black.withValues(alpha: 0.12),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -769,7 +1093,7 @@ class InventoryTabState extends State<InventoryTab>
                 color: color,
                 boxShadow: [
                   BoxShadow(
-                    color: color.withOpacity(0.3),
+                    color: color.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
