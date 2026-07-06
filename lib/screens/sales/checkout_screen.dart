@@ -531,596 +531,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (BuildContext context) {
-        String? selectedMethod;
-        int currentStep = 0; // 0: Selección de Pago, 1: Yape/Plin QR, 2: Efectivo
-
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setModalState) {
-            return Container(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom,
-              ),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(
-                  top: Radius.circular(24),
-                ),
-              ),
-              child: SafeArea(
-                top: false,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
-                    child: currentStep == 0
-                        ? _buildPaymentSelectionStep(
-                            selectedMethod,
-                            (method) {
-                              setModalState(() {
-                                selectedMethod = method;
-                              });
-                            },
-                            () {
-                              if (selectedMethod == 'Yape/Plin') {
-                                setModalState(() {
-                                  currentStep = 1;
-                                });
-                              } else if (selectedMethod == 'Efectivo') {
-                                setModalState(() {
-                                  _montoRecibidoController.text = _total.toStringAsFixed(2);
-                                  currentStep = 2;
-                                });
-                              }
-                            },
-                          )
-                        : currentStep == 1
-                            ? _buildQrStep(
-                                () {
-                                  // Regresar a selección
-                                  setModalState(() {
-                                    currentStep = 0;
-                                  });
-                                },
-                                () {
-                                  Navigator.pop(context); // Cierra bottom sheet
-                                  _procesarCobro('Yape/Plin');
-                                },
-                              )
-                            : _buildEfectivoStep(
-                                () {
-                                  // Regresar a selección
-                                  setModalState(() {
-                                    currentStep = 0;
-                                  });
-                                },
-                                () {
-                                  Navigator.pop(context); // Cierra bottom sheet
-                                  _procesarCobro('Efectivo');
-                                },
-                                setModalState,
-                              ),
-                  ),
-                ),
-              ),
-            );
+      builder: (BuildContext dialogContext) {
+        return _MetodoPagoModalContent(
+          total: _total,
+          montoRecibidoController: _montoRecibidoController,
+          onConfirmPayment: (metodoPago) {
+            Navigator.pop(dialogContext); // Cierra bottom sheet
+            _procesarCobro(metodoPago);
           },
         );
       },
-    );
-  }
-
-  Widget _buildEfectivoStep(
-    VoidCallback onBack,
-    VoidCallback onConfirm,
-    StateSetter setModalState,
-  ) {
-    final double receivedAmount = double.tryParse(_montoRecibidoController.text) ?? 0.0;
-    final double change = receivedAmount >= _total ? receivedAmount - _total : 0.0;
-    final bool canConfirm = receivedAmount >= _total;
-
-    return Column(
-      key: const ValueKey('efectivo_step'),
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          children: [
-            GestureDetector(
-              onTap: onBack,
-              child: const Icon(
-                Icons.arrow_back_rounded,
-                color: AppTheme.textPrimary,
-                size: 24,
-              ),
-            ),
-            const Expanded(
-              child: Text(
-                'Cobrar Venta',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.textPrimary,
-                ),
-              ),
-            ),
-            const SizedBox(width: 24),
-          ],
-        ),
-        const SizedBox(height: 12),
-        
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.payments_rounded,
-              color: AppTheme.primaryGreen,
-              size: 24,
-            ),
-            const SizedBox(width: 8),
-            const Text(
-              'Efectivo',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: AppTheme.textPrimary,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 20),
-        
-        const Center(
-          child: Text(
-            'Total a cobrar',
-            style: TextStyle(
-              fontSize: 13,
-              color: AppTheme.textSecondary,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-        const SizedBox(height: 4),
-        Center(
-          child: Text(
-            'S/. ${_total.toStringAsFixed(2)}',
-            style: const TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.w900,
-              color: AppTheme.primaryGreen,
-            ),
-          ),
-        ),
-        const SizedBox(height: 24),
-        
-        const Text(
-          'Monto recibido',
-          style: TextStyle(
-            fontSize: 14,
-            color: AppTheme.textSecondary,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 8),
-        
-        TextField(
-          controller: _montoRecibidoController,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          autofocus: true,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: AppTheme.textPrimary,
-          ),
-          onChanged: (val) {
-            setModalState(() {});
-          },
-          decoration: InputDecoration(
-            prefixIcon: Container(
-              margin: const EdgeInsets.only(right: 12),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              decoration: const BoxDecoration(
-                color: AppTheme.primaryGreenLight,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  bottomLeft: Radius.circular(12),
-                ),
-              ),
-              child: const Text(
-                'S/.',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.primaryGreen,
-                ),
-              ),
-            ),
-            prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
-            contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: canConfirm ? AppTheme.primaryGreen : AppTheme.divider,
-                width: 1.5,
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: canConfirm ? AppTheme.primaryGreen : AppTheme.divider,
-                width: 1.5,
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: AppTheme.primaryGreen,
-                width: 2.0,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 24),
-        
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF4F6F4),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: const BoxDecoration(
-                  color: AppTheme.primaryGreenLight,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.autorenew_rounded,
-                  color: AppTheme.primaryGreen,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 16),
-              const Text(
-                'Vuelto:',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.textPrimary,
-                ),
-              ),
-              const Spacer(),
-              Text(
-                'S/. ${change.toStringAsFixed(2)}',
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                  color: AppTheme.primaryGreen,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 32),
-        
-        ElevatedButton(
-          onPressed: canConfirm ? onConfirm : null,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppTheme.primaryGreen,
-            disabledBackgroundColor: AppTheme.primaryGreen.withValues(alpha: 0.5),
-            foregroundColor: Colors.white,
-            minimumSize: const Size(double.infinity, 56),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            elevation: 0,
-          ),
-          child: const Text(
-            'Confirmar pago',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPaymentSelectionStep(
-    String? selectedMethod,
-    Function(String) onSelect,
-    VoidCallback onConfirm,
-  ) {
-    return Column(
-      key: const ValueKey('payment_selection_step'),
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Center(
-          child: Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: AppTheme.divider,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-        ),
-        const SizedBox(height: 20),
-        
-        const Text(
-          'Cobrar Venta',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            color: AppTheme.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 16),
-        
-        const Text(
-          'Total a cobrar',
-          style: TextStyle(
-            fontSize: 13,
-            color: AppTheme.textSecondary,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'S/. ${_total.toStringAsFixed(2)}',
-          style: const TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.w900,
-            color: AppTheme.primaryGreen,
-          ),
-        ),
-        const SizedBox(height: 24),
-        
-        const Align(
-          alignment: Alignment.centerLeft,
-          child: Text(
-            'Selecciona el método de pago',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.textPrimary,
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        
-        Row(
-          children: [
-            Expanded(
-              child: _buildPaymentCard(
-                label: 'Efectivo',
-                icon: Icons.payments_rounded,
-                isSelected: selectedMethod == 'Efectivo',
-                onTap: () => onSelect('Efectivo'),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildPaymentCard(
-                label: 'Yape/Plin',
-                icon: Icons.qr_code_2_rounded,
-                isSelected: selectedMethod == 'Yape/Plin',
-                onTap: () => onSelect('Yape/Plin'),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 32),
-        
-        ElevatedButton(
-          onPressed: selectedMethod == null ? null : onConfirm,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppTheme.primaryGreen,
-            disabledBackgroundColor: AppTheme.primaryGreen.withValues(alpha: 0.5),
-            foregroundColor: Colors.white,
-            minimumSize: const Size(double.infinity, 56),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            elevation: 0,
-          ),
-          child: const Text(
-            'Confirmar método de pago',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPaymentCard({
-    required String label,
-    required IconData icon,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 24),
-        decoration: BoxDecoration(
-          color: isSelected ? AppTheme.primaryGreenLight : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected ? AppTheme.primaryGreen : AppTheme.divider,
-            width: isSelected ? 2.0 : 1.0,
-          ),
-        ),
-        child: Column(
-          children: [
-            Icon(
-              icon,
-              size: 36,
-              color: AppTheme.primaryGreen,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: AppTheme.textPrimary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQrStep(
-    VoidCallback onBack,
-    VoidCallback onConfirm,
-  ) {
-    return Column(
-      key: const ValueKey('qr_step'),
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Row(
-          children: [
-            GestureDetector(
-              onTap: onBack,
-              child: const Icon(
-                Icons.close_rounded,
-                color: AppTheme.textPrimary,
-                size: 24,
-              ),
-            ),
-            const Expanded(
-              child: Text(
-                'Yape/Plin',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.textPrimary,
-                ),
-              ),
-            ),
-            const SizedBox(width: 24),
-          ],
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          'Escanea y paga',
-          style: TextStyle(
-            fontSize: 13,
-            color: AppTheme.textSecondary,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 24),
-        
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: AppTheme.primaryGreen,
-              width: 1.5,
-            ),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: Transform.scale(
-              scale: 1.25, // Zoom para recortar los bordes vacíos/blancos del QR
-              child: Image.asset(
-                'assets/images/qr_yape.png',
-                width: 200,
-                height: 200,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) {
-                  return Transform.scale(
-                    scale: 0.8, // Compensa el 1.25 de zoom para mantener el placeholder en tamaño normal
-                    child: Container(
-                      width: 200,
-                      height: 200,
-                      color: const Color(0xFFF9F9F9),
-                      alignment: Alignment.center,
-                      child: const Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.qr_code_2_rounded,
-                            size: 64,
-                            color: AppTheme.textHint,
-                          ),
-                          SizedBox(height: 8),
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 16),
-                            child: Text(
-                              'QR Yape/Plin\n(Coloca tu imagen en assets/images/qr_yape.png)',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: AppTheme.textSecondary,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 24),
-        
-        Text(
-          'S/. ${_total.toStringAsFixed(2)}',
-          style: const TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.w900,
-            color: AppTheme.primaryGreen,
-          ),
-        ),
-        const SizedBox(height: 4),
-        const Text(
-          'Muestra este QR al cliente',
-          style: TextStyle(
-            fontSize: 13,
-            color: AppTheme.textSecondary,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 32),
-        
-        ElevatedButton(
-          onPressed: onConfirm,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppTheme.primaryGreen,
-            foregroundColor: Colors.white,
-            minimumSize: const Size(double.infinity, 56),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            elevation: 0,
-          ),
-          child: const Text(
-            'Confirmar pago recibido',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-      ],
     );
   }
 
@@ -1701,6 +1121,587 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _MetodoPagoModalContent extends StatefulWidget {
+  final double total;
+  final TextEditingController montoRecibidoController;
+  final Function(String) onConfirmPayment;
+
+  const _MetodoPagoModalContent({
+    required this.total,
+    required this.montoRecibidoController,
+    required this.onConfirmPayment,
+  });
+
+  @override
+  State<_MetodoPagoModalContent> createState() => _MetodoPagoModalContentState();
+}
+
+class _MetodoPagoModalContentState extends State<_MetodoPagoModalContent> {
+  String? selectedMethod;
+  int currentStep = 0; // 0: Selección de Pago, 1: Yape/Plin QR, 2: Efectivo
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(24),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            child: currentStep == 0
+                ? _buildPaymentSelectionStep()
+                : currentStep == 1
+                    ? _buildQrStep()
+                    : _buildEfectivoStep(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPaymentSelectionStep() {
+    return Column(
+      key: const ValueKey('payment_selection_step'),
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Center(
+          child: Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: AppTheme.divider,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+        
+        const Text(
+          'Cobrar Venta',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            color: AppTheme.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 16),
+        
+        const Text(
+          'Total a cobrar',
+          style: TextStyle(
+            fontSize: 13,
+            color: AppTheme.textSecondary,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'S/. ${widget.total.toStringAsFixed(2)}',
+          style: const TextStyle(
+            fontSize: 32,
+            fontWeight: FontWeight.w900,
+            color: AppTheme.primaryGreen,
+          ),
+        ),
+        const SizedBox(height: 24),
+        
+        const Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            'Selecciona el método de pago',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.textPrimary,
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        
+        Row(
+          children: [
+            Expanded(
+              child: _buildPaymentCard(
+                label: 'Efectivo',
+                icon: Icons.payments_rounded,
+                isSelected: selectedMethod == 'Efectivo',
+                onTap: () {
+                  setState(() {
+                    selectedMethod = 'Efectivo';
+                  });
+                },
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildPaymentCard(
+                label: 'Yape/Plin',
+                icon: Icons.qr_code_2_rounded,
+                isSelected: selectedMethod == 'Yape/Plin',
+                onTap: () {
+                  setState(() {
+                    selectedMethod = 'Yape/Plin';
+                  });
+                },
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 32),
+        
+        ElevatedButton(
+          onPressed: selectedMethod == null
+              ? null
+              : () {
+                  if (selectedMethod == 'Yape/Plin') {
+                    setState(() {
+                      currentStep = 1;
+                    });
+                  } else if (selectedMethod == 'Efectivo') {
+                    setState(() {
+                      widget.montoRecibidoController.text = widget.total.toStringAsFixed(2);
+                      currentStep = 2;
+                    });
+                  }
+                },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppTheme.primaryGreen,
+            disabledBackgroundColor: AppTheme.primaryGreen.withValues(alpha: 0.5),
+            foregroundColor: Colors.white,
+            minimumSize: const Size(double.infinity, 56),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            elevation: 0,
+          ),
+          child: const Text(
+            'Confirmar método de pago',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPaymentCard({
+    required String label,
+    required IconData icon,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        decoration: BoxDecoration(
+          color: isSelected ? AppTheme.primaryGreenLight : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? AppTheme.primaryGreen : AppTheme.divider,
+            width: isSelected ? 2.0 : 1.0,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              size: 36,
+              color: AppTheme.primaryGreen,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.textPrimary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQrStep() {
+    return Column(
+      key: const ValueKey('qr_step'),
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  currentStep = 0;
+                });
+              },
+              child: const Icon(
+                Icons.close_rounded,
+                color: AppTheme.textPrimary,
+                size: 24,
+              ),
+            ),
+            const Expanded(
+              child: Text(
+                'Yape/Plin',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+            ),
+            const SizedBox(width: 24),
+          ],
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Escanea y paga',
+          style: TextStyle(
+            fontSize: 13,
+            color: AppTheme.textSecondary,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 24),
+        
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: AppTheme.primaryGreen,
+              width: 1.5,
+            ),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Transform.scale(
+              scale: 1.25,
+              child: Image.asset(
+                'assets/images/qr_yape.png',
+                width: 200,
+                height: 200,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  return Transform.scale(
+                    scale: 0.8,
+                    child: Container(
+                      width: 200,
+                      height: 200,
+                      color: const Color(0xFFF9F9F9),
+                      alignment: Alignment.center,
+                      child: const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.qr_code_2_rounded,
+                            size: 64,
+                            color: AppTheme.textHint,
+                          ),
+                          SizedBox(height: 8),
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            child: Text(
+                              'QR Yape/Plin\n(Coloca tu imagen en assets/images/qr_yape.png)',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: AppTheme.textSecondary,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+        
+        Text(
+          'S/. ${widget.total.toStringAsFixed(2)}',
+          style: const TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.w900,
+            color: AppTheme.primaryGreen,
+          ),
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          'Muestra este QR al cliente',
+          style: TextStyle(
+            fontSize: 13,
+            color: AppTheme.textSecondary,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 32),
+        
+        ElevatedButton(
+          onPressed: () => widget.onConfirmPayment('Yape/Plin'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppTheme.primaryGreen,
+            foregroundColor: Colors.white,
+            minimumSize: const Size(double.infinity, 56),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            elevation: 0,
+          ),
+          child: const Text(
+            'Confirmar pago recibido',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEfectivoStep() {
+    final double receivedAmount = double.tryParse(widget.montoRecibidoController.text) ?? 0.0;
+    final double change = receivedAmount >= widget.total ? receivedAmount - widget.total : 0.0;
+    final bool canConfirm = receivedAmount >= widget.total;
+
+    return Column(
+      key: const ValueKey('efectivo_step'),
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  currentStep = 0;
+                });
+              },
+              child: const Icon(
+                Icons.arrow_back_rounded,
+                color: AppTheme.textPrimary,
+                size: 24,
+              ),
+            ),
+            const Expanded(
+              child: Text(
+                'Cobrar Venta',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+            ),
+            const SizedBox(width: 24),
+          ],
+        ),
+        const SizedBox(height: 12),
+        
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.payments_rounded,
+              color: AppTheme.primaryGreen,
+              size: 24,
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              'Efectivo',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.textPrimary,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+        
+        const Center(
+          child: Text(
+            'Total a cobrar',
+            style: TextStyle(
+              fontSize: 13,
+              color: AppTheme.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Center(
+          child: Text(
+            'S/. ${widget.total.toStringAsFixed(2)}',
+            style: const TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.w900,
+              color: AppTheme.primaryGreen,
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+        
+        const Text(
+          'Monto recibido',
+          style: TextStyle(
+            fontSize: 14,
+            color: AppTheme.textSecondary,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 8),
+        
+        TextField(
+          controller: widget.montoRecibidoController,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          autofocus: true,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.textPrimary,
+          ),
+          onChanged: (val) {
+            setState(() {});
+          },
+          decoration: InputDecoration(
+            prefixIcon: Container(
+              margin: const EdgeInsets.only(right: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              decoration: const BoxDecoration(
+                color: AppTheme.primaryGreenLight,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(12),
+                  bottomLeft: Radius.circular(12),
+                ),
+              ),
+              child: const Text(
+                'S/.',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.primaryGreen,
+                ),
+              ),
+            ),
+            prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+            contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: canConfirm ? AppTheme.primaryGreen : AppTheme.divider,
+                width: 1.5,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: canConfirm ? AppTheme.primaryGreen : AppTheme.divider,
+                width: 1.5,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: AppTheme.primaryGreen,
+                width: 2.0,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+        
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF4F6F4),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: const BoxDecoration(
+                  color: AppTheme.primaryGreenLight,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.autorenew_rounded,
+                  color: AppTheme.primaryGreen,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 16),
+              const Text(
+                'Vuelto:',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                'S/. ${change.toStringAsFixed(2)}',
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                  color: AppTheme.primaryGreen,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 32),
+        
+        ElevatedButton(
+          onPressed: canConfirm ? () => widget.onConfirmPayment('Efectivo') : null,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppTheme.primaryGreen,
+            disabledBackgroundColor: AppTheme.primaryGreen.withValues(alpha: 0.5),
+            foregroundColor: Colors.white,
+            minimumSize: const Size(double.infinity, 56),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            elevation: 0,
+          ),
+          child: const Text(
+            'Confirmar pago',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

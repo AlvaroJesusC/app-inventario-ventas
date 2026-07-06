@@ -358,35 +358,6 @@ class InventoryTabState extends State<InventoryTab>
               isPurchasesTab: true,
             ),
 
-            // Botón "+ Nueva Compra" a la derecha (según Imagen 2)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              child: Row(
-                children: [
-                  const Spacer(),
-                  OutlinedButton.icon(
-                    onPressed: _navigateToNewPurchase,
-                    icon: const Icon(Icons.add_rounded, color: AppTheme.primaryGreen, size: 20),
-                    label: const Text(
-                      'Nueva Compra',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.primaryGreen,
-                      ),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      side: const BorderSide(color: AppTheme.primaryGreen, width: 1.5),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
             // Lista de Compras
             Expanded(
               child: snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData
@@ -396,7 +367,7 @@ class InventoryTabState extends State<InventoryTab>
                   : purchases.isEmpty
                       ? _buildEmptyPurchasesState()
                       : ListView.separated(
-                          padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+                          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
                           itemCount: purchases.length,
                           separatorBuilder: (ctx, i) => const SizedBox(height: 12),
                           itemBuilder: (ctx, index) {
@@ -434,7 +405,7 @@ class InventoryTabState extends State<InventoryTab>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Fila de Título + Conteo + Botón Filtrar (arriba en el espacio vacío) ──
+          // ── Fila de Título + Conteo + Botón Acciones (Filtrar / Nueva Compra) ──
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -509,6 +480,26 @@ class InventoryTabState extends State<InventoryTab>
                           ),
                         ],
                       ],
+                    ),
+                  ),
+                ),
+              if (isPurchasesTab)
+                OutlinedButton.icon(
+                  onPressed: _navigateToNewPurchase,
+                  icon: const Icon(Icons.add_rounded, color: AppTheme.primaryGreen, size: 18),
+                  label: const Text(
+                    'Nueva Compra',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.primaryGreen,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    side: const BorderSide(color: AppTheme.primaryGreen, width: 1.5),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                 ),
