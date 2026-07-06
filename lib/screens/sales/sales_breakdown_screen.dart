@@ -218,15 +218,23 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
   Widget _buildHeader(BuildContext context) {
     return Row(
       children: [
-        IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: const Icon(
-            Icons.arrow_back_rounded,
-            color: AppTheme.primaryGreen,
-            size: 26,
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: AppTheme.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE0E0E0)),
           ),
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(),
+          child: IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(
+              Icons.arrow_back_rounded,
+              color: AppTheme.primaryGreen,
+              size: 20,
+            ),
+            padding: EdgeInsets.zero,
+          ),
         ),
         const SizedBox(width: 16),
         const Expanded(

@@ -340,6 +340,8 @@ class _SalesTabState extends State<SalesTab> {
   }
 
   Widget _buildSummaryCard(double totalAmount, int count) {
+    final ticketPromedio = count > 0 ? totalAmount / count : 0.0;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -359,7 +361,7 @@ class _SalesTabState extends State<SalesTab> {
         children: [
           // Total Ventas Columna
           Expanded(
-            flex: 5,
+            flex: 4,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -434,12 +436,12 @@ class _SalesTabState extends State<SalesTab> {
             height: 70,
             width: 1,
             color: AppTheme.divider,
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           ),
 
           // Stats Adicionales
           Expanded(
-            flex: 4,
+            flex: 5,
             child: Row(
               children: [
                 // Transacciones
@@ -476,13 +478,13 @@ class _SalesTabState extends State<SalesTab> {
                           color: AppTheme.textSecondary,
                           fontWeight: FontWeight.w500,
                         ),
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
                 ),
-                // Empleados
+                // Ticket Promedio
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -490,27 +492,27 @@ class _SalesTabState extends State<SalesTab> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.blue.shade50,
+                          color: Colors.orange.shade50,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Icon(
-                          Icons.person_outline_rounded,
+                          Icons.analytics_outlined,
                           size: 16,
-                          color: Colors.blue.shade600,
+                          color: Colors.orange.shade700,
                         ),
                       ),
                       const SizedBox(height: 12),
-                      const Text(
-                        '1',
-                        style: TextStyle(
-                          fontSize: 18,
+                      Text(
+                        'S/. ${ticketPromedio.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          fontSize: 14,
                           fontWeight: FontWeight.w700,
                           color: AppTheme.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 2),
                       const Text(
-                        'Empleados activos',
+                        'Ticket promedio',
                         style: TextStyle(
                           fontSize: 10,
                           color: AppTheme.textSecondary,

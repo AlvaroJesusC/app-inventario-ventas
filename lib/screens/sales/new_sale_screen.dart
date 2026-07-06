@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../config/app_theme.dart';
 import '../../models/product_model.dart';
+import '../../models/sale_model.dart';
 import '../../services/product_service.dart';
+import '../../services/sale_service.dart';
 import '../home/home_screen.dart';
 import 'checkout_screen.dart';
 
@@ -29,15 +31,30 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   List<ProductModel> _allProducts = [];
+  List<SaleModel> _allSales = [];
+  List<ProductModel> _topSoldProducts = [];
   StreamSubscription<List<ProductModel>>? _productsSubscription;
+  StreamSubscription<List<SaleModel>>? _salesSubscription;
 
   @override
   void initState() {
     super.initState();
-    _productsSubscription = _productService.getProductsStream().listen((products) {
+    _productsSubscription = _productService.getProductsStream().listen((
+      products,
+    ) {
       if (mounted) {
         setState(() {
           _allProducts = products;
+          _updateTopSoldProducts();
+        });
+      }
+    });
+
+    _salesSubscription = SaleService().getSalesStream().listen((sales) {
+      if (mounted) {
+        setState(() {
+          _allSales = sales;
+          _updateTopSoldProducts();
         });
       }
     });
@@ -46,9 +63,40 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   @override
   void dispose() {
     _productsSubscription?.cancel();
+    _salesSubscription?.cancel();
     _searchController.dispose();
     _scannerController.dispose();
     super.dispose();
+  }
+
+  void _updateTopSoldProducts() {
+    if (_allProducts.isEmpty) return;
+
+    if (_allSales.isEmpty) {
+      setState(() {
+        _topSoldProducts = _allProducts.take(3).toList();
+      });
+      return;
+    }
+
+    final Map<String, int> productSalesCounts = {};
+    for (var sale in _allSales) {
+      for (var item in sale.articulos) {
+        productSalesCounts[item.id] =
+            (productSalesCounts[item.id] ?? 0) + item.cantidad;
+      }
+    }
+
+    final sortedProducts = List<ProductModel>.from(_allProducts);
+    sortedProducts.sort((a, b) {
+      final countA = productSalesCounts[a.id] ?? 0;
+      final countB = productSalesCounts[b.id] ?? 0;
+      return countB.compareTo(countA);
+    });
+
+    setState(() {
+      _topSoldProducts = sortedProducts.take(3).toList();
+    });
   }
 
   void _handleBack() {
@@ -59,8 +107,6 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       Navigator.pop(context);
     }
   }
-
-
 
   void _onDetectBarcode(BarcodeCapture capture) async {
     if (_isProcessing) return;
@@ -103,34 +149,38 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
           // mostrar advertencia si no está en laa BD
           if (mounted) {
             ScaffoldMessenger.of(context).clearSnackBars();
-            final snackBarController = ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Row(
-                  children: [
-                    const Icon(Icons.warning_amber_rounded, color: Colors.white),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Producto no encontrado en inventario ($barcode)',
-                      ),
+            final snackBarController = ScaffoldMessenger.of(context)
+                .showSnackBar(
+                  SnackBar(
+                    content: Row(
+                      children: [
+                        const Icon(
+                          Icons.warning_amber_rounded,
+                          color: Colors.white,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Producto no encontrado en inventario ($barcode)',
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                backgroundColor: Colors.redAccent.shade700,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                duration: const Duration(seconds: 3),
-                action: SnackBarAction(
-                  label: 'CERRAR',
-                  textColor: Colors.white,
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).clearSnackBars();
-                  },
-                ),
-              ),
-            );
+                    backgroundColor: Colors.redAccent.shade700,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    duration: const Duration(seconds: 3),
+                    action: SnackBarAction(
+                      label: 'CERRAR',
+                      textColor: Colors.white,
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).clearSnackBars();
+                      },
+                    ),
+                  ),
+                );
             await snackBarController.closed;
           }
         }
@@ -154,7 +204,9 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Cantidad de ${_scannedItems[index]['name']} aumentada'),
+            content: Text(
+              'Cantidad de ${_scannedItems[index]['name']} aumentada',
+            ),
             backgroundColor: AppTheme.primaryGreen,
             duration: const Duration(milliseconds: 800),
           ),
@@ -283,7 +335,8 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     final matchedProducts = _allProducts.where((p) {
       final nameMatches = p.nombre.toLowerCase().contains(query);
       final skuMatches = p.sku.toLowerCase().contains(query);
-      final barcodeMatches = p.codigoBarras?.toLowerCase().contains(query) ?? false;
+      final barcodeMatches =
+          p.codigoBarras?.toLowerCase().contains(query) ?? false;
       return nameMatches || skuMatches || barcodeMatches;
     }).toList();
 
@@ -314,11 +367,11 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
           : ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: matchedProducts.length > 5 ? 5 : matchedProducts.length,
-              separatorBuilder: (context, index) => const Divider(
-                height: 1,
-                color: AppTheme.divider,
-              ),
+              itemCount: matchedProducts.length > 5
+                  ? 5
+                  : matchedProducts.length,
+              separatorBuilder: (context, index) =>
+                  const Divider(height: 1, color: AppTheme.divider),
               itemBuilder: (context, index) {
                 final product = matchedProducts[index];
                 return ListTile(
@@ -389,7 +442,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundGrey,
+      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       body: SafeArea(
         child: Column(
           children: [
@@ -400,6 +453,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                   children: [
                     _buildScannerBox(),
                     _buildSearchBar(),
+                    if (_searchQuery.isEmpty) _buildMostSoldProducts(),
                     _buildSearchResults(),
                     _buildScannedList(),
                   ],
@@ -421,10 +475,19 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         children: [
           GestureDetector(
             onTap: _handleBack,
-            child: const Icon(
-              Icons.arrow_back_rounded,
-              color: AppTheme.primaryGreen,
-              size: 28,
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppTheme.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE0E0E0)),
+              ),
+              child: const Icon(
+                Icons.arrow_back_rounded,
+                color: AppTheme.primaryGreen,
+                size: 20,
+              ),
             ),
           ),
           const Text(
@@ -456,9 +519,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       height: 115,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
       clipBehavior: Clip.hardEdge,
       child: Stack(
         alignment: Alignment.center,
@@ -712,10 +773,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                 decoration: BoxDecoration(
                   color: Colors.red.shade50.withValues(alpha: 0.8),
                   border: const Border(
-                    left: BorderSide(
-                      color: AppTheme.divider,
-                      width: 1,
-                    ),
+                    left: BorderSide(color: AppTheme.divider, width: 1),
                   ),
                 ),
                 alignment: Alignment.center,
@@ -849,6 +907,138 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       ),
     );
   }
+
+  Widget _buildMostSoldProducts() {
+    if (_topSoldProducts.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.bolt_rounded,
+                color: AppTheme.textPrimary,
+                size: 18,
+              ),
+              const SizedBox(width: 6),
+              const Text(
+                'Más vendidos',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ..._topSoldProducts.map((product) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE0E0E0)),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF5F5F5),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          _getProductIcon(product),
+                          color: AppTheme.primaryGreen,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              product.nombre,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'S/. ${product.precio.toStringAsFixed(2)} · ${product.unidadMedida.isNotEmpty ? product.unidadMedida : 'und'}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppTheme.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () => _addProductToCart(product),
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: const BoxDecoration(
+                            color: AppTheme.primaryGreen,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.add_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )),
+        ],
+      ),
+    );
+  }
+
+  IconData _getProductIcon(ProductModel product) {
+    final name = product.nombre.toLowerCase();
+    final cat = (product.categoria ?? '').toLowerCase();
+
+    if (name.contains('coca') ||
+        name.contains('fanta') ||
+        name.contains('sprite') ||
+        name.contains('bebida') ||
+        name.contains('gaseosa') ||
+        name.contains('agua') ||
+        cat.contains('bebida')) {
+      return Icons.local_drink_rounded;
+    }
+    if (name.contains('lays') ||
+        name.contains('papitas') ||
+        name.contains('doritos') ||
+        name.contains('piqueo') ||
+        name.contains('snack') ||
+        cat.contains('snack')) {
+      return Icons.fastfood_rounded;
+    }
+    if (name.contains('arroz') ||
+        name.contains('fideo') ||
+        name.contains('aceite') ||
+        name.contains('harina') ||
+        name.contains('comida') ||
+        cat.contains('abarrote')) {
+      return Icons.shopping_basket_rounded;
+    }
+    return Icons.shopping_bag_outlined;
+  }
 }
 
 class ScannerCornersPainter extends CustomPainter {
@@ -873,7 +1063,7 @@ class ScannerCornersPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
 
     final path = Path();
-    
+
     // Top Left Corner
     path.moveTo(0, cornerLength);
     path.lineTo(0, borderRadius);
@@ -889,7 +1079,12 @@ class ScannerCornersPainter extends CustomPainter {
     // Bottom Right Corner
     path.moveTo(size.width, size.height - cornerLength);
     path.lineTo(size.width, size.height - borderRadius);
-    path.quadraticBezierTo(size.width, size.height, size.width - borderRadius, size.height);
+    path.quadraticBezierTo(
+      size.width,
+      size.height,
+      size.width - borderRadius,
+      size.height,
+    );
     path.lineTo(size.width - cornerLength, size.height);
 
     // Bottom Left Corner

@@ -113,16 +113,28 @@ class InventoryTabState extends State<InventoryTab>
       case StockFilter.all:
         break;
       case StockFilter.inStock:
-        filtered = filtered.where((p) => p.stockStatus == StockStatus.inStock).toList();
+        filtered = filtered
+            .where((p) => p.stockStatus == StockStatus.inStock)
+            .toList();
         break;
       case StockFilter.low:
-        filtered = filtered.where((p) => p.stockStatus == StockStatus.low).toList();
+        filtered = filtered
+            .where((p) => p.stockStatus == StockStatus.low)
+            .toList();
         break;
       case StockFilter.empty:
-        filtered = filtered.where((p) => p.stockStatus == StockStatus.empty).toList();
+        filtered = filtered
+            .where((p) => p.stockStatus == StockStatus.empty)
+            .toList();
         break;
       case StockFilter.critical:
-        filtered = filtered.where((p) => p.stockStatus == StockStatus.low || p.stockStatus == StockStatus.empty).toList();
+        filtered = filtered
+            .where(
+              (p) =>
+                  p.stockStatus == StockStatus.low ||
+                  p.stockStatus == StockStatus.empty,
+            )
+            .toList();
         break;
     }
 
@@ -196,11 +208,15 @@ class InventoryTabState extends State<InventoryTab>
       builder: (ctx) => AlertDialog(
         title: const Text('¿Eliminar Compra?'),
         content: const Text(
-            'Se eliminará este registro de compra de forma permanente y se restará automáticamente el stock ingresado de los productos correspondientes para mantener el inventario al día.'),
+          'Se eliminará este registro de compra de forma permanente y se restará automáticamente el stock ingresado de los productos correspondientes para mantener el inventario al día.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancelar', style: TextStyle(color: AppTheme.textSecondary)),
+            child: const Text(
+              'Cancelar',
+              style: TextStyle(color: AppTheme.textSecondary),
+            ),
           ),
           TextButton(
             onPressed: () {
@@ -208,12 +224,17 @@ class InventoryTabState extends State<InventoryTab>
               _purchaseService.deletePurchase(purchase.id);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Compra eliminada y stock revertido correctamente.'),
+                  content: Text(
+                    'Compra eliminada y stock revertido correctamente.',
+                  ),
                   backgroundColor: AppTheme.primaryGreen,
                 ),
               );
             },
-            child: const Text('Eliminar y Revertir', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Eliminar y Revertir',
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -244,7 +265,8 @@ class InventoryTabState extends State<InventoryTab>
           ),
 
           // Speed dial solo visible en la pestaña Productos cuando está abierto o en animación
-          if (_selectedSubTab == 0 && (_isMenuOpen || _animationController.value > 0))
+          if (_selectedSubTab == 0 &&
+              (_isMenuOpen || _animationController.value > 0))
             Positioned.fill(
               child: GestureDetector(
                 onTap: _toggleMenu,
@@ -257,7 +279,8 @@ class InventoryTabState extends State<InventoryTab>
               ),
             ),
 
-          if (_selectedSubTab == 0 && (_isMenuOpen || _animationController.value > 0))
+          if (_selectedSubTab == 0 &&
+              (_isMenuOpen || _animationController.value > 0))
             Positioned(
               right: 20,
               bottom: 92,
@@ -322,7 +345,8 @@ class InventoryTabState extends State<InventoryTab>
                   animation: _animationController,
                   builder: (context, child) {
                     return Transform.rotate(
-                      angle: _animationController.value *
+                      angle:
+                          _animationController.value *
                           (3 * 3.141592653589793 / 4),
                       child: Icon(
                         _animationController.value > 0.5
@@ -413,24 +437,36 @@ class InventoryTabState extends State<InventoryTab>
 
                 // Lista de Compras
                 Expanded(
-                  child: snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData
+                  child:
+                      snapshot.connectionState == ConnectionState.waiting &&
+                          !snapshot.hasData
                       ? const Center(
-                          child: CircularProgressIndicator(color: AppTheme.primaryGreen),
+                          child: CircularProgressIndicator(
+                            color: AppTheme.primaryGreen,
+                          ),
                         )
                       : purchases.isEmpty
-                          ? _buildEmptyPurchasesState()
-                          : ListView.separated(
-                              padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-                              itemCount: purchases.length,
-                              separatorBuilder: (ctx, i) => const SizedBox(height: 12),
-                              itemBuilder: (ctx, index) {
-                                final purchase = purchases[index];
-                                final supplierName = (purchase.supplierId != null && supplierNames.containsKey(purchase.supplierId))
-                                    ? supplierNames[purchase.supplierId]!
-                                    : purchase.proveedor;
-                                return _buildPurchaseCard(purchase, currentSupplierName: supplierName);
-                              },
-                            ),
+                      ? _buildEmptyPurchasesState()
+                      : ListView.separated(
+                          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+                          itemCount: purchases.length,
+                          separatorBuilder: (ctx, i) =>
+                              const SizedBox(height: 12),
+                          itemBuilder: (ctx, index) {
+                            final purchase = purchases[index];
+                            final supplierName =
+                                (purchase.supplierId != null &&
+                                    supplierNames.containsKey(
+                                      purchase.supplierId,
+                                    ))
+                                ? supplierNames[purchase.supplierId]!
+                                : purchase.proveedor;
+                            return _buildPurchaseCard(
+                              purchase,
+                              currentSupplierName: supplierName,
+                            );
+                          },
+                        ),
                 ),
               ],
             );
@@ -455,8 +491,8 @@ class InventoryTabState extends State<InventoryTab>
     final countText = isPurchasesTab
         ? '$productCount compras'
         : (_searchQuery.isNotEmpty || hasActiveFilters)
-            ? '${showingCount ?? 0} de $productCount productos'
-            : '$productCount productos';
+        ? '${showingCount ?? 0} de $productCount productos'
+        : '$productCount productos';
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
@@ -494,7 +530,8 @@ class InventoryTabState extends State<InventoryTab>
                 GestureDetector(
                   onTap: () => _showFilterBottomSheet(context, allProducts),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    height: 44,
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
                     decoration: BoxDecoration(
                       color: hasActiveFilters
                           ? AppTheme.primaryGreen.withValues(alpha: 0.15)
@@ -507,6 +544,7 @@ class InventoryTabState extends State<InventoryTab>
                       ),
                     ),
                     child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
                           'Filtrar',
@@ -544,7 +582,11 @@ class InventoryTabState extends State<InventoryTab>
               if (isPurchasesTab)
                 OutlinedButton.icon(
                   onPressed: _navigateToNewPurchase,
-                  icon: const Icon(Icons.add_rounded, color: AppTheme.primaryGreen, size: 18),
+                  icon: const Icon(
+                    Icons.add_rounded,
+                    color: AppTheme.primaryGreen,
+                    size: 18,
+                  ),
                   label: const Text(
                     'Nueva Compra',
                     style: TextStyle(
@@ -554,8 +596,12 @@ class InventoryTabState extends State<InventoryTab>
                     ),
                   ),
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    side: const BorderSide(color: AppTheme.primaryGreen, width: 1.5),
+                    minimumSize: const Size(0, 43),
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    side: const BorderSide(
+                      color: AppTheme.primaryGreen,
+                      width: 1.5,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -669,9 +715,13 @@ class InventoryTabState extends State<InventoryTab>
   }
 
   // ── TARJETA DE COMPRA (RECREADA SEGÚN LA IMAGEN 2) ──
-  Widget _buildPurchaseCard(PurchaseModel purchase, {required String currentSupplierName}) {
+  Widget _buildPurchaseCard(
+    PurchaseModel purchase, {
+    required String currentSupplierName,
+  }) {
     // Formato de fecha corto (ej: 28 Jun 2026)
-    final dateStr = '${purchase.fecha.day} ${_getMonthAbbr(purchase.fecha.month)} ${purchase.fecha.year}';
+    final dateStr =
+        '${purchase.fecha.day} ${_getMonthAbbr(purchase.fecha.month)} ${purchase.fecha.year}';
 
     return Container(
       decoration: BoxDecoration(
@@ -692,14 +742,14 @@ class InventoryTabState extends State<InventoryTab>
           child: Row(
             children: [
               // Barra acentuada verde en el borde izquierdo (Image 2)
-              Container(
-                width: 5,
-                color: AppTheme.primaryGreen,
-              ),
+              Container(width: 5, color: AppTheme.primaryGreen),
 
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -727,7 +777,11 @@ class InventoryTabState extends State<InventoryTab>
                           ),
                           const SizedBox(width: 4),
                           PopupMenuButton<String>(
-                            icon: const Icon(Icons.more_vert_rounded, size: 20, color: AppTheme.textSecondary),
+                            icon: const Icon(
+                              Icons.more_vert_rounded,
+                              size: 20,
+                              color: AppTheme.textSecondary,
+                            ),
                             onSelected: (val) {
                               if (val == 'edit') {
                                 _navigateToEditPurchase(purchase);
@@ -740,7 +794,11 @@ class InventoryTabState extends State<InventoryTab>
                                 value: 'edit',
                                 child: Row(
                                   children: [
-                                    Icon(Icons.edit_outlined, size: 18, color: AppTheme.textPrimary),
+                                    Icon(
+                                      Icons.edit_outlined,
+                                      size: 18,
+                                      color: AppTheme.textPrimary,
+                                    ),
                                     SizedBox(width: 8),
                                     Text('Editar compra'),
                                   ],
@@ -750,9 +808,16 @@ class InventoryTabState extends State<InventoryTab>
                                 value: 'delete',
                                 child: Row(
                                   children: [
-                                    Icon(Icons.delete_outline_rounded, size: 18, color: AppTheme.error),
+                                    Icon(
+                                      Icons.delete_outline_rounded,
+                                      size: 18,
+                                      color: AppTheme.error,
+                                    ),
                                     SizedBox(width: 8),
-                                    Text('Eliminar registro', style: TextStyle(color: AppTheme.error)),
+                                    Text(
+                                      'Eliminar registro',
+                                      style: TextStyle(color: AppTheme.error),
+                                    ),
                                   ],
                                 ),
                               ),
@@ -798,7 +863,20 @@ class InventoryTabState extends State<InventoryTab>
   }
 
   String _getMonthAbbr(int month) {
-    const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Set', 'Oct', 'Nov', 'Dic'];
+    const months = [
+      'Ene',
+      'Feb',
+      'Mar',
+      'Abr',
+      'May',
+      'Jun',
+      'Jul',
+      'Ago',
+      'Set',
+      'Oct',
+      'Nov',
+      'Dic',
+    ];
     return months[(month - 1) % 12];
   }
 
@@ -832,10 +910,7 @@ class InventoryTabState extends State<InventoryTab>
           const SizedBox(height: 6),
           const Text(
             'Registra compras para abastecer tu inventario automáticamente',
-            style: TextStyle(
-              fontSize: 13,
-              color: AppTheme.textSecondary,
-            ),
+            style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
           ),
         ],
       ),
@@ -856,7 +931,11 @@ class InventoryTabState extends State<InventoryTab>
         child: Row(
           children: [
             const SizedBox(width: 14),
-            const Icon(Icons.search_rounded, size: 22, color: AppTheme.textHint),
+            const Icon(
+              Icons.search_rounded,
+              size: 22,
+              color: AppTheme.textHint,
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: TextField(

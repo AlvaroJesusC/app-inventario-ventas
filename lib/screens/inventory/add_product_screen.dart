@@ -773,13 +773,13 @@ class _AddProductScreenState extends State<AddProductScreen> {
               height: 40,
               decoration: BoxDecoration(
                 color: AppTheme.white,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppTheme.divider),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE0E0E0)),
               ),
               child: const Icon(
                 Icons.arrow_back_rounded,
                 size: 20,
-                color: AppTheme.textPrimary,
+                color: AppTheme.primaryGreen,
               ),
             ),
           ),

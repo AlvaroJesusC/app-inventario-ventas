@@ -23,16 +23,29 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: AppTheme.textPrimary),
-          onPressed: () {
-            final homeState = HomeScreen.of(context);
-            if (homeState != null) {
-              homeState.hideUserManagement();
-            } else {
-              Navigator.pop(context);
-            }
-          },
+        toolbarHeight: 70,
+        leadingWidth: 68,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 16.0, top: 12.0, bottom: 12.0),
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppTheme.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE0E0E0)),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.primaryGreen, size: 20),
+              onPressed: () {
+                final homeState = HomeScreen.of(context);
+                if (homeState != null) {
+                  homeState.hideUserManagement();
+                } else {
+                  Navigator.pop(context);
+                }
+              },
+              padding: EdgeInsets.zero,
+            ),
+          ),
         ),
       ),
       body: Padding(

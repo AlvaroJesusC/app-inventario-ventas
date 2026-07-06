@@ -587,7 +587,7 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
               borderRadius: BorderRadius.circular(12),
             ),
             child: IconButton(
-              icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.textPrimary, size: 20),
+              icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.primaryGreen, size: 20),
               onPressed: _handleBack,
               padding: EdgeInsets.zero,
             ),
@@ -660,48 +660,73 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    InkWell(
-                      onTap: _showSupplierPickerSheet,
-                      borderRadius: BorderRadius.circular(14),
-                      child: Container(
-                        height: 64,
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: AppTheme.white,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: const Color(0xFFE0E0E0)),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 40,
-                              height: 40,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: InkWell(
+                            onTap: _showSupplierPickerSheet,
+                            borderRadius: BorderRadius.circular(14),
+                            child: Container(
+                              height: 64,
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFE8F5E9),
-                                borderRadius: BorderRadius.circular(10),
+                                color: AppTheme.white,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: const Color(0xFFE0E0E0)),
                               ),
-                              child: const Icon(
-                                Icons.storefront_rounded,
-                                color: AppTheme.primaryGreen,
-                                size: 20,
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFE8F5E9),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: const Icon(
+                                      Icons.storefront_rounded,
+                                      color: AppTheme.primaryGreen,
+                                      size: 20,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      _selectedSupplier?.nombre ?? 'Seleccionar proveedor',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: _selectedSupplier != null ? AppTheme.textPrimary : AppTheme.textHint,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.textSecondary),
+                                ],
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                _selectedSupplier?.nombre ?? 'Seleccionar proveedor',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: _selectedSupplier != null ? AppTheme.textPrimary : AppTheme.textHint,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.textSecondary),
-                          ],
+                          ),
                         ),
-                      ),
+                        const SizedBox(width: 10),
+                        InkWell(
+                          onTap: _showAddSupplierDialog,
+                          borderRadius: BorderRadius.circular(14),
+                          child: Container(
+                            width: 60,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              color: AppTheme.white,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: const Color(0xFFE0E0E0)),
+                            ),
+                            child: const Icon(
+                              Icons.add_rounded,
+                              color: AppTheme.primaryGreen,
+                              size: 28,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 8),
                     Container(
@@ -886,7 +911,7 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                     if (_purchaseItems.isEmpty)
                       Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 16),
+                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(14),
@@ -896,8 +921,8 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Container(
-                              width: 56,
-                              height: 56,
+                              width: 40,
+                              height: 40,
                               decoration: const BoxDecoration(
                                 color: Color(0xFFE8F5E9),
                                 shape: BoxShape.circle,
@@ -905,24 +930,24 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                               child: const Icon(
                                 Icons.inventory_2_outlined,
                                 color: AppTheme.primaryGreen,
-                                size: 26,
+                                size: 20,
                               ),
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 10),
                             const Text(
                               'Aún no has agregado productos',
                               style: TextStyle(
-                                fontSize: 15,
+                                fontSize: 13,
                                 fontWeight: FontWeight.bold,
                                 color: AppTheme.textPrimary,
                               ),
                               textAlign: TextAlign.center,
                             ),
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 4),
                             const Text(
                               'Agrega productos para verlos aquí.',
                               style: TextStyle(
-                                fontSize: 12,
+                                fontSize: 11,
                                 color: AppTheme.textSecondary,
                               ),
                               textAlign: TextAlign.center,
