@@ -204,7 +204,7 @@ class _LoginScreenState extends State<LoginScreen>
                       Text(
                         AppConstants.appName,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.w800,
                           color: AppTheme.primaryGreen,
@@ -217,7 +217,7 @@ class _LoginScreenState extends State<LoginScreen>
                       Text(
                         AppConstants.appSubtitle,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w400,
                           color: AppTheme.textSecondary,
@@ -230,7 +230,7 @@ class _LoginScreenState extends State<LoginScreen>
                       Text(
                         _isRegisterMode ? 'Crear cuenta' : 'Iniciar sesión',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.w700,
                           color: AppTheme.textPrimary,
@@ -242,7 +242,7 @@ class _LoginScreenState extends State<LoginScreen>
                             ? 'Completa tus datos para registrarte'
                             : 'Ingresa tus credenciales para continuar',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
                           color: AppTheme.textSecondary,
@@ -257,7 +257,7 @@ class _LoginScreenState extends State<LoginScreen>
                           keyboardType: TextInputType.name,
                           textInputAction: TextInputAction.next,
                           enabled: !_isLoading,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             hintText: 'Nombre completo',
                             prefixIcon: Icon(
                               Icons.person_outline,
@@ -283,7 +283,7 @@ class _LoginScreenState extends State<LoginScreen>
                         keyboardType: TextInputType.emailAddress,
                         textInputAction: TextInputAction.next,
                         enabled: !_isLoading,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           hintText: 'Correo electrónico',
                           prefixIcon: Icon(
                             Icons.email_outlined,
@@ -318,7 +318,7 @@ class _LoginScreenState extends State<LoginScreen>
                         },
                         decoration: InputDecoration(
                           hintText: 'Contraseña',
-                          prefixIcon: const Icon(
+                          prefixIcon: Icon(
                             Icons.lock_outline,
                             color: AppTheme.textHint,
                             size: 20,
@@ -360,7 +360,7 @@ class _LoginScreenState extends State<LoginScreen>
                           onFieldSubmitted: (_) => _handleSubmit(),
                           decoration: InputDecoration(
                             hintText: 'Confirmar contraseña',
-                            prefixIcon: const Icon(
+                            prefixIcon: Icon(
                               Icons.lock_outline,
                               color: AppTheme.textHint,
                               size: 20,
@@ -420,7 +420,7 @@ class _LoginScreenState extends State<LoginScreen>
                               ),
                             ),
                             const SizedBox(width: 12),
-                            const Text(
+                            Text(
                               'Recordar mi sesión',
                               style: TextStyle(
                                 fontSize: 14,
@@ -470,7 +470,7 @@ class _LoginScreenState extends State<LoginScreen>
                       // Divisor "o"
                       Row(
                         children: [
-                          const Expanded(
+                          Expanded(
                             child: Divider(color: AppTheme.divider),
                           ),
                           Padding(
@@ -483,7 +483,7 @@ class _LoginScreenState extends State<LoginScreen>
                               ),
                             ),
                           ),
-                          const Expanded(
+                          Expanded(
                             child: Divider(color: AppTheme.divider),
                           ),
                         ],
@@ -498,7 +498,7 @@ class _LoginScreenState extends State<LoginScreen>
                             _isRegisterMode
                                 ? '¿Ya tienes una cuenta? '
                                 : '¿No tienes una cuenta? ',
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppTheme.textSecondary,
                               fontSize: 14,
                             ),
@@ -518,7 +518,7 @@ class _LoginScreenState extends State<LoginScreen>
                                   },
                             child: Text(
                               _isRegisterMode ? 'Iniciar sesión' : 'Registrarse',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppTheme.primaryGreen,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 14,

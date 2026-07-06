@@ -44,7 +44,7 @@ class GlobalHeader extends StatelessWidget {
                 Text(
                   AppConstants
                       .appName, // Usará 'StockApp' o 'MyPeru' según tu app_constants.dart
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
                     color: AppTheme.primaryGreen, // Texto verde oscuro
@@ -86,7 +86,7 @@ class GlobalHeader extends StatelessWidget {
                       Container(
                         width: 42,
                         height: 42,
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           color: AppTheme.primaryGreen, // Fondo verde oscuro
                           shape: BoxShape.circle,
                         ),

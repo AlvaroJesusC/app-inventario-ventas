@@ -87,7 +87,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
       if (found) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('¡Producto encontrado online automáticamente!'),
             backgroundColor: AppTheme.primaryGreen,
           ),
@@ -193,7 +193,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedCategory == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Selecciona una categoría'),
           backgroundColor: AppTheme.error,
         ),
@@ -284,7 +284,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                         widget.product != null
                             ? 'Editar Producto'
                             : 'Nuevo Producto',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.w800,
                           color: AppTheme.textPrimary,
@@ -505,7 +505,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               },
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: AppTheme.textPrimary,
-                                side: const BorderSide(
+                                side: BorderSide(
                                   color: AppTheme.divider,
                                   width: 1.5,
                                 ),
@@ -559,7 +559,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   Widget _buildInputLabel(String label) {
     return Text(
       label,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.w600,
         color: AppTheme.textSecondary,
@@ -776,14 +776,14 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: const Color(0xFFE0E0E0)),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.arrow_back_rounded,
                 size: 20,
                 color: AppTheme.primaryGreen,
               ),
             ),
           ),
-          const Expanded(
+          Expanded(
             child: Text(
               AppConstants.appName,
               textAlign: TextAlign.center,
@@ -828,14 +828,14 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   ),
                   child: Center(
                     child: initials.isEmpty
-                        ? const Icon(
+                        ? Icon(
                             Icons.person_rounded,
                             size: 22,
                             color: AppTheme.primaryGreen,
                           )
                         : Text(
                             initials,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppTheme.primaryGreen,
                               fontWeight: FontWeight.bold,
                               fontSize: 14,

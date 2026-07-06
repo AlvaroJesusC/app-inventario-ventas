@@ -50,7 +50,7 @@ class _InventoryFilterBottomSheetState extends State<InventoryFilterBottomSheet>
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.75,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppTheme.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -76,7 +76,7 @@ class _InventoryFilterBottomSheetState extends State<InventoryFilterBottomSheet>
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'Filtros',
                   style: TextStyle(
                     fontSize: 22,
@@ -112,7 +112,7 @@ class _InventoryFilterBottomSheetState extends State<InventoryFilterBottomSheet>
             ),
           ),
           const SizedBox(height: 20),
-          const Divider(height: 1, color: AppTheme.divider),
+          Divider(height: 1, color: AppTheme.divider),
           
           // Contenido scrollable
           Expanded(
@@ -120,7 +120,7 @@ class _InventoryFilterBottomSheetState extends State<InventoryFilterBottomSheet>
               padding: const EdgeInsets.all(24),
               children: [
                 // Ordenar por Precio
-                const Text(
+                Text(
                   'Ordenar por Precio',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
                 ),
@@ -151,7 +151,7 @@ class _InventoryFilterBottomSheetState extends State<InventoryFilterBottomSheet>
                 const SizedBox(height: 32),
 
                 // Filtrar por Stock
-                const Text(
+                Text(
                   'Estado de Stock',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
                 ),
@@ -190,7 +190,7 @@ class _InventoryFilterBottomSheetState extends State<InventoryFilterBottomSheet>
                 const SizedBox(height: 32),
 
                 // Filtrar por Categoría
-                const Text(
+                Text(
                   'Categoría',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
                 ),

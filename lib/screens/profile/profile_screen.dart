@@ -5,6 +5,7 @@ import '../../models/user_model.dart';
 import '../../services/auth_service.dart';
 import '../../services/user_service.dart';
 import '../home/home_screen.dart';
+import 'general_settings_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -42,7 +43,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text(
+              child: Text(
                 'Cancelar',
                 style: TextStyle(color: AppTheme.textSecondary),
               ),
@@ -71,7 +72,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       await _authService.sendPasswordResetEmail(email: email);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
               'Se ha enviado un correo para restablecer tu contraseña.',
             ),
@@ -177,7 +178,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             const SizedBox(height: 16),
                             Text(
                               user.nombre,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 26,
                                 fontWeight: FontWeight.w800,
                                 color: AppTheme.textPrimary,
@@ -186,7 +187,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             const SizedBox(height: 4),
                             Text(
                               user.rol,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
                                 color: AppTheme.textSecondary,
                                 fontWeight: FontWeight.w500,
@@ -204,7 +205,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Cuenta',
                               style: TextStyle(
                                 fontSize: 18,
@@ -281,8 +282,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     subtitle: 'Preferencias y configuraciones del sistema',
                                     showDivider: false, // Es la última opción
                                     onTap: () {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(content: Text('Próximamente...')),
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => const GeneralSettingsScreen(),
+                                        ),
                                       );
                                     },
                                   ),
@@ -369,7 +373,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           Expanded(
                             child: Text(
                               title,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w700,
                                 color: AppTheme.textPrimary,
@@ -401,7 +405,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       const SizedBox(height: 4),
                       Text(
                         subtitle,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w400,
                           color: AppTheme.textSecondary,
@@ -412,13 +416,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right_rounded, color: AppTheme.textHint),
+                Icon(Icons.chevron_right_rounded, color: AppTheme.textHint),
               ],
             ),
           ),
         ),
         if (showDivider)
-          const Divider(height: 1, color: AppTheme.divider, indent: 16, endIndent: 16),
+          Divider(height: 1, color: AppTheme.divider, indent: 16, endIndent: 16),
       ],
     );
   }

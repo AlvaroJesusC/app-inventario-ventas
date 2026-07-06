@@ -210,7 +210,7 @@ class _ReportsTabState extends State<ReportsTab> {
             color: AppTheme.primaryGreen.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(16),
           ),
-          child: const Icon(
+          child: Icon(
             Icons.smart_toy_rounded,
             color: AppTheme.primaryGreen,
             size: 32,
@@ -221,7 +221,7 @@ class _ReportsTabState extends State<ReportsTab> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Agente IA & Reportes',
                 style: TextStyle(
                   fontSize: 22,
@@ -263,7 +263,7 @@ class _ReportsTabState extends State<ReportsTab> {
             ),
           ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Text(
               'Estado: Conectado a Agente',
               style: TextStyle(
@@ -276,7 +276,7 @@ class _ReportsTabState extends State<ReportsTab> {
           TextButton.icon(
             onPressed: _isAnyLoading ? null : _loadAllImages,
             icon: _isAnyLoading
-                ? const SizedBox(
+                ? SizedBox(
                     width: 14,
                     height: 14,
                     child: CircularProgressIndicator(
@@ -284,14 +284,14 @@ class _ReportsTabState extends State<ReportsTab> {
                       color: AppTheme.primaryGreen,
                     ),
                   )
-                : const Icon(
+                : Icon(
                     Icons.refresh_rounded,
                     size: 18,
                     color: AppTheme.primaryGreen,
                   ),
             label: Text(
               _isAnyLoading ? 'Actualizando...' : 'Verificar',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
                 color: AppTheme.primaryGreen,
@@ -306,7 +306,7 @@ class _ReportsTabState extends State<ReportsTab> {
   Widget _buildSectionHeader(String title) {
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.w700,
         color: AppTheme.textSecondary,
@@ -363,7 +363,7 @@ class _ReportsTabState extends State<ReportsTab> {
                     children: [
                       Text(
                         title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
                           color: AppTheme.textPrimary,
@@ -380,7 +380,7 @@ class _ReportsTabState extends State<ReportsTab> {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.fullscreen_rounded,
                     color: AppTheme.textSecondary,
                   ),
@@ -412,7 +412,7 @@ class _ReportsTabState extends State<ReportsTab> {
                 child: Builder(
                   builder: (context) {
                     if (isLoading && bytes == null) {
-                      return const Center(
+                      return Center(
                         child: Padding(
                           padding: EdgeInsets.all(32.0),
                           child: Column(
@@ -452,7 +452,7 @@ class _ReportsTabState extends State<ReportsTab> {
                             Text(
                               'No se pudo cargar el gráfico ($title)',
                               textAlign: TextAlign.center,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
                                 color: AppTheme.textSecondary,
                                 fontWeight: FontWeight.w600,
@@ -477,7 +477,7 @@ class _ReportsTabState extends State<ReportsTab> {
                               ),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: AppTheme.primaryGreen,
-                                side: const BorderSide(
+                                side: BorderSide(
                                   color: AppTheme.primaryGreen,
                                 ),
                                 padding: const EdgeInsets.symmetric(

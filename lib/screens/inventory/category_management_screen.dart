@@ -40,7 +40,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar', style: TextStyle(color: AppTheme.textSecondary)),
+            child: Text('Cancelar', style: TextStyle(color: AppTheme.textSecondary)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
@@ -117,7 +117,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
               children: [
                 const SizedBox(height: 16),
                 ListTile(
-                  leading: const Icon(Icons.edit_outlined, color: AppTheme.primaryGreen),
+                  leading: Icon(Icons.edit_outlined, color: AppTheme.primaryGreen),
                   title: const Text('Editar', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
                   onTap: () {
                     Navigator.pop(context);
@@ -125,7 +125,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.bar_chart_rounded, color: AppTheme.primaryGreen),
+                  leading: Icon(Icons.bar_chart_rounded, color: AppTheme.primaryGreen),
                   title: const Text('Ver productos', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
                   trailing: Text('Varios', style: TextStyle(color: Colors.grey.shade500, fontSize: 14)), // Placeholder
                   onTap: () {
@@ -134,8 +134,8 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.delete_outline, color: AppTheme.error),
-                  title: const Text('Eliminar', style: TextStyle(color: AppTheme.error, fontWeight: FontWeight.w600, fontSize: 16)),
+                  leading: Icon(Icons.delete_outline, color: AppTheme.error),
+                  title: Text('Eliminar', style: TextStyle(color: AppTheme.error, fontWeight: FontWeight.w600, fontSize: 16)),
                   onTap: () {
                     Navigator.pop(context);
                     _deleteCategory(cat);
@@ -185,7 +185,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
               border: Border.all(color: const Color(0xFFE0E0E0)),
             ),
             child: IconButton(
-              icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.primaryGreen, size: 20),
+              icon: Icon(Icons.arrow_back_rounded, color: AppTheme.primaryGreen, size: 20),
               onPressed: () => Navigator.pop(context),
               padding: EdgeInsets.zero,
             ),
@@ -231,7 +231,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
               stream: _categoryService.getCategoriesStream(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen));
+                  return Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen));
                 }
 
                 var categories = snapshot.data ?? [];
@@ -250,9 +250,9 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text('${categories.length} categorías', 
-                            style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.w500)),
+                            style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w500)),
                           Row(
-                            children: const [
+                            children: [
                               Text('Ordenar', style: TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.w600)),
                               SizedBox(width: 4),
                               Icon(Icons.sort, size: 16, color: AppTheme.primaryGreen),
@@ -356,4 +356,3 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
     );
   }
 }
-

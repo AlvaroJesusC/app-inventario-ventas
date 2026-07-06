@@ -69,7 +69,7 @@ class ProductCard extends StatelessWidget {
                         children: [
                           Text(
                             product.nombre.capitalizeFirst(),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
                               color: AppTheme.textPrimary,
@@ -98,7 +98,7 @@ class ProductCard extends StatelessWidget {
                       children: [
                         Text(
                           'S/. ${product.precio.toStringAsFixed(2)}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
                             color: AppTheme.textPrimary,
@@ -112,7 +112,7 @@ class ProductCard extends StatelessWidget {
 
                     // Botón de menú de opciones (3 puntos)
                     PopupMenuButton<String>(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.more_vert_rounded,
                         color: AppTheme.textSecondary,
                         size: 22,
@@ -132,7 +132,7 @@ class ProductCard extends StatelessWidget {
                         }
                       },
                       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                        const PopupMenuItem<String>(
+                        PopupMenuItem<String>(
                           value: 'edit',
                           child: Row(
                             children: [
@@ -149,7 +149,7 @@ class ProductCard extends StatelessWidget {
                             ],
                           ),
                         ),
-                        const PopupMenuItem<String>(
+                        PopupMenuItem<String>(
                           value: 'delete',
                           child: Row(
                             children: [

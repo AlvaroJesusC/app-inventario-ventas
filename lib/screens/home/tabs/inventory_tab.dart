@@ -213,7 +213,7 @@ class InventoryTabState extends State<InventoryTab>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text(
+            child: Text(
               'Cancelar',
               style: TextStyle(color: AppTheme.textSecondary),
             ),
@@ -223,7 +223,7 @@ class InventoryTabState extends State<InventoryTab>
               Navigator.pop(ctx);
               _purchaseService.deletePurchase(purchase.id);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
+                SnackBar(
                   content: Text(
                     'Compra eliminada y stock revertido correctamente.',
                   ),
@@ -376,7 +376,7 @@ class InventoryTabState extends State<InventoryTab>
             children: [
               _buildMainHeader(productCount: 0),
               _buildSearchBar(),
-              const Expanded(
+              Expanded(
                 child: Center(
                   child: CircularProgressIndicator(
                     color: AppTheme.primaryGreen,
@@ -440,7 +440,7 @@ class InventoryTabState extends State<InventoryTab>
                   child:
                       snapshot.connectionState == ConnectionState.waiting &&
                           !snapshot.hasData
-                      ? const Center(
+                      ? Center(
                           child: CircularProgressIndicator(
                             color: AppTheme.primaryGreen,
                           ),
@@ -506,7 +506,7 @@ class InventoryTabState extends State<InventoryTab>
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Inventario',
                     style: TextStyle(
                       fontSize: 28,
@@ -517,7 +517,7 @@ class InventoryTabState extends State<InventoryTab>
                   const SizedBox(height: 2),
                   Text(
                     countText,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
                       color: AppTheme.textSecondary,
@@ -569,7 +569,7 @@ class InventoryTabState extends State<InventoryTab>
                           Container(
                             width: 6,
                             height: 6,
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               color: AppTheme.primaryGreen,
                               shape: BoxShape.circle,
                             ),
@@ -582,12 +582,12 @@ class InventoryTabState extends State<InventoryTab>
               if (isPurchasesTab)
                 OutlinedButton.icon(
                   onPressed: _navigateToNewPurchase,
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.add_rounded,
                     color: AppTheme.primaryGreen,
                     size: 18,
                   ),
-                  label: const Text(
+                  label: Text(
                     'Nueva Compra',
                     style: TextStyle(
                       fontSize: 14,
@@ -598,7 +598,7 @@ class InventoryTabState extends State<InventoryTab>
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size(0, 43),
                     padding: const EdgeInsets.symmetric(horizontal: 14),
-                    side: const BorderSide(
+                    side: BorderSide(
                       color: AppTheme.primaryGreen,
                       width: 1.5,
                     ),
@@ -618,7 +618,7 @@ class InventoryTabState extends State<InventoryTab>
             width: double.infinity,
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: const Color(0xFFF0F2F5),
+              color: AppTheme.divider,
               borderRadius: BorderRadius.circular(14),
             ),
             child: Row(
@@ -635,7 +635,7 @@ class InventoryTabState extends State<InventoryTab>
                       duration: const Duration(milliseconds: 200),
                       decoration: BoxDecoration(
                         color: _selectedSubTab == 1
-                            ? Colors.white
+                            ? AppTheme.white
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(10),
                         boxShadow: _selectedSubTab == 1
@@ -677,7 +677,7 @@ class InventoryTabState extends State<InventoryTab>
                       duration: const Duration(milliseconds: 200),
                       decoration: BoxDecoration(
                         color: _selectedSubTab == 0
-                            ? Colors.white
+                            ? AppTheme.white
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(10),
                         boxShadow: _selectedSubTab == 0
@@ -760,7 +760,7 @@ class InventoryTabState extends State<InventoryTab>
                           Expanded(
                             child: Text(
                               currentSupplierName,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                                 color: AppTheme.textPrimary,
@@ -770,14 +770,14 @@ class InventoryTabState extends State<InventoryTab>
                           ),
                           Text(
                             dateStr,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
                               color: AppTheme.textSecondary,
                             ),
                           ),
                           const SizedBox(width: 4),
                           PopupMenuButton<String>(
-                            icon: const Icon(
+                            icon: Icon(
                               Icons.more_vert_rounded,
                               size: 20,
                               color: AppTheme.textSecondary,
@@ -790,7 +790,7 @@ class InventoryTabState extends State<InventoryTab>
                               }
                             },
                             itemBuilder: (ctx) => [
-                              const PopupMenuItem(
+                              PopupMenuItem(
                                 value: 'edit',
                                 child: Row(
                                   children: [
@@ -804,7 +804,7 @@ class InventoryTabState extends State<InventoryTab>
                                   ],
                                 ),
                               ),
-                              const PopupMenuItem(
+                              PopupMenuItem(
                                 value: 'delete',
                                 child: Row(
                                   children: [
@@ -830,7 +830,7 @@ class InventoryTabState extends State<InventoryTab>
                       // Fila Central: Subtítulo (ej. 3 productos · 120 unidades)
                       Text(
                         '${purchase.totalProductos} productos · ${purchase.unidadesLabel}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           color: AppTheme.textSecondary,
                         ),
@@ -843,7 +843,7 @@ class InventoryTabState extends State<InventoryTab>
                         children: [
                           Text(
                             'S/. ${purchase.total.toStringAsFixed(2)}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                               color: AppTheme.primaryGreen,
@@ -899,7 +899,7 @@ class InventoryTabState extends State<InventoryTab>
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'No hay compras registradas',
             style: TextStyle(
               fontSize: 16,
@@ -908,7 +908,7 @@ class InventoryTabState extends State<InventoryTab>
             ),
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'Registra compras para abastecer tu inventario automáticamente',
             style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
           ),
@@ -931,7 +931,7 @@ class InventoryTabState extends State<InventoryTab>
         child: Row(
           children: [
             const SizedBox(width: 14),
-            const Icon(
+            Icon(
               Icons.search_rounded,
               size: 22,
               color: AppTheme.textHint,
@@ -945,7 +945,7 @@ class InventoryTabState extends State<InventoryTab>
                     _searchQuery = value;
                   });
                 },
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: 'Buscar productos...',
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
@@ -954,7 +954,7 @@ class InventoryTabState extends State<InventoryTab>
                   isDense: true,
                   hintStyle: TextStyle(fontSize: 14, color: AppTheme.textHint),
                 ),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   color: AppTheme.textPrimary,
                 ),
@@ -1031,7 +1031,7 @@ class InventoryTabState extends State<InventoryTab>
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text(
+              child: Text(
                 'Cancelar',
                 style: TextStyle(color: AppTheme.textSecondary),
               ),
@@ -1043,7 +1043,7 @@ class InventoryTabState extends State<InventoryTab>
                 try {
                   await _productService.deleteProduct(product.id);
                   messenger.showSnackBar(
-                    const SnackBar(
+                    SnackBar(
                       content: Text('Producto eliminado correctamente'),
                       backgroundColor: AppTheme.primaryGreen,
                     ),
@@ -1057,7 +1057,7 @@ class InventoryTabState extends State<InventoryTab>
                   );
                 }
               },
-              child: const Text(
+              child: Text(
                 'Eliminar',
                 style: TextStyle(
                   color: AppTheme.error,
@@ -1098,7 +1098,7 @@ class InventoryTabState extends State<InventoryTab>
             const SizedBox(height: 24),
             Text(
               isSearching ? 'Sin resultados' : 'Tu inventario está vacío',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
                 color: AppTheme.textPrimary,
@@ -1110,7 +1110,7 @@ class InventoryTabState extends State<InventoryTab>
                   ? 'No se encontraron productos con "$_searchQuery"'
                   : 'Agrega tu primer producto para\nempezar a gestionar tu inventario',
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w400,
                 color: AppTheme.textSecondary,
@@ -1162,7 +1162,7 @@ class InventoryTabState extends State<InventoryTab>
               color: AppTheme.error.withValues(alpha: 0.6),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'Error al cargar datos',
               style: TextStyle(
                 fontSize: 18,
@@ -1174,7 +1174,7 @@ class InventoryTabState extends State<InventoryTab>
             Text(
               error,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 color: AppTheme.textSecondary,
               ),
@@ -1220,7 +1220,7 @@ class InventoryTabState extends State<InventoryTab>
               ),
               child: Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: AppTheme.textPrimary,

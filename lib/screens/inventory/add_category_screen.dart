@@ -82,7 +82,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Categoría guardada correctamente'),
           backgroundColor: AppTheme.primaryGreen,
         ),
@@ -124,7 +124,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
               border: Border.all(color: const Color(0xFFE0E0E0)),
             ),
             child: IconButton(
-              icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.primaryGreen, size: 20),
+              icon: Icon(Icons.arrow_back_rounded, color: AppTheme.primaryGreen, size: 20),
               onPressed: () => Navigator.pop(context),
               padding: EdgeInsets.zero,
             ),
@@ -152,21 +152,21 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                             color: AppTheme.primaryGreen.withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.local_offer_rounded,
                             size: 48,
                             color: AppTheme.primaryGreen,
                           ),
                         ),
                         Container(
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             color: AppTheme.white,
                             shape: BoxShape.circle,
                           ),
                           padding: const EdgeInsets.all(2),
                           child: Container(
                             padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               color: AppTheme.primaryGreen,
                               shape: BoxShape.circle,
                             ),
@@ -176,7 +176,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    const Text(
+                    Text(
                       'Agregar ícono',
                       style: TextStyle(
                         color: AppTheme.primaryGreen,
@@ -185,7 +185,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
+                    Text(
                       'Selecciona un ícono para tu categoría',
                       style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
                     ),
@@ -196,7 +196,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
 
               // Campo: Nombre
               RichText(
-                text: const TextSpan(
+                text: TextSpan(
                   text: 'Nombre de la categoría ',
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
                   children: [TextSpan(text: '*', style: TextStyle(color: AppTheme.error))],
@@ -212,15 +212,15 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                   fillColor: AppTheme.white,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppTheme.divider),
+                    borderSide: BorderSide(color: AppTheme.divider),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppTheme.divider),
+                    borderSide: BorderSide(color: AppTheme.divider),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 2),
+                    borderSide: BorderSide(color: AppTheme.primaryGreen, width: 2),
                   ),
                 ),
                 validator: (value) => value == null || value.trim().isEmpty ? 'Requerido' : null,
@@ -228,7 +228,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
               const SizedBox(height: 16),
 
               // Campo: Descripción
-              const Text(
+              Text(
                 'Descripción (opcional)',
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
               ),
@@ -243,22 +243,22 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                   fillColor: AppTheme.white,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppTheme.divider),
+                    borderSide: BorderSide(color: AppTheme.divider),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppTheme.divider),
+                    borderSide: BorderSide(color: AppTheme.divider),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 2),
+                    borderSide: BorderSide(color: AppTheme.primaryGreen, width: 2),
                   ),
                 ),
               ),
               const SizedBox(height: 16),
 
               // Selección de Color
-              const Text(
+              Text(
                 'Color',
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
               ),
@@ -302,12 +302,12 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.lightbulb_outline_rounded, color: AppTheme.primaryGreen),
+                    Icon(Icons.lightbulb_outline_rounded, color: AppTheme.primaryGreen),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
+                        children: [
                           Text(
                             'Consejo',
                             style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryGreen),

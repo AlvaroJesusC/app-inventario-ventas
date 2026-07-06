@@ -48,7 +48,7 @@ class _HomeTabState extends State<HomeTab> {
                   RichText(
                     text: TextSpan(
                       text: '¡Buenos días, ',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.w700,
                         color: AppTheme.textPrimary,
@@ -56,7 +56,7 @@ class _HomeTabState extends State<HomeTab> {
                       children: [
                         TextSpan(
                           text: '$nombre!',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppTheme.primaryGreen, // Cambiado al verde principal
                           ),
                         ),
@@ -69,7 +69,7 @@ class _HomeTabState extends State<HomeTab> {
                   const SizedBox(height: 4),
                   Text(
                     rol,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       color: AppTheme.textSecondary,
                       fontWeight: FontWeight.w400,
@@ -217,7 +217,7 @@ class _HomeTabState extends State<HomeTab> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          const Column(
+                          Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
@@ -246,14 +246,14 @@ class _HomeTabState extends State<HomeTab> {
                               children: [
                                 Text(
                                   'Ver todo',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600,
                                     color: AppTheme.primaryGreen,
                                   ),
                                 ),
                                 const SizedBox(width: 2),
-                                const Icon(Icons.chevron_right_rounded, size: 16, color: AppTheme.primaryGreen),
+                                Icon(Icons.chevron_right_rounded, size: 16, color: AppTheme.primaryGreen),
                               ],
                             ),
                           ),
@@ -305,17 +305,17 @@ class _HomeTabState extends State<HomeTab> {
               color: AppTheme.primaryGreen.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
-            child: const Center(
+            child: Center(
               child: Icon(Icons.check_rounded, size: 40, color: AppTheme.primaryGreen),
             ),
           ),
           const SizedBox(height: 20),
-          const Text(
+          Text(
             '¡Todo en orden!',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'No hay artículos con stock crítico.',
             style: TextStyle(fontSize: 14, color: AppTheme.textSecondary),
           ),
@@ -399,7 +399,7 @@ class _DashboardCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           title,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
                             color: AppTheme.textSecondary,
@@ -420,7 +420,7 @@ class _DashboardCard extends StatelessWidget {
                   const SizedBox(height: 12),
                   Text(
                     value,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.w800,
                       color: AppTheme.textPrimary,
@@ -462,14 +462,14 @@ class _DashboardCard extends StatelessWidget {
                       children: [
                         Text(
                           actionText,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                             color: AppTheme.primaryGreen,
                           ),
                         ),
                         const SizedBox(width: 4),
-                        const Icon(Icons.chevron_right_rounded, size: 16, color: AppTheme.primaryGreen),
+                        Icon(Icons.chevron_right_rounded, size: 16, color: AppTheme.primaryGreen),
                       ],
                     ),
                   ),
@@ -552,7 +552,7 @@ class _AlertItem extends StatelessWidget {
                       color: AppTheme.backgroundGrey,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.inventory_2_outlined, color: AppTheme.textHint, size: 24),
+                    child: Icon(Icons.inventory_2_outlined, color: AppTheme.textHint, size: 24),
                   ),
                   const SizedBox(width: 16),
                   
@@ -563,7 +563,7 @@ class _AlertItem extends StatelessWidget {
                       children: [
                         Text(
                           product.nombre,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                             color: AppTheme.textPrimary,
@@ -574,7 +574,7 @@ class _AlertItem extends StatelessWidget {
                         const SizedBox(height: 2),
                         Text(
                           'SKU: ${product.sku}${product.codigoBarras != null && product.codigoBarras!.isNotEmpty ? ' • ${product.codigoBarras}' : ''}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 10,
                             color: AppTheme.textSecondary,
                           ),
@@ -594,7 +594,7 @@ class _AlertItem extends StatelessWidget {
                         product.stock % 1 == 0
                             ? product.stock.toInt().toString()
                             : product.stock.toString(),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
                           color: AppTheme.textPrimary,
@@ -604,7 +604,7 @@ class _AlertItem extends StatelessWidget {
                         (product.unidadMedida.toLowerCase() == 'kg' || product.ventaPorPeso)
                             ? 'KILOS'
                             : 'UNIDADES',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 8,
                           fontWeight: FontWeight.w700,
                           color: AppTheme.textHint,
@@ -633,7 +633,7 @@ class _AlertItem extends StatelessWidget {
                   const SizedBox(width: 4),
                   
                   // Icono >
-                  const Icon(Icons.chevron_right_rounded, size: 18, color: AppTheme.textHint),
+                  Icon(Icons.chevron_right_rounded, size: 18, color: AppTheme.textHint),
                 ],
               ),
             ),

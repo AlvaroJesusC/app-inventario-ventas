@@ -299,7 +299,7 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Nuevo Proveedor',
                     style: TextStyle(
                       fontSize: 18,
@@ -398,7 +398,7 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'Seleccionar Proveedor',
                       style: TextStyle(
                         fontSize: 18,
@@ -421,7 +421,7 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                           final isSelected = _selectedSupplier?.id == sup.id;
                           return ListTile(
                             contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-                            leading: const Icon(Icons.storefront_outlined, color: AppTheme.textSecondary),
+                            leading: Icon(Icons.storefront_outlined, color: AppTheme.textSecondary),
                             title: Text(
                               sup.nombre,
                               style: TextStyle(
@@ -430,7 +430,7 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                                 color: isSelected ? AppTheme.primaryGreen : AppTheme.textPrimary,
                               ),
                             ),
-                            trailing: isSelected ? const Icon(Icons.check_circle, color: AppTheme.primaryGreen) : null,
+                            trailing: isSelected ? Icon(Icons.check_circle, color: AppTheme.primaryGreen) : null,
                             onTap: () {
                               setState(() {
                                 _selectedSupplier = sup;
@@ -453,7 +453,7 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                               color: const Color(0xFFE8F5E9),
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: const Row(
+                            child: Row(
                               children: [
                                 Icon(Icons.add_circle_outline_rounded, color: AppTheme.primaryGreen, size: 22),
                                 SizedBox(width: 10),
@@ -499,7 +499,7 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'Elegir Producto',
                       style: TextStyle(
                         fontSize: 18,
@@ -515,7 +515,7 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                 ),
                 const SizedBox(height: 10),
                 if (_availableProducts.isEmpty)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.all(20),
                     child: Center(
                       child: Text(
@@ -544,10 +544,10 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                           ),
                           subtitle: Text(
                             'Stock: ${p.stockLabel} · Costo Ref: S/. ${p.costo.toStringAsFixed(2)}',
-                            style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                            style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
                           ),
                           trailing: isSelected
-                              ? const Icon(Icons.check_circle, color: AppTheme.primaryGreen)
+                              ? Icon(Icons.check_circle, color: AppTheme.primaryGreen)
                               : null,
                           onTap: () {
                             setState(() {
@@ -575,7 +575,7 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.white,
+      backgroundColor: AppTheme.backgroundGrey,
       appBar: AppBar(
         toolbarHeight: 70,
         leadingWidth: 68,
@@ -583,11 +583,11 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
           padding: const EdgeInsets.only(left: 16.0, top: 12.0, bottom: 12.0),
           child: Container(
             decoration: BoxDecoration(
-              color: const Color(0xFFF5F5F5),
+              color: AppTheme.white,
               borderRadius: BorderRadius.circular(12),
             ),
             child: IconButton(
-              icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.primaryGreen, size: 20),
+              icon: Icon(Icons.arrow_back_rounded, color: AppTheme.primaryGreen, size: 20),
               onPressed: _handleBack,
               padding: EdgeInsets.zero,
             ),
@@ -599,14 +599,14 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
           children: [
             Text(
               widget.purchaseToEdit != null ? 'Editar Compra' : 'Nueva Compra',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: AppTheme.textPrimary,
               ),
             ),
             const SizedBox(height: 2),
-            const Text(
+            Text(
               'Registra los productos que estás comprando',
               style: TextStyle(
                 fontSize: 12,
@@ -618,7 +618,7 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
         ),
         centerTitle: false,
         elevation: 0,
-        backgroundColor: AppTheme.white,
+        backgroundColor: AppTheme.backgroundGrey,
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16.0),
@@ -629,7 +629,7 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                 shape: BoxShape.circle,
               ),
               child: IconButton(
-                icon: const Icon(Icons.help_outline_outlined, color: AppTheme.primaryGreen, size: 24),
+                icon: Icon(Icons.help_outline_outlined, color: AppTheme.primaryGreen, size: 24),
                 onPressed: () {
                   // Ayuda o info
                 },
@@ -651,7 +651,7 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // ── 1. PROVEEDOR ──
-                    const Text(
+                    Text(
                       'Proveedor',
                       style: TextStyle(
                         fontSize: 14,
@@ -672,7 +672,7 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                               decoration: BoxDecoration(
                                 color: AppTheme.white,
                                 borderRadius: BorderRadius.circular(14),
-                                border: Border.all(color: const Color(0xFFE0E0E0)),
+                                border: Border.all(color: AppTheme.divider),
                               ),
                               child: Row(
                                 children: [
@@ -680,10 +680,10 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                                     width: 40,
                                     height: 40,
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFE8F5E9),
+                                      color: AppTheme.primaryGreenLight,
                                       borderRadius: BorderRadius.circular(10),
                                     ),
-                                    child: const Icon(
+                                    child: Icon(
                                       Icons.storefront_rounded,
                                       color: AppTheme.primaryGreen,
                                       size: 20,
@@ -701,7 +701,7 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
-                                  const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.textSecondary),
+                                  Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.textSecondary),
                                 ],
                               ),
                             ),
@@ -717,9 +717,9 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                             decoration: BoxDecoration(
                               color: AppTheme.white,
                               borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: const Color(0xFFE0E0E0)),
+                              border: Border.all(color: AppTheme.divider),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.add_rounded,
                               color: AppTheme.primaryGreen,
                               size: 28,
@@ -732,10 +732,10 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF1F8F3),
+                        color: AppTheme.primaryGreenLight,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Row(
+                      child: Row(
                         children: [
                           Icon(
                             Icons.info_outline_rounded,
@@ -760,7 +760,7 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                     const SizedBox(height: 24),
 
                     // ── 2. AGREGAR PRODUCTO ──
-                    const Text(
+                    Text(
                       'Agregar producto',
                       style: TextStyle(
                         fontSize: 14,
@@ -777,13 +777,13 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                         height: 54,
                         padding: const EdgeInsets.symmetric(horizontal: 14),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF9F9F9),
+                          color: AppTheme.white,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFE0E0E0)),
+                          border: Border.all(color: AppTheme.divider),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.search, color: AppTheme.textSecondary, size: 20),
+                            Icon(Icons.search, color: AppTheme.textSecondary, size: 20),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
@@ -796,7 +796,7 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.textSecondary),
+                            Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.textSecondary),
                           ],
                         ),
                       ),
@@ -815,7 +815,7 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                               keyboardType: TextInputType.numberWithOptions(
                                 decimal: _selectedProduct?.ventaPorPeso ?? false,
                               ),
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
                                 border: InputBorder.none,
                                 isDense: true,
                                 contentPadding: EdgeInsets.zero,
@@ -824,7 +824,7 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                                 fillColor: Colors.transparent,
                                 filled: false,
                               ),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
                                 color: AppTheme.textPrimary,
@@ -842,7 +842,7 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                             child: TextField(
                               controller: _unitCostController,
                               keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
                                 border: InputBorder.none,
                                 isDense: true,
                                 contentPadding: EdgeInsets.zero,
@@ -857,7 +857,7 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                                 fillColor: Colors.transparent,
                                 filled: false,
                               ),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
                                 color: AppTheme.textPrimary,
@@ -875,8 +875,8 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                       height: 48,
                       child: OutlinedButton.icon(
                         onPressed: _addItemToPurchase,
-                        icon: const Icon(Icons.add_circle, color: AppTheme.primaryGreen, size: 20),
-                        label: const Text(
+                        icon: Icon(Icons.add_circle, color: AppTheme.primaryGreen, size: 20),
+                        label: Text(
                           'Agregar producto',
                           style: TextStyle(
                             fontSize: 14,
@@ -885,11 +885,11 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                           ),
                         ),
                         style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: AppTheme.primaryGreen, width: 1.5),
+                          side: BorderSide(color: AppTheme.primaryGreen, width: 1.5),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          backgroundColor: Colors.white,
+                          backgroundColor: AppTheme.white,
                           elevation: 0,
                         ),
                       ),
@@ -900,7 +900,7 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                     // ── 3. PRODUCTOS EN ESTA COMPRA (N) ──
                     Text(
                       'Productos en esta compra (${_purchaseItems.length})',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: AppTheme.textPrimary,
@@ -913,9 +913,9 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppTheme.white,
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: const Color(0xFFE0E0E0)),
+                          border: Border.all(color: AppTheme.divider),
                         ),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -923,18 +923,18 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                             Container(
                               width: 40,
                               height: 40,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFFE8F5E9),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryGreenLight,
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.inventory_2_outlined,
                                 color: AppTheme.primaryGreen,
                                 size: 20,
                               ),
                             ),
                             const SizedBox(height: 10),
-                            const Text(
+                            Text(
                               'Aún no has agregado productos',
                               style: TextStyle(
                                 fontSize: 13,
@@ -944,7 +944,7 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 4),
-                            const Text(
+                            Text(
                               'Agrega productos para verlos aquí.',
                               style: TextStyle(
                                 fontSize: 11,
@@ -973,14 +973,14 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF6F8F6),
+                        color: AppTheme.white,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFFE8F0E9)),
+                        border: Border.all(color: AppTheme.divider),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'Resumen',
                             style: TextStyle(
                               fontSize: 15,
@@ -994,18 +994,18 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                               Container(
                                 width: 32,
                                 height: 32,
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFFE8F5E9),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primaryGreenLight,
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.inventory_2_outlined,
                                   color: AppTheme.primaryGreen,
                                   size: 16,
                                 ),
                               ),
                               const SizedBox(width: 10),
-                              const Text(
+                              Text(
                                 'Total productos',
                                 style: TextStyle(
                                   fontSize: 14,
@@ -1016,7 +1016,7 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                               const Spacer(),
                               Text(
                                 '${_purchaseItems.length}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.bold,
                                   color: AppTheme.textPrimary,
@@ -1024,27 +1024,27 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                               ),
                             ],
                           ),
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 12),
-                            child: DashedDivider(color: Color(0xFFC8E6C9), height: 1),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            child: DashedDivider(color: AppTheme.divider, height: 1),
                           ),
                           Row(
                             children: [
                               Container(
                                 width: 32,
                                 height: 32,
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFFE8F5E9),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primaryGreenLight,
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.account_balance_wallet_outlined,
                                   color: AppTheme.primaryGreen,
                                   size: 16,
                                 ),
                               ),
                               const SizedBox(width: 10),
-                              const Text(
+                              Text(
                                 'Total a pagar',
                                 style: TextStyle(
                                   fontSize: 14,
@@ -1055,7 +1055,7 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                               const Spacer(),
                               Text(
                                 'S/. ${_totalAmount.toStringAsFixed(2)}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.w800,
                                   color: AppTheme.primaryGreen,
@@ -1102,7 +1102,7 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    const Row(
+                    Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
@@ -1136,9 +1136,9 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFF9F9F9),
+        color: AppTheme.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE0E0E0)),
+        border: Border.all(color: AppTheme.divider),
       ),
       child: Row(
         children: [
@@ -1149,7 +1149,7 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
                     color: AppTheme.textSecondary,
                     fontWeight: FontWeight.w500,
@@ -1173,7 +1173,7 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
       decoration: BoxDecoration(
         color: AppTheme.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE0E0E0)),
+        border: Border.all(color: AppTheme.divider),
       ),
       child: Row(
         children: [
@@ -1181,10 +1181,10 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: const Color(0xFFF1F8F3),
+              color: AppTheme.primaryGreenLight,
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.inventory_2_outlined,
               color: AppTheme.primaryGreen,
               size: 18,
@@ -1197,7 +1197,7 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
               children: [
                 Text(
                   item.nombre,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                     color: AppTheme.textPrimary,
@@ -1207,7 +1207,7 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                 const SizedBox(height: 4),
                 Text(
                   '${item.cantidadLabel} x S/. ${item.costoUnitario.toStringAsFixed(2)}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     color: AppTheme.textSecondary,
                   ),
@@ -1221,7 +1221,7 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
             children: [
               Text(
                 'S/. ${item.costoTotal.toStringAsFixed(2)}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: AppTheme.primaryGreen,

@@ -34,7 +34,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               border: Border.all(color: const Color(0xFFE0E0E0)),
             ),
             child: IconButton(
-              icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.primaryGreen, size: 20),
+              icon: Icon(Icons.arrow_back_rounded, color: AppTheme.primaryGreen, size: 20),
               onPressed: () {
                 final homeState = HomeScreen.of(context);
                 if (homeState != null) {
@@ -61,7 +61,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Gestión de Usuarios',
                         style: TextStyle(
                           fontSize: 28,
@@ -87,7 +87,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                     color: AppTheme.primaryGreen.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.groups_rounded,
                     size: 48,
                     color: AppTheme.primaryGreen,
@@ -147,10 +147,10 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                 },
                 decoration: InputDecoration(
                   hintText: 'Buscar por nombre o rol...',
-                  hintStyle: const TextStyle(color: AppTheme.textHint),
-                  prefixIcon: const Icon(Icons.search, color: AppTheme.textSecondary),
+                  hintStyle: TextStyle(color: AppTheme.textHint),
+                  prefixIcon: Icon(Icons.search, color: AppTheme.textSecondary),
                   suffixIcon: IconButton(
-                    icon: const Icon(Icons.filter_list, color: AppTheme.primaryGreen),
+                    icon: Icon(Icons.filter_list, color: AppTheme.primaryGreen),
                     onPressed: () {
                       // Filter action
                     },
@@ -263,7 +263,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                       children: [
                         Text(
                           user.nombre,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
                             color: AppTheme.textPrimary,
@@ -274,7 +274,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                         const SizedBox(height: 4),
                         Text(
                           user.email,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             color: AppTheme.textSecondary,
                           ),
@@ -327,7 +327,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                         ),
                         child: IconButton(
                           padding: EdgeInsets.zero,
-                          icon: const Icon(Icons.more_vert, size: 20, color: AppTheme.textPrimary),
+                          icon: Icon(Icons.more_vert, size: 20, color: AppTheme.textPrimary),
                           onPressed: () {},
                         ),
                       ),
@@ -419,7 +419,7 @@ class _AddEmployeeBottomSheetState extends State<AddEmployeeBottomSheet> {
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('Empleado agregado exitosamente'),
             backgroundColor: AppTheme.primaryGreen,
           ),
@@ -449,7 +449,7 @@ class _AddEmployeeBottomSheetState extends State<AddEmployeeBottomSheet> {
 
     return Container(
       padding: EdgeInsets.fromLTRB(24, 24, 24, bottomInset + 24),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppTheme.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -463,7 +463,7 @@ class _AddEmployeeBottomSheetState extends State<AddEmployeeBottomSheet> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Agregar Nuevo Empleado',
                     style: TextStyle(
                       fontSize: 20,
@@ -472,7 +472,7 @@ class _AddEmployeeBottomSheetState extends State<AddEmployeeBottomSheet> {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, color: AppTheme.textSecondary),
+                    icon: Icon(Icons.close, color: AppTheme.textSecondary),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],

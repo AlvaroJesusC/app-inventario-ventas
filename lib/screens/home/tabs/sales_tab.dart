@@ -31,7 +31,7 @@ class _SalesTabState extends State<SalesTab> {
               padding: const EdgeInsets.all(40),
               child: Text(
                 'Error cargando ventas: ${snapshot.error}',
-                style: const TextStyle(color: AppTheme.error),
+                style: TextStyle(color: AppTheme.error),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -88,7 +88,7 @@ class _SalesTabState extends State<SalesTab> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // ── Título y Subtítulo ──
-              const Text(
+              Text(
                 'Ventas',
                 style: TextStyle(
                   fontSize: 28,
@@ -98,7 +98,7 @@ class _SalesTabState extends State<SalesTab> {
                 ),
               ),
               const SizedBox(height: 4),
-              const Text(
+              Text(
                 'Resumen de transacciones y operaciones.',
                 style: TextStyle(
                   fontSize: 14,
@@ -125,7 +125,7 @@ class _SalesTabState extends State<SalesTab> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const Text(
+                  Text(
                     'Historial de Ventas',
                     style: TextStyle(
                       fontSize: 18,
@@ -186,7 +186,7 @@ class _SalesTabState extends State<SalesTab> {
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: filteredSales.length,
                         separatorBuilder: (context, index) =>
-                            const Divider(height: 1, color: AppTheme.divider),
+                            Divider(height: 1, color: AppTheme.divider),
                         itemBuilder: (context, index) {
                           return _buildTransactionItem(filteredSales[index]);
                         },
@@ -208,7 +208,7 @@ class _SalesTabState extends State<SalesTab> {
                     );
                   },
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: AppTheme.divider),
+                    side: BorderSide(color: AppTheme.divider),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -247,7 +247,7 @@ class _SalesTabState extends State<SalesTab> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           colors: [AppTheme.primaryGreen, AppTheme.primaryGreenDark],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -287,7 +287,7 @@ class _SalesTabState extends State<SalesTab> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.shopping_cart_outlined,
                     color: AppTheme.primaryGreen,
                     size: 28,
@@ -325,7 +325,7 @@ class _SalesTabState extends State<SalesTab> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.add_rounded,
                     color: AppTheme.primaryGreen,
                     size: 28,
@@ -365,7 +365,7 @@ class _SalesTabState extends State<SalesTab> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'TOTAL VENTAS (FILTRADO)',
                   style: TextStyle(
                     fontSize: 10,
@@ -377,7 +377,7 @@ class _SalesTabState extends State<SalesTab> {
                 const SizedBox(height: 8),
                 Text(
                   'S/. ${totalAmount.toStringAsFixed(2)}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.w800,
                     color: AppTheme.textPrimary,
@@ -396,7 +396,7 @@ class _SalesTabState extends State<SalesTab> {
                         color: AppTheme.backgroundGrey,
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
@@ -417,7 +417,7 @@ class _SalesTabState extends State<SalesTab> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    const Text(
+                    Text(
                       'vs ayer',
                       style: TextStyle(
                         fontSize: 11,
@@ -464,14 +464,14 @@ class _SalesTabState extends State<SalesTab> {
                       const SizedBox(height: 12),
                       Text(
                         '$count',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
                           color: AppTheme.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 2),
-                      const Text(
+                      Text(
                         'Transacciones',
                         style: TextStyle(
                           fontSize: 10,
@@ -504,14 +504,14 @@ class _SalesTabState extends State<SalesTab> {
                       const SizedBox(height: 12),
                       Text(
                         'S/. ${ticketPromedio.toStringAsFixed(2)}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
                           color: AppTheme.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 2),
-                      const Text(
+                      Text(
                         'Ticket promedio',
                         style: TextStyle(
                           fontSize: 10,
@@ -535,7 +535,7 @@ class _SalesTabState extends State<SalesTab> {
   Widget _buildFiltersRow() {
     return Row(
       children: [
-        const Text(
+        Text(
           'Fecha:',
           style: TextStyle(
             fontSize: 13,
@@ -707,7 +707,7 @@ class _SalesTabState extends State<SalesTab> {
                 color: AppTheme.primaryGreen.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.shopping_bag_rounded,
                 color: AppTheme.primaryGreen,
                 size: 22,
@@ -722,7 +722,7 @@ class _SalesTabState extends State<SalesTab> {
                 children: [
                   Text(
                     titleText,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                       color: AppTheme.textPrimary,
@@ -733,7 +733,7 @@ class _SalesTabState extends State<SalesTab> {
                   const SizedBox(height: 4),
                   Text(
                     subtitleText,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       color: AppTheme.textSecondary,
                       fontWeight: FontWeight.w400,
@@ -749,7 +749,7 @@ class _SalesTabState extends State<SalesTab> {
               children: [
                 Text(
                   'S/. ${sale.total.toStringAsFixed(2)}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
                     color: AppTheme.textPrimary,
@@ -767,7 +767,7 @@ class _SalesTabState extends State<SalesTab> {
                   ),
                   child: Text(
                     '${sale.totalArticulos} und.',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.w700,
                       color: AppTheme.textSecondary,
@@ -779,7 +779,7 @@ class _SalesTabState extends State<SalesTab> {
             const SizedBox(width: 12),
 
             // Flecha
-            const Icon(
+            Icon(
               Icons.chevron_right_rounded,
               color: AppTheme.textHint,
               size: 20,
@@ -811,7 +811,7 @@ class _SalesTabState extends State<SalesTab> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'Detalle de Venta',
                       style: TextStyle(
                         fontSize: 18,
@@ -829,7 +829,7 @@ class _SalesTabState extends State<SalesTab> {
                 const SizedBox(height: 8),
                 Text(
                   'Fecha: $dateStr',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     color: AppTheme.textSecondary,
                   ),
@@ -837,7 +837,7 @@ class _SalesTabState extends State<SalesTab> {
                 const SizedBox(height: 4),
                 Text(
                   'Cajero: ${sale.cajero}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     color: AppTheme.textSecondary,
                   ),
@@ -845,13 +845,13 @@ class _SalesTabState extends State<SalesTab> {
                 const SizedBox(height: 4),
                 Text(
                   'Categoría: ${sale.categoria}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     color: AppTheme.textSecondary,
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   'Productos',
                   style: TextStyle(
                     fontSize: 14,
@@ -879,7 +879,7 @@ class _SalesTabState extends State<SalesTab> {
                                 children: [
                                   Text(
                                     item.nombre,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
                                       color: AppTheme.textPrimary,
@@ -887,7 +887,7 @@ class _SalesTabState extends State<SalesTab> {
                                   ),
                                   Text(
                                     '${item.cantidad} x S/. ${item.precio.toStringAsFixed(2)}',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 11,
                                       color: AppTheme.textSecondary,
                                     ),
@@ -897,7 +897,7 @@ class _SalesTabState extends State<SalesTab> {
                             ),
                             Text(
                               'S/. ${(item.precio * item.cantidad).toStringAsFixed(2)}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
                                 color: AppTheme.primaryGreen,
@@ -914,7 +914,7 @@ class _SalesTabState extends State<SalesTab> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'Total General',
                       style: TextStyle(
                         fontSize: 15,
@@ -924,7 +924,7 @@ class _SalesTabState extends State<SalesTab> {
                     ),
                     Text(
                       'S/. ${sale.total.toStringAsFixed(2)}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w900,
                         color: AppTheme.primaryGreen,
@@ -958,14 +958,14 @@ class _SalesTabState extends State<SalesTab> {
               color: AppTheme.backgroundGrey,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.receipt_long_rounded,
               size: 48,
               color: AppTheme.textHint,
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Sin transacciones aún',
             style: TextStyle(
               fontSize: 16,
@@ -974,7 +974,7 @@ class _SalesTabState extends State<SalesTab> {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Registra tu primera venta para ver el historial.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),

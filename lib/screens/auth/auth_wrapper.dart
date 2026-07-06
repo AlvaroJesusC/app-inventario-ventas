@@ -101,14 +101,14 @@ class _AuthWrapperState extends State<AuthWrapper> {
                 color: AppTheme.primaryGreenLight,
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.inventory_2_rounded,
                 size: 40,
                 color: AppTheme.primaryGreen,
               ),
             ),
             const SizedBox(height: 24),
-            const SizedBox(
+            SizedBox(
               width: 24,
               height: 24,
               child: CircularProgressIndicator(

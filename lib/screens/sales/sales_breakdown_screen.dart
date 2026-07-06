@@ -71,7 +71,7 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
+            colorScheme: ColorScheme.light(
               primary: AppTheme.primaryGreen,
               onPrimary: Colors.white,
               onSurface: AppTheme.textPrimary,
@@ -113,7 +113,7 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
             }
 
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
+              return Center(
                 child: CircularProgressIndicator(color: AppTheme.primaryGreen),
               );
             }
@@ -186,7 +186,7 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         'Historial de ventas',
                         style: TextStyle(
                           fontSize: 18,
@@ -229,7 +229,7 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
           ),
           child: IconButton(
             onPressed: () => Navigator.pop(context),
-            icon: const Icon(
+            icon: Icon(
               Icons.arrow_back_rounded,
               color: AppTheme.primaryGreen,
               size: 20,
@@ -238,7 +238,7 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
           ),
         ),
         const SizedBox(width: 16),
-        const Expanded(
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -274,13 +274,13 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Entendido', style: TextStyle(color: AppTheme.primaryGreen)),
+                    child: Text('Entendido', style: TextStyle(color: AppTheme.primaryGreen)),
                   ),
                 ],
               ),
             );
           },
-          icon: const Icon(
+          icon: Icon(
             Icons.help_outline_rounded,
             color: AppTheme.primaryGreen,
             size: 24,
@@ -315,7 +315,7 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.calendar_today_rounded,
                     color: AppTheme.primaryGreen,
                     size: 20,
@@ -324,14 +324,14 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
                   Expanded(
                     child: Text(
                       _formatSelectedDate(_selectedDate),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: AppTheme.textPrimary,
                       ),
                     ),
                   ),
-                  const Icon(
+                  Icon(
                     Icons.keyboard_arrow_down_rounded,
                     color: AppTheme.textSecondary,
                     size: 20,
@@ -347,7 +347,7 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
           onTap: () {
             ScaffoldMessenger.of(context).clearSnackBars();
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
+              SnackBar(
                 content: Text('Los filtros ya están activos para la fecha seleccionada.'),
                 backgroundColor: AppTheme.primaryGreen,
                 duration: Duration(seconds: 2),
@@ -370,13 +370,13 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
             ),
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.tune_rounded,
                   color: AppTheme.textPrimary,
                   size: 20,
                 ),
                 const SizedBox(width: 8),
-                const Text(
+                Text(
                   'Filtros',
                   style: TextStyle(
                     fontSize: 14,
@@ -388,7 +388,7 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
                 Container(
                   width: 8,
                   height: 8,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     color: AppTheme.primaryGreen,
                     shape: BoxShape.circle,
                   ),
@@ -603,7 +603,7 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
         if (sales.isEmpty) {
           ScaffoldMessenger.of(context).clearSnackBars();
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
+            SnackBar(
               content: Text('No hay ventas para exportar.'),
               backgroundColor: AppTheme.error,
             ),
@@ -624,7 +624,7 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
           color: AppTheme.primaryGreenLight,
           borderRadius: BorderRadius.circular(10),
         ),
-        child: const Row(
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
@@ -656,7 +656,7 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppTheme.divider),
       ),
-      child: const Column(
+      child: Column(
         children: [
           Icon(
             Icons.receipt_long_rounded,
@@ -706,7 +706,7 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         itemCount: displaySales.length,
-        separatorBuilder: (context, index) => const Divider(color: AppTheme.divider, height: 1),
+        separatorBuilder: (context, index) => Divider(color: AppTheme.divider, height: 1),
         itemBuilder: (context, index) {
           final sale = displaySales[index];
           final String paymentMethod = _getPaymentMethod(sale, index);
@@ -736,7 +736,7 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
                       color: AppTheme.primaryGreen.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.shopping_bag_rounded,
                       color: AppTheme.primaryGreen,
                       size: 20,
@@ -751,7 +751,7 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
                       children: [
                         Text(
                           titleText,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
                             color: AppTheme.textPrimary,
@@ -762,7 +762,7 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
                         const SizedBox(height: 4),
                         Text(
                           '$timeStr  •  ${sale.cajero}  •  $paymentMethod',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             color: AppTheme.textSecondary,
                           ),
@@ -774,14 +774,14 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
                   // Amount
                   Text(
                     'S/. ${sale.total.toStringAsFixed(2)}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
                       color: AppTheme.textPrimary,
                     ),
                   ),
                   const SizedBox(width: 8),
-                  const Icon(
+                  Icon(
                     Icons.chevron_right_rounded,
                     color: AppTheme.textHint,
                     size: 20,
@@ -843,7 +843,7 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'Detalle de Venta',
                       style: TextStyle(
                         fontSize: 18,
@@ -861,7 +861,7 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
                 const SizedBox(height: 8),
                 Text(
                   'Fecha: $dateStr',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     color: AppTheme.textSecondary,
                   ),
@@ -869,7 +869,7 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
                 const SizedBox(height: 4),
                 Text(
                   'Cajero: ${sale.cajero}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     color: AppTheme.textSecondary,
                   ),
@@ -878,7 +878,7 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
                   const SizedBox(height: 4),
                   Text(
                     'Cliente: ${sale.cliente}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       color: AppTheme.textSecondary,
                     ),
@@ -887,13 +887,13 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
                 const SizedBox(height: 4),
                 Text(
                   'Categoría: ${sale.categoria}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     color: AppTheme.textSecondary,
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   'Productos',
                   style: TextStyle(
                     fontSize: 14,
@@ -921,7 +921,7 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
                                 children: [
                                   Text(
                                     item.nombre,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
                                       color: AppTheme.textPrimary,
@@ -929,7 +929,7 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
                                   ),
                                   Text(
                                     'S/. ${item.precio.toStringAsFixed(2)} x ${item.cantidad}',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 11,
                                       color: AppTheme.textSecondary,
                                     ),
@@ -939,7 +939,7 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
                             ),
                             Text(
                               'S/. ${(item.precio * item.cantidad).toStringAsFixed(2)}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
                                 color: AppTheme.textPrimary,
@@ -955,7 +955,7 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'Total Venta',
                       style: TextStyle(
                         fontSize: 15,
@@ -965,7 +965,7 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
                     ),
                     Text(
                       'S/. ${sale.total.toStringAsFixed(2)}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w900,
                         color: AppTheme.primaryGreen,
@@ -981,7 +981,7 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
                         onPressed: () => ShareUtils.shareViaSystem(sale),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppTheme.textPrimary,
-                          side: const BorderSide(color: AppTheme.divider, width: 1.5),
+                          side: BorderSide(color: AppTheme.divider, width: 1.5),
                           minimumSize: const Size(0, 44),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -1033,7 +1033,7 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
         return AlertDialog(
           backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Row(
+          title: Row(
             children: [
               Icon(Icons.chat_bubble_outline_rounded, color: AppTheme.primaryGreen),
               SizedBox(width: 10),
@@ -1047,7 +1047,7 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Ingresa el número de WhatsApp del cliente para enviarle el ticket directamente:',
                 style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
               ),
@@ -1056,21 +1056,21 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
                 controller: phoneController,
                 keyboardType: TextInputType.phone,
                 autofocus: true,
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
                 decoration: InputDecoration(
                   labelText: 'Número de celular',
-                  labelStyle: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+                  labelStyle: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
                   hintText: 'Ej. 987654321',
-                  hintStyle: const TextStyle(color: AppTheme.textHint, fontSize: 13),
-                  prefixIcon: const Icon(Icons.phone_rounded, color: AppTheme.primaryGreen, size: 20),
+                  hintStyle: TextStyle(color: AppTheme.textHint, fontSize: 13),
+                  prefixIcon: Icon(Icons.phone_rounded, color: AppTheme.primaryGreen, size: 20),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppTheme.divider),
+                    borderSide: BorderSide(color: AppTheme.divider),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 1.5),
+                    borderSide: BorderSide(color: AppTheme.primaryGreen, width: 1.5),
                   ),
                 ),
               ),
@@ -1082,7 +1082,7 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
                 Navigator.pop(dialogContext);
                 ShareUtils.shareViaSystem(sale);
               },
-              child: const Text(
+              child: Text(
                 'Compartir sin número',
                 style: TextStyle(color: AppTheme.textSecondary, fontWeight: FontWeight.bold),
               ),

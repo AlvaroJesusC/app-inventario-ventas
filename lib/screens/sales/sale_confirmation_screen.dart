@@ -136,7 +136,7 @@ class _SaleConfirmationScreenState extends State<SaleConfirmationScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Venta registrada con éxito.'),
           backgroundColor: AppTheme.primaryGreen,
         ),
@@ -169,10 +169,10 @@ class _SaleConfirmationScreenState extends State<SaleConfirmationScreen> {
         backgroundColor: AppTheme.backgroundGrey,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.primaryGreen),
+          icon: Icon(Icons.arrow_back_rounded, color: AppTheme.primaryGreen),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Confirmar Venta',
           style: TextStyle(
             color: AppTheme.textPrimary,
@@ -205,7 +205,7 @@ class _SaleConfirmationScreenState extends State<SaleConfirmationScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Center(
+                    Center(
                       child: Text(
                         'TICKET DE VENTA',
                         style: TextStyle(
@@ -223,14 +223,14 @@ class _SaleConfirmationScreenState extends State<SaleConfirmationScreen> {
                     _buildTicketRow('Método de pago:', widget.metodoPago),
                     
                     const SizedBox(height: 12),
-                    const Text(
+                    Text(
                       '- - - - - - - - - - - - - - - - - - - - - - - - - -',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: AppTheme.textHint, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 12),
                     
-                    const Row(
+                    Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
@@ -261,7 +261,7 @@ class _SaleConfirmationScreenState extends State<SaleConfirmationScreen> {
                                 children: [
                                   Text(
                                     name,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
                                       color: AppTheme.textPrimary,
@@ -269,7 +269,7 @@ class _SaleConfirmationScreenState extends State<SaleConfirmationScreen> {
                                   ),
                                   Text(
                                     'S/. ${price.toStringAsFixed(2)} x $qty',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 11,
                                       color: AppTheme.textSecondary,
                                     ),
@@ -279,7 +279,7 @@ class _SaleConfirmationScreenState extends State<SaleConfirmationScreen> {
                             ),
                             Text(
                               'S/. ${(price * qty).toStringAsFixed(2)}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
                                 color: AppTheme.textPrimary,
@@ -291,7 +291,7 @@ class _SaleConfirmationScreenState extends State<SaleConfirmationScreen> {
                     }),
                     
                     const SizedBox(height: 12),
-                    const Text(
+                    Text(
                       '- - - - - - - - - - - - - - - - - - - - - - - - - -',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: AppTheme.textHint, fontWeight: FontWeight.bold),
@@ -304,7 +304,7 @@ class _SaleConfirmationScreenState extends State<SaleConfirmationScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'TOTAL:',
                           style: TextStyle(
                             fontSize: 16,
@@ -314,7 +314,7 @@ class _SaleConfirmationScreenState extends State<SaleConfirmationScreen> {
                         ),
                         Text(
                           'S/. ${_total.toStringAsFixed(2)}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w900,
                             color: AppTheme.primaryGreen,
@@ -345,7 +345,7 @@ class _SaleConfirmationScreenState extends State<SaleConfirmationScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Text(
+                    Text(
                       'Datos del Cliente',
                       style: TextStyle(
                         fontSize: 16,
@@ -358,21 +358,21 @@ class _SaleConfirmationScreenState extends State<SaleConfirmationScreen> {
                     // Cliente Nombre
                     TextField(
                       controller: _clienteController,
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
                       decoration: InputDecoration(
                         labelText: 'Nombre del cliente (Opcional)',
-                        labelStyle: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+                        labelStyle: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
                         hintText: 'Ej. Juan Pérez',
-                        hintStyle: const TextStyle(color: AppTheme.textHint, fontSize: 13),
-                        prefixIcon: const Icon(Icons.person_outline_rounded, color: AppTheme.primaryGreen, size: 20),
+                        hintStyle: TextStyle(color: AppTheme.textHint, fontSize: 13),
+                        prefixIcon: Icon(Icons.person_outline_rounded, color: AppTheme.primaryGreen, size: 20),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppTheme.divider),
+                          borderSide: BorderSide(color: AppTheme.divider),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 1.5),
+                          borderSide: BorderSide(color: AppTheme.primaryGreen, width: 1.5),
                         ),
                       ),
                     ),
@@ -382,21 +382,21 @@ class _SaleConfirmationScreenState extends State<SaleConfirmationScreen> {
                     TextField(
                       controller: _phoneController,
                       keyboardType: TextInputType.phone,
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
                       decoration: InputDecoration(
                         labelText: 'Celular del cliente (WhatsApp)',
-                        labelStyle: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+                        labelStyle: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
                         hintText: 'Ej. 987654321',
-                        hintStyle: const TextStyle(color: AppTheme.textHint, fontSize: 13),
-                        prefixIcon: const Icon(Icons.phone_rounded, color: AppTheme.primaryGreen, size: 20),
+                        hintStyle: TextStyle(color: AppTheme.textHint, fontSize: 13),
+                        prefixIcon: Icon(Icons.phone_rounded, color: AppTheme.primaryGreen, size: 20),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppTheme.divider),
+                          borderSide: BorderSide(color: AppTheme.divider),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 1.5),
+                          borderSide: BorderSide(color: AppTheme.primaryGreen, width: 1.5),
                         ),
                       ),
                     ),
@@ -413,7 +413,7 @@ class _SaleConfirmationScreenState extends State<SaleConfirmationScreen> {
                       onPressed: () => ShareUtils.shareViaSystem(_buildTempSale()),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppTheme.textPrimary,
-                        side: const BorderSide(color: AppTheme.divider, width: 1.5),
+                        side: BorderSide(color: AppTheme.divider, width: 1.5),
                         minimumSize: const Size(0, 54),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
@@ -496,14 +496,14 @@ class _SaleConfirmationScreenState extends State<SaleConfirmationScreen> {
         children: [
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               color: AppTheme.textSecondary,
             ),
           ),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               color: AppTheme.textPrimary,
               fontWeight: FontWeight.w600,

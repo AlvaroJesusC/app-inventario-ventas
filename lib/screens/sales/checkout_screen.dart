@@ -153,7 +153,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             border: Border.all(color: const Color(0xFFE0E0E0)),
           ),
           child: IconButton(
-            icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.primaryGreen, size: 20),
+            icon: Icon(Icons.arrow_back_rounded, color: AppTheme.primaryGreen, size: 20),
             onPressed: () {
               // Return the updated list to the scanner so it syncs
               Navigator.pop(context, items);
@@ -162,7 +162,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ),
         ),
       ),
-      title: const Text(
+      title: Text(
         'Nueva Venta',
         style: TextStyle(
           color: AppTheme.textPrimary,
@@ -181,7 +181,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             child: CircleAvatar(
               radius: 18,
               backgroundColor: AppTheme.primaryGreen.withValues(alpha: 0.2),
-              child: const Icon(Icons.person, color: AppTheme.primaryGreen, size: 20),
+              child: Icon(Icons.person, color: AppTheme.primaryGreen, size: 20),
             ),
           ),
         ),
@@ -205,10 +205,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       child: TextField(
         decoration: InputDecoration(
           hintText: 'Buscar producto, SKU o código de barras...',
-          hintStyle: const TextStyle(color: AppTheme.textHint, fontSize: 14),
-          prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.textSecondary),
+          hintStyle: TextStyle(color: AppTheme.textHint, fontSize: 14),
+          prefixIcon: Icon(Icons.search_rounded, color: AppTheme.textSecondary),
           suffixIcon: IconButton(
-            icon: const Icon(Icons.document_scanner_outlined, color: AppTheme.primaryGreen),
+            icon: Icon(Icons.document_scanner_outlined, color: AppTheme.primaryGreen),
             onPressed: () {
               Navigator.pop(context, items); // Go back to scanner
             },
@@ -233,7 +233,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           children: [
             Icon(Icons.shopping_cart_outlined, size: 48, color: AppTheme.textHint.withValues(alpha: 0.5)),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'No hay productos en el carrito',
               style: TextStyle(color: AppTheme.textSecondary, fontSize: 16),
             ),
@@ -294,7 +294,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       children: [
                         Text(
                           item['name'],
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
                             color: AppTheme.textPrimary,
@@ -304,7 +304,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         ),
                         Text(
                           'SKU: ${item['sku']}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             color: AppTheme.textHint,
                           ),
@@ -331,7 +331,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     children: [
                       GestureDetector(
                         onTap: () => _removeItem(index),
-                        child: const Icon(Icons.delete_outline_rounded, color: AppTheme.textHint, size: 20),
+                        child: Icon(Icons.delete_outline_rounded, color: AppTheme.textHint, size: 20),
                       ),
                       Container(
                         decoration: BoxDecoration(
@@ -350,7 +350,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             ),
                             Text(
                               '${item['quantity']}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
                                 color: AppTheme.textPrimary,
@@ -453,7 +453,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             '-S/. 0.00',
             isDiscount: true,
           ),
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(vertical: 16),
             child: Divider(color: AppTheme.divider, height: 1),
           ),
@@ -468,10 +468,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       color: AppTheme.primaryGreenLight,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.attach_money_rounded, color: AppTheme.primaryGreen, size: 18),
+                    child: Icon(Icons.attach_money_rounded, color: AppTheme.primaryGreen, size: 18),
                   ),
                   const SizedBox(width: 12),
-                  const Text(
+                  Text(
                     'Total',
                     style: TextStyle(
                       fontSize: 18,
@@ -483,7 +483,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ),
               Text(
                 'S/. ${_total.toStringAsFixed(2)}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w900,
                   color: AppTheme.primaryGreen,
@@ -513,7 +513,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             const SizedBox(width: 12),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 color: AppTheme.textPrimary,
                 fontWeight: FontWeight.w500,
@@ -757,7 +757,7 @@ class _MetodoPagoModalContentState extends State<_MetodoPagoModalContent> {
         ),
         const SizedBox(height: 20),
         
-        const Text(
+        Text(
           'Cobrar Venta',
           style: TextStyle(
             fontSize: 20,
@@ -767,7 +767,7 @@ class _MetodoPagoModalContentState extends State<_MetodoPagoModalContent> {
         ),
         const SizedBox(height: 16),
         
-        const Text(
+        Text(
           'Total a cobrar',
           style: TextStyle(
             fontSize: 13,
@@ -778,7 +778,7 @@ class _MetodoPagoModalContentState extends State<_MetodoPagoModalContent> {
         const SizedBox(height: 4),
         Text(
           'S/. ${widget.total.toStringAsFixed(2)}',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 32,
             fontWeight: FontWeight.w900,
             color: AppTheme.primaryGreen,
@@ -788,35 +788,35 @@ class _MetodoPagoModalContentState extends State<_MetodoPagoModalContent> {
         
         TextField(
           controller: _clienteController,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
             color: AppTheme.textPrimary,
           ),
           decoration: InputDecoration(
             labelText: 'Nombre del cliente (Opcional)',
-            labelStyle: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+            labelStyle: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
             hintText: 'Ej. Juan Pérez',
-            hintStyle: const TextStyle(color: AppTheme.textHint, fontSize: 13),
-            prefixIcon: const Icon(Icons.person_outline_rounded, color: AppTheme.primaryGreen, size: 20),
+            hintStyle: TextStyle(color: AppTheme.textHint, fontSize: 13),
+            prefixIcon: Icon(Icons.person_outline_rounded, color: AppTheme.primaryGreen, size: 20),
             contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppTheme.divider),
+              borderSide: BorderSide(color: AppTheme.divider),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppTheme.divider),
+              borderSide: BorderSide(color: AppTheme.divider),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 1.5),
+              borderSide: BorderSide(color: AppTheme.primaryGreen, width: 1.5),
             ),
           ),
         ),
         const SizedBox(height: 20),
         
-        const Align(
+        Align(
           alignment: Alignment.centerLeft,
           child: Text(
             'Selecciona el método de pago',
@@ -926,7 +926,7 @@ class _MetodoPagoModalContentState extends State<_MetodoPagoModalContent> {
             const SizedBox(height: 12),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
                 color: AppTheme.textPrimary,
@@ -951,13 +951,13 @@ class _MetodoPagoModalContentState extends State<_MetodoPagoModalContent> {
                   currentStep = 0;
                 });
               },
-              child: const Icon(
+              child: Icon(
                 Icons.close_rounded,
                 color: AppTheme.textPrimary,
                 size: 24,
               ),
             ),
-            const Expanded(
+            Expanded(
               child: Text(
                 'Yape/Plin',
                 textAlign: TextAlign.center,
@@ -972,7 +972,7 @@ class _MetodoPagoModalContentState extends State<_MetodoPagoModalContent> {
           ],
         ),
         const SizedBox(height: 8),
-        const Text(
+        Text(
           'Escanea y paga',
           style: TextStyle(
             fontSize: 13,
@@ -1008,7 +1008,7 @@ class _MetodoPagoModalContentState extends State<_MetodoPagoModalContent> {
                       height: 200,
                       color: const Color(0xFFF9F9F9),
                       alignment: Alignment.center,
-                      child: const Column(
+                      child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
@@ -1042,14 +1042,14 @@ class _MetodoPagoModalContentState extends State<_MetodoPagoModalContent> {
         
         Text(
           'S/. ${widget.total.toStringAsFixed(2)}',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w900,
             color: AppTheme.primaryGreen,
           ),
         ),
         const SizedBox(height: 4),
-        const Text(
+        Text(
           'Muestra este QR al cliente',
           style: TextStyle(
             fontSize: 13,
@@ -1108,14 +1108,14 @@ class _MetodoPagoModalContentState extends State<_MetodoPagoModalContent> {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: const Color(0xFFE0E0E0)),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.arrow_back_rounded,
                   color: AppTheme.primaryGreen,
                   size: 20,
                 ),
               ),
             ),
-            const Expanded(
+            Expanded(
               child: Text(
                 'Cobrar Venta',
                 textAlign: TextAlign.center,
@@ -1134,13 +1134,13 @@ class _MetodoPagoModalContentState extends State<_MetodoPagoModalContent> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
+            Icon(
               Icons.payments_rounded,
               color: AppTheme.primaryGreen,
               size: 24,
             ),
             const SizedBox(width: 8),
-            const Text(
+            Text(
               'Efectivo',
               style: TextStyle(
                 fontSize: 15,
@@ -1152,7 +1152,7 @@ class _MetodoPagoModalContentState extends State<_MetodoPagoModalContent> {
         ),
         const SizedBox(height: 20),
         
-        const Center(
+        Center(
           child: Text(
             'Total a cobrar',
             style: TextStyle(
@@ -1166,7 +1166,7 @@ class _MetodoPagoModalContentState extends State<_MetodoPagoModalContent> {
         Center(
           child: Text(
             'S/. ${widget.total.toStringAsFixed(2)}',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.w900,
               color: AppTheme.primaryGreen,
@@ -1175,7 +1175,7 @@ class _MetodoPagoModalContentState extends State<_MetodoPagoModalContent> {
         ),
         const SizedBox(height: 24),
         
-        const Text(
+        Text(
           'Monto recibido',
           style: TextStyle(
             fontSize: 14,
@@ -1189,7 +1189,7 @@ class _MetodoPagoModalContentState extends State<_MetodoPagoModalContent> {
           controller: widget.montoRecibidoController,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           autofocus: true,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: AppTheme.textPrimary,
@@ -1201,14 +1201,14 @@ class _MetodoPagoModalContentState extends State<_MetodoPagoModalContent> {
             prefixIcon: Container(
               margin: const EdgeInsets.only(right: 12),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 color: AppTheme.primaryGreenLight,
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(12),
                   bottomLeft: Radius.circular(12),
                 ),
               ),
-              child: const Text(
+              child: Text(
                 'S/.',
                 style: TextStyle(
                   fontSize: 16,
@@ -1235,7 +1235,7 @@ class _MetodoPagoModalContentState extends State<_MetodoPagoModalContent> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
+              borderSide: BorderSide(
                 color: AppTheme.primaryGreen,
                 width: 2.0,
               ),
@@ -1254,18 +1254,18 @@ class _MetodoPagoModalContentState extends State<_MetodoPagoModalContent> {
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: AppTheme.primaryGreenLight,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.autorenew_rounded,
                   color: AppTheme.primaryGreen,
                   size: 20,
                 ),
               ),
               const SizedBox(width: 16),
-              const Text(
+              Text(
                 'Vuelto:',
                 style: TextStyle(
                   fontSize: 16,
@@ -1276,7 +1276,7 @@ class _MetodoPagoModalContentState extends State<_MetodoPagoModalContent> {
               const Spacer(),
               Text(
                 'S/. ${change.toStringAsFixed(2)}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w900,
                   color: AppTheme.primaryGreen,

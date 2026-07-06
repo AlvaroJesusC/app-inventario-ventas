@@ -260,7 +260,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             child: Row(
               children: [
                 const SizedBox(width: 14),
-                const Icon(
+                Icon(
                   Icons.search_rounded,
                   size: 20,
                   color: AppTheme.textHint,
@@ -274,7 +274,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                         _searchQuery = value;
                       });
                     },
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: 'Buscar por nombre...',
                       border: InputBorder.none,
                       enabledBorder: InputBorder.none,
@@ -286,7 +286,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                         color: AppTheme.textHint,
                       ),
                     ),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       color: AppTheme.textPrimary,
                     ),
@@ -300,7 +300,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                         _searchQuery = '';
                       });
                     },
-                    child: const Padding(
+                    child: Padding(
                       padding: EdgeInsets.symmetric(horizontal: 12),
                       child: Icon(
                         Icons.clear_rounded,
@@ -313,7 +313,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             ),
           ),
         ),
-        const Padding(
+        Padding(
           padding: EdgeInsets.only(left: 24, right: 24, bottom: 8),
           child: Text(
             'Alternativo al escáner. Se usa solo cuando el código de barras no puede escanearse.',
@@ -355,7 +355,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         ],
       ),
       child: matchedProducts.isEmpty
-          ? const Padding(
+          ? Padding(
               padding: EdgeInsets.all(16.0),
               child: Center(
                 child: Text(
@@ -371,7 +371,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                   ? 5
                   : matchedProducts.length,
               separatorBuilder: (context, index) =>
-                  const Divider(height: 1, color: AppTheme.divider),
+                  Divider(height: 1, color: AppTheme.divider),
               itemBuilder: (context, index) {
                 final product = matchedProducts[index];
                 return ListTile(
@@ -383,7 +383,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                       color: AppTheme.backgroundGrey,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.inventory_2_rounded,
                       color: AppTheme.textHint,
                       size: 16,
@@ -391,7 +391,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                   ),
                   title: Text(
                     product.nombre,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: AppTheme.textPrimary,
@@ -399,14 +399,14 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                   ),
                   subtitle: Text(
                     product.categoria ?? 'Sin categoría',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       color: AppTheme.textSecondary,
                     ),
                   ),
                   trailing: Text(
                     'S/. ${product.precio.toStringAsFixed(2)}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                       color: AppTheme.primaryGreen,
@@ -442,7 +442,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+      backgroundColor: AppTheme.backgroundGrey,
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -484,14 +484,14 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: const Color(0xFFE0E0E0)),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.arrow_back_rounded,
                 color: AppTheme.primaryGreen,
                 size: 20,
               ),
             ),
           ),
-          const Text(
+          Text(
             'Escanear Productos',
             style: TextStyle(
               fontSize: 18,
@@ -505,7 +505,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
               color: AppTheme.primaryGreen.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.question_mark_rounded,
               color: AppTheme.primaryGreen,
               size: 18,
@@ -573,7 +573,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             children: [
               Text(
                 'Productos escaneados (${_scannedItems.length})',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   color: AppTheme.textPrimary,
@@ -608,7 +608,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
           ),
           const SizedBox(height: 16),
           if (_scannedItems.isEmpty)
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(vertical: 40),
               child: Center(
                 child: Text(
@@ -674,7 +674,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                   children: [
                     Text(
                       item['name'],
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
                         color: AppTheme.textPrimary,
@@ -685,7 +685,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                     const SizedBox(height: 2),
                     Text(
                       'SKU: ${item['sku']}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
                         color: AppTheme.textSecondary,
                       ),
@@ -697,7 +697,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                       children: [
                         Text(
                           'S/. ${(item['price'] * item['quantity']).toStringAsFixed(2)}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
                             color: AppTheme.primaryGreen,
@@ -717,7 +717,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                                     setState(() => item['quantity']--);
                                   }
                                 },
-                                child: const Padding(
+                                child: Padding(
                                   padding: EdgeInsets.symmetric(
                                     horizontal: 10,
                                     vertical: 6,
@@ -731,7 +731,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                               ),
                               Text(
                                 '${item['quantity']}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
                                   color: AppTheme.textPrimary,
@@ -741,7 +741,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                                 onTap: () {
                                   setState(() => item['quantity']++);
                                 },
-                                child: const Padding(
+                                child: Padding(
                                   padding: EdgeInsets.symmetric(
                                     horizontal: 10,
                                     vertical: 6,
@@ -773,7 +773,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                 width: 52,
                 decoration: BoxDecoration(
                   color: Colors.red.shade50.withValues(alpha: 0.8),
-                  border: const Border(
+                  border: Border(
                     left: BorderSide(color: AppTheme.divider, width: 1),
                   ),
                 ),
@@ -822,7 +822,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.shopping_cart_outlined,
               color: AppTheme.primaryGreen,
               size: 24,
@@ -925,13 +925,13 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.bolt_rounded,
                 color: AppTheme.textPrimary,
                 size: 18,
               ),
               const SizedBox(width: 6),
-              const Text(
+              Text(
                 'Más vendidos',
                 style: TextStyle(
                   fontSize: 15,
@@ -973,7 +973,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                           children: [
                             Text(
                               product.nombre,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
                                 color: AppTheme.textPrimary,
@@ -982,7 +982,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                             const SizedBox(height: 2),
                             Text(
                               'S/. ${product.precio.toStringAsFixed(2)} · ${product.unidadMedida.isNotEmpty ? product.unidadMedida : 'und'}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
                                 color: AppTheme.textSecondary,
                               ),
@@ -995,7 +995,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                         child: Container(
                           width: 32,
                           height: 32,
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             color: AppTheme.primaryGreen,
                             shape: BoxShape.circle,
                           ),
