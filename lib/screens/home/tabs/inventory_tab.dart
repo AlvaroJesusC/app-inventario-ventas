@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import '../../../config/app_theme.dart';
 import '../../../models/product_model.dart';
 import '../../../models/purchase_model.dart';
+import '../../../models/supplier_model.dart';
 import '../../../services/product_service.dart';
 import '../../../services/purchase_service.dart';
+import '../../../services/supplier_service.dart';
 import '../../../widgets/product_card.dart';
 import '../../../widgets/inventory_filter_bottom_sheet.dart';
 import '../../inventory/add_product_screen.dart';
@@ -11,7 +13,7 @@ import '../../inventory/category_management_screen.dart';
 import '../../inventory/new_purchase_screen.dart';
 import '../home_screen.dart';
 
-/// Tab de Inventario — vista con sub-navegación entre [Productos] y [Compras]
+/// Tab de Inventario — vista con sub-navegación entre [Compras] y [Productos]
 /// Conectada a Cloud Firestore en tiempo real
 class InventoryTab extends StatefulWidget {
   const InventoryTab({super.key});
@@ -28,6 +30,7 @@ class InventoryTabState extends State<InventoryTab>
   final _searchController = TextEditingController();
   final _productService = ProductService();
   final _purchaseService = PurchaseService();
+  final _supplierService = SupplierService();
   String _searchQuery = '';
 
   // Filter & Sort State
@@ -345,38 +348,49 @@ class InventoryTabState extends State<InventoryTab>
 
   // ── PESTAÑA 2: COMPRAS (IMAGE 2) ───────────────────────
   Widget _buildPurchasesView() {
-    return StreamBuilder<List<PurchaseModel>>(
-      stream: _purchaseService.getPurchasesStream(),
-      builder: (context, snapshot) {
-        final purchases = snapshot.data ?? [];
+    return StreamBuilder<List<SupplierModel>>(
+      stream: _supplierService.getSuppliersStream(),
+      builder: (context, supplierSnapshot) {
+        final suppliers = supplierSnapshot.data ?? [];
+        final supplierNames = {for (var s in suppliers) s.id: s.nombre};
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildMainHeader(
-              productCount: purchases.length,
-              isPurchasesTab: true,
-            ),
+        return StreamBuilder<List<PurchaseModel>>(
+          stream: _purchaseService.getPurchasesStream(),
+          builder: (context, snapshot) {
+            final purchases = snapshot.data ?? [];
 
-            // Lista de Compras
-            Expanded(
-              child: snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData
-                  ? const Center(
-                      child: CircularProgressIndicator(color: AppTheme.primaryGreen),
-                    )
-                  : purchases.isEmpty
-                      ? _buildEmptyPurchasesState()
-                      : ListView.separated(
-                          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-                          itemCount: purchases.length,
-                          separatorBuilder: (ctx, i) => const SizedBox(height: 12),
-                          itemBuilder: (ctx, index) {
-                            final purchase = purchases[index];
-                            return _buildPurchaseCard(purchase);
-                          },
-                        ),
-            ),
-          ],
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildMainHeader(
+                  productCount: purchases.length,
+                  isPurchasesTab: true,
+                ),
+
+                // Lista de Compras
+                Expanded(
+                  child: snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData
+                      ? const Center(
+                          child: CircularProgressIndicator(color: AppTheme.primaryGreen),
+                        )
+                      : purchases.isEmpty
+                          ? _buildEmptyPurchasesState()
+                          : ListView.separated(
+                              padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+                              itemCount: purchases.length,
+                              separatorBuilder: (ctx, i) => const SizedBox(height: 12),
+                              itemBuilder: (ctx, index) {
+                                final purchase = purchases[index];
+                                final supplierName = (purchase.supplierId != null && supplierNames.containsKey(purchase.supplierId))
+                                    ? supplierNames[purchase.supplierId]!
+                                    : purchase.proveedor;
+                                return _buildPurchaseCard(purchase, currentSupplierName: supplierName);
+                              },
+                            ),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -508,7 +522,7 @@ class InventoryTabState extends State<InventoryTab>
 
           const SizedBox(height: 14),
 
-          // ── SEGMENTED TOGGLE (Sub-tabs [Productos] | [Compras]) a Ancho Completo ──
+          // ── SEGMENTED TOGGLE (Sub-tabs [Compras] | [Productos]) a Ancho Completo ──
           Container(
             height: 48,
             width: double.infinity,
@@ -519,7 +533,49 @@ class InventoryTabState extends State<InventoryTab>
             ),
             child: Row(
               children: [
-                // Sub-tab 1: Productos
+                // Sub-tab 1: Compras
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedSubTab = 1;
+                      });
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      decoration: BoxDecoration(
+                        color: _selectedSubTab == 1
+                            ? Colors.white
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: _selectedSubTab == 1
+                            ? [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.06),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ]
+                            : [],
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        'Compras',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: _selectedSubTab == 1
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color: _selectedSubTab == 1
+                              ? AppTheme.textPrimary
+                              : AppTheme.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Sub-tab 2: Productos
                 Expanded(
                   child: GestureDetector(
                     onTap: () {
@@ -560,48 +616,6 @@ class InventoryTabState extends State<InventoryTab>
                     ),
                   ),
                 ),
-
-                // Sub-tab 2: Compras
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _selectedSubTab = 1;
-                      });
-                    },
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      decoration: BoxDecoration(
-                        color: _selectedSubTab == 1
-                            ? Colors.white
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(10),
-                        boxShadow: _selectedSubTab == 1
-                            ? [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.06),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ]
-                            : [],
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        'Compras',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: _selectedSubTab == 1
-                              ? FontWeight.w700
-                              : FontWeight.w500,
-                          color: _selectedSubTab == 1
-                              ? AppTheme.primaryGreen
-                              : AppTheme.textSecondary,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
@@ -611,7 +625,7 @@ class InventoryTabState extends State<InventoryTab>
   }
 
   // ── TARJETA DE COMPRA (RECREADA SEGÚN LA IMAGEN 2) ──
-  Widget _buildPurchaseCard(PurchaseModel purchase) {
+  Widget _buildPurchaseCard(PurchaseModel purchase, {required String currentSupplierName}) {
     // Formato de fecha corto (ej: 28 Jun 2026)
     final dateStr = '${purchase.fecha.day} ${_getMonthAbbr(purchase.fecha.month)} ${purchase.fecha.year}';
 
@@ -651,7 +665,7 @@ class InventoryTabState extends State<InventoryTab>
                         children: [
                           Expanded(
                             child: Text(
-                              purchase.proveedor,
+                              currentSupplierName,
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,

@@ -64,12 +64,15 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
       (suppliers) {
         if (mounted) {
           setState(() {
-            if (suppliers.isEmpty) {
-              _suppliers = SupplierService.defaultSuppliers;
-            } else {
-              _suppliers = suppliers;
-            }
-            if (_selectedSupplier == null && _suppliers.isNotEmpty) {
+            _suppliers = suppliers;
+            if (_selectedSupplier != null) {
+              final index = suppliers.indexWhere((s) => s.id == _selectedSupplier!.id);
+              if (index != -1) {
+                _selectedSupplier = suppliers[index];
+              } else {
+                _selectedSupplier = suppliers.isNotEmpty ? suppliers.first : null;
+              }
+            } else if (_suppliers.isNotEmpty) {
               _selectedSupplier = _suppliers.first;
             }
             _isLoading = false;
@@ -80,10 +83,7 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
         debugPrint('Error cargando proveedores: $error');
         if (mounted) {
           setState(() {
-            _suppliers = SupplierService.defaultSuppliers;
-            if (_selectedSupplier == null && _suppliers.isNotEmpty) {
-              _selectedSupplier = _suppliers.first;
-            }
+            _suppliers = [];
             _isLoading = false;
           });
         }

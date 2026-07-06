@@ -23,12 +23,4 @@ class SupplierService {
     final docRef = await _ref.add(supplier.toMap());
     return docRef.id;
   }
-
-  /// Proveedores por defecto (demo / fallback)
-  static List<SupplierModel> get defaultSuppliers => [
-    SupplierModel(id: 'sup_1', nombre: 'Distribuidora Lima Norte', telefono: '987654321', ruc: '20123456789'),
-    SupplierModel(id: 'sup_2', nombre: 'Comercial Abastece SAC', telefono: '912345678', ruc: '20987654321'),
-    SupplierModel(id: 'sup_3', nombre: 'Inversiones San Pedro SAC', telefono: '955443322', ruc: '20554433221'),
-    SupplierModel(id: 'sup_4', nombre: 'Bodega Don Pepe E.I.R.L.', telefono: '944332211', ruc: '20443322110'),
-  ];
 }
