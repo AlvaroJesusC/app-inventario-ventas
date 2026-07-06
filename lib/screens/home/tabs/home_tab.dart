@@ -591,16 +591,20 @@ class _AlertItem extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        '${product.stock}',
+                        product.stock % 1 == 0
+                            ? product.stock.toInt().toString()
+                            : product.stock.toString(),
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
                           color: AppTheme.textPrimary,
                         ),
                       ),
-                      const Text(
-                        'UNIDADES',
-                        style: TextStyle(
+                      Text(
+                        (product.unidadMedida.toLowerCase() == 'kg' || product.ventaPorPeso)
+                            ? 'KILOS'
+                            : 'UNIDADES',
+                        style: const TextStyle(
                           fontSize: 8,
                           fontWeight: FontWeight.w700,
                           color: AppTheme.textHint,

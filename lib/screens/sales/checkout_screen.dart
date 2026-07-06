@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../../config/app_theme.dart';
 import '../home/home_screen.dart';
-import '../../services/user_service.dart';
-import '../../services/sale_service.dart';
-import '../../models/sale_model.dart';
+import 'sale_confirmation_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
   final List<Map<String, dynamic>> scannedItems;
@@ -20,7 +17,6 @@ class CheckoutScreen extends StatefulWidget {
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
   late List<Map<String, dynamic>> items;
-  bool _isSaving = false;
   final TextEditingController _montoRecibidoController = TextEditingController();
 
   @override
@@ -69,463 +65,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     });
   }
 
-  void _procesarCobro(String metodoPago) async {
-    setState(() {
-      _isSaving = true;
-    });
-
-    try {
-      // 1. Obtener el usuario actual
-      final user = FirebaseAuth.instance.currentUser;
-      String cashierName = 'Cajero';
-      if (user != null) {
-        final userProfile = await UserService().getUserProfile(user.uid);
-        if (userProfile != null) {
-          cashierName = userProfile.nombre;
-        } else {
-          cashierName = user.email ?? 'Cajero';
-        }
-      }
-
-      // 2. Preparar los productos vendidos
-      final saleItems = items.map((item) {
-        return SaleItemModel(
-          id: item['id'] ?? '',
-          nombre: item['name'] ?? '',
-          sku: item['sku'] ?? '',
-          precio: (item['price'] ?? 0).toDouble(),
-          cantidad: (item['quantity'] ?? 0).toInt(),
-          categoria: item['category'] ?? 'General',
-        );
-      }).toList();
-
-      // Obtener categorías únicas de los productos vendidos
-      final uniqueCategories = saleItems.map((e) => e.categoria).toSet();
-      final String saleCategory = uniqueCategories.isEmpty 
-          ? 'General' 
-          : uniqueCategories.join(', ');
-
-      // 3. Crear el modelo de venta
-      final newSale = SaleModel(
-        id: '', // Firestore generará el ID automáticamente
-        fecha: DateTime.now(),
-        total: _total,
-        totalArticulos: _totalItems,
-        cajero: cashierName,
-        estado: 'PAGADO',
-        categoria: saleCategory,
-        articulos: saleItems,
-        metodoPago: metodoPago,
-      );
-
-      // 4. Guardar la venta en Firestore
-      final saleId = await SaleService().addSale(newSale);
-
-      if (!mounted) return;
-
-      setState(() {
-        _isSaving = false;
-      });
-
-      // 5. Mostrar diálogo de éxito personalizado
-      _showSuccessDialog(saleId, newSale);
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isSaving = false;
-        });
-        ScaffoldMessenger.of(context).clearSnackBars();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al realizar la venta: $e'),
-            backgroundColor: AppTheme.error,
-          ),
-        );
-      }
-    }
-  }
-
-  void _showSuccessDialog(String saleId, SaleModel sale) {
-    final String shortId = saleId.length > 5 
-        ? saleId.substring(saleId.length - 5).toUpperCase() 
-        : saleId.toUpperCase();
-    final String transId = '#VTA-$shortId';
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext dialogContext) {
-        return Dialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Icono Check Verde
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: const BoxDecoration(
-                    color: AppTheme.primaryGreen,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.check_rounded,
-                    color: Colors.white,
-                    size: 48,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                
-                // Título
-                const Text(
-                  '¡Venta completada!',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.textPrimary,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-
-                // Detalle ID Transacción
-                const Text(
-                  'ID de transacción',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppTheme.textSecondary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  transId,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.primaryGreen,
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Método de Pago
-                const Text(
-                  'Método de pago',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppTheme.textSecondary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: AppTheme.primaryGreenLight,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        sale.metodoPago == 'Yape/Plin' 
-                            ? Icons.qr_code_2_rounded 
-                            : Icons.payments_rounded,
-                        color: AppTheme.primaryGreen,
-                        size: 16,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      sale.metodoPago ?? 'Efectivo',
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.textPrimary,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 32),
-
-                // Botones
-                OutlinedButton(
-                  onPressed: () {
-                    Navigator.pop(dialogContext); // Cierra el modal
-                    Navigator.pop(context, <Map<String, dynamic>>[]); // Sale del checkout indicando carrito vacío
-                    HomeScreen.of(context)?.setTab(1); // Lleva al inicio de ventas
-                  },
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppTheme.primaryGreen,
-                    side: const BorderSide(color: AppTheme.primaryGreen, width: 1.5),
-                    minimumSize: const Size(double.infinity, 54),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: const Text(
-                    'Nueva Venta',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                
-                ElevatedButton(
-                  onPressed: () {
-                    _showComprobanteDialog(dialogContext, transId, sale);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryGreen,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(double.infinity, 54),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    'Ver comprobante',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  void _showComprobanteDialog(BuildContext successDialogContext, String transId, SaleModel sale) {
-    final localFecha = sale.fecha.toLocal();
-    final String dateStr =
-        "${localFecha.day.toString().padLeft(2, '0')}/${localFecha.month.toString().padLeft(2, '0')}/${localFecha.year} ${localFecha.hour.toString().padLeft(2, '0')}:${localFecha.minute.toString().padLeft(2, '0')}";
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Comprobante',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                          color: AppTheme.textPrimary,
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close_rounded),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ],
-                  ),
-                  const Divider(color: AppTheme.divider),
-                  const SizedBox(height: 12),
-                  
-                  const Center(
-                    child: Text(
-                      'TICKET DE VENTA',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.textSecondary,
-                        letterSpacing: 2,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  _buildTicketRow('Transacción:', transId, isBold: true),
-                  _buildTicketRow('Fecha/Hora:', dateStr),
-                  _buildTicketRow('Cajero:', sale.cajero),
-                  _buildTicketRow('Método de pago:', sale.metodoPago ?? 'Efectivo'),
-                  
-                  const SizedBox(height: 12),
-                  const Text(
-                    '- - - - - - - - - - - - - - - - - - - - - - - - - -',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: AppTheme.textHint, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 12),
-                  
-                  const Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Descripción',
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.textSecondary),
-                      ),
-                      Text(
-                        'Total',
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.textSecondary),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  
-                  ...sale.articulos.map((item) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  item.nombre,
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppTheme.textPrimary,
-                                  ),
-                                ),
-                                Text(
-                                  'S/. ${item.precio.toStringAsFixed(2)} x ${item.cantidad}',
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    color: AppTheme.textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Text(
-                            'S/. ${(item.precio * item.cantidad).toStringAsFixed(2)}',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: AppTheme.textPrimary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
-                  
-                  const SizedBox(height: 12),
-                  const Text(
-                    '- - - - - - - - - - - - - - - - - - - - - - - - - -',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: AppTheme.textHint, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 12),
-                  
-                  _buildTicketRow('Subtotal:', 'S/. ${(_subtotal).toStringAsFixed(2)}'),
-                  _buildTicketRow('Impuestos (18%):', 'S/. ${_taxes.toStringAsFixed(2)}'),
-                  _buildTicketRow('Descuento:', '-S/. 0.00'),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'TOTAL:',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
-                          color: AppTheme.textPrimary,
-                        ),
-                      ),
-                      Text(
-                        'S/. ${sale.total.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w900,
-                          color: AppTheme.primaryGreen,
-                        ),
-                      ),
-                    ],
-                  ),
-                  
-                  const SizedBox(height: 32),
-                  
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context); // Cierra comprobante
-                      Navigator.pop(successDialogContext); // Cierra éxito
-                      Navigator.pop(this.context, <Map<String, dynamic>>[]); // Sale del checkout indicando carrito vacío
-                      HomeScreen.of(context)?.setTab(1); // Regresa a ventas
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryGreen,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(double.infinity, 54),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: const Text(
-                      'Finalizar y Volver',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildTicketRow(String label, String value, {bool isBold = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              color: AppTheme.textSecondary,
-              fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 12,
-              color: AppTheme.textPrimary,
-              fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _showMetodoPagoBottomSheet() {
     showModalBottomSheet(
       context: context,
@@ -535,9 +74,26 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         return _MetodoPagoModalContent(
           total: _total,
           montoRecibidoController: _montoRecibidoController,
-          onConfirmPayment: (metodoPago) {
+          onConfirmPayment: (metodoPago, nombreCliente) async {
             Navigator.pop(dialogContext); // Cierra bottom sheet
-            _procesarCobro(metodoPago);
+            
+            // Navegación a la pantalla de confirmación
+            final result = await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => SaleConfirmationScreen(
+                  items: items,
+                  metodoPago: metodoPago,
+                  clienteInicial: nombreCliente,
+                ),
+              ),
+            );
+            
+            if (result == true) {
+              if (mounted) {
+                Navigator.pop(context, <Map<String, dynamic>>[]);
+              }
+            }
           },
         );
       },
@@ -991,7 +547,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ],
       ),
       child: ElevatedButton(
-        onPressed: (items.isEmpty || _isSaving) ? null : _showMetodoPagoBottomSheet,
+        onPressed: items.isEmpty ? null : _showMetodoPagoBottomSheet,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppTheme.primaryGreen,
           disabledBackgroundColor: AppTheme.primaryGreen.withValues(alpha: 0.5),
@@ -1002,29 +558,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             borderRadius: BorderRadius.circular(16),
           ),
         ),
-        child: _isSaving
-            ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                  color: Colors.white,
-                  strokeWidth: 2,
-                ),
-              )
-            : const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.point_of_sale_rounded, size: 24),
-                  SizedBox(width: 8),
-                  Text(
-                    'Cobrar Venta',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.point_of_sale_rounded, size: 24),
+            SizedBox(width: 8),
+            Text(
+              'Cobrar Venta',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
               ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1141,7 +688,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 class _MetodoPagoModalContent extends StatefulWidget {
   final double total;
   final TextEditingController montoRecibidoController;
-  final Function(String) onConfirmPayment;
+  final Function(String, String?) onConfirmPayment;
 
   const _MetodoPagoModalContent({
     required this.total,
@@ -1156,6 +703,13 @@ class _MetodoPagoModalContent extends StatefulWidget {
 class _MetodoPagoModalContentState extends State<_MetodoPagoModalContent> {
   String? selectedMethod;
   int currentStep = 0; // 0: Selección de Pago, 1: Yape/Plin QR, 2: Efectivo
+  final TextEditingController _clienteController = TextEditingController();
+
+  @override
+  void dispose() {
+    _clienteController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1230,7 +784,37 @@ class _MetodoPagoModalContentState extends State<_MetodoPagoModalContent> {
             color: AppTheme.primaryGreen,
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
+        
+        TextField(
+          controller: _clienteController,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.textPrimary,
+          ),
+          decoration: InputDecoration(
+            labelText: 'Nombre del cliente (Opcional)',
+            labelStyle: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+            hintText: 'Ej. Juan Pérez',
+            hintStyle: const TextStyle(color: AppTheme.textHint, fontSize: 13),
+            prefixIcon: const Icon(Icons.person_outline_rounded, color: AppTheme.primaryGreen, size: 20),
+            contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppTheme.divider),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppTheme.divider),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 1.5),
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
         
         const Align(
           alignment: Alignment.centerLeft,
@@ -1476,7 +1060,7 @@ class _MetodoPagoModalContentState extends State<_MetodoPagoModalContent> {
         const SizedBox(height: 32),
         
         ElevatedButton(
-          onPressed: () => widget.onConfirmPayment('Yape/Plin'),
+          onPressed: () => widget.onConfirmPayment('Yape/Plin', _clienteController.text),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppTheme.primaryGreen,
             foregroundColor: Colors.white,
@@ -1704,7 +1288,7 @@ class _MetodoPagoModalContentState extends State<_MetodoPagoModalContent> {
         const SizedBox(height: 32),
         
         ElevatedButton(
-          onPressed: canConfirm ? () => widget.onConfirmPayment('Efectivo') : null,
+          onPressed: canConfirm ? () => widget.onConfirmPayment('Efectivo', _clienteController.text) : null,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppTheme.primaryGreen,
             disabledBackgroundColor: AppTheme.primaryGreen.withValues(alpha: 0.5),

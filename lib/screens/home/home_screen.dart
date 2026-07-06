@@ -186,38 +186,50 @@ class HomeScreenState extends State<HomeScreen> {
           children: [
             if (!_showAddProduct && !_showNewSale && !_showNewPurchase) const GlobalHeader(),
             Expanded(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 250),
-                layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
-                  return Stack(
-                    alignment: Alignment.topCenter,
-                    children: <Widget>[
-                      ...previousChildren,
-                      // ignore: use_null_aware_elements
-                      if (currentChild != null) currentChild,
-                    ],
-                  );
-                },
-                child: _showUserManagement
-                    ? const UserManagementScreen()
-                    : _showAddProduct 
-                        ? const AddProductScreen() 
-                        : _showNewSale
-                            ? const NewSaleScreen()
-                            : _showNewPurchase
-                                ? NewPurchaseScreen(purchaseToEdit: _purchaseToEdit)
-                                : PageView(
-                                    controller: _pageController,
-                                    onPageChanged: (index) {
-                                      setState(() {
-                                        _currentIndex = index;
-                                      });
-                                      if (index == 2) {
-                                        _inventoryTabKey.currentState?.applyStockFilter(StockFilter.all);
-                                      }
-                                    },
-                                    children: _tabs,
-                                  ),
+              child: Stack(
+                children: [
+                  // Mantener el PageView vivo para no perder el estado de las pestañas ni de la navegación
+                  Offstage(
+                    offstage: _showUserManagement || _showAddProduct || _showNewSale || _showNewPurchase,
+                    child: PageView(
+                      controller: _pageController,
+                      onPageChanged: (index) {
+                        setState(() {
+                          _currentIndex = index;
+                        });
+                        if (index == 2) {
+                          _inventoryTabKey.currentState?.applyStockFilter(StockFilter.all);
+                        }
+                      },
+                      children: _tabs,
+                    ),
+                  ),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 250),
+                    layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
+                      return Stack(
+                        alignment: Alignment.topCenter,
+                        children: <Widget>[
+                          ...previousChildren,
+                          // ignore: use_null_aware_elements
+                          if (currentChild != null) currentChild,
+                        ],
+                      );
+                    },
+                    child: _showUserManagement
+                        ? const UserManagementScreen(key: ValueKey('UserManagement'))
+                        : _showAddProduct 
+                            ? const AddProductScreen(key: ValueKey('AddProduct')) 
+                            : _showNewSale
+                                ? const NewSaleScreen(key: ValueKey('NewSale'))
+                                : _showNewPurchase
+                                    ? NewPurchaseScreen(
+                                        key: const ValueKey('NewPurchase'),
+                                        purchaseToEdit: _purchaseToEdit,
+                                      )
+                                    : const SizedBox.shrink(key: ValueKey('Empty')),
+                  ),
+                ],
               ),
             ),
           ],

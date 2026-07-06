@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../config/app_theme.dart';
 import '../../models/sale_model.dart';
 import '../../services/sale_service.dart';
+import '../../utils/share_utils.dart';
 
 class SalesBreakdownScreen extends StatefulWidget {
   const SalesBreakdownScreen({super.key});
@@ -873,6 +874,16 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
                     color: AppTheme.textSecondary,
                   ),
                 ),
+                if (sale.cliente != null && sale.cliente!.trim().isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'Cliente: ${sale.cliente}',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 4),
                 Text(
                   'Categoría: ${sale.categoria}',
@@ -962,9 +973,135 @@ class _SalesBreakdownScreenState extends State<SalesBreakdownScreen> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => ShareUtils.shareViaSystem(sale),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppTheme.textPrimary,
+                          side: const BorderSide(color: AppTheme.divider, width: 1.5),
+                          minimumSize: const Size(0, 44),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        icon: const Icon(Icons.share_rounded, size: 16),
+                        label: const Text(
+                          'Compartir',
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => _promptWhatsAppNumber(sale),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF25D366),
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size(0, 44),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                        icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16),
+                        label: const Text(
+                          'WhatsApp',
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
+        );
+      },
+    );
+  }
+
+  void _promptWhatsAppNumber(SaleModel sale) {
+    final TextEditingController phoneController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.chat_bubble_outline_rounded, color: AppTheme.primaryGreen),
+              SizedBox(width: 10),
+              Text(
+                'Enviar por WhatsApp',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Ingresa el número de WhatsApp del cliente para enviarle el ticket directamente:',
+                style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: phoneController,
+                keyboardType: TextInputType.phone,
+                autofocus: true,
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+                decoration: InputDecoration(
+                  labelText: 'Número de celular',
+                  labelStyle: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+                  hintText: 'Ej. 987654321',
+                  hintStyle: const TextStyle(color: AppTheme.textHint, fontSize: 13),
+                  prefixIcon: const Icon(Icons.phone_rounded, color: AppTheme.primaryGreen, size: 20),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppTheme.divider),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 1.5),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                ShareUtils.shareViaSystem(sale);
+              },
+              child: const Text(
+                'Compartir sin número',
+                style: TextStyle(color: AppTheme.textSecondary, fontWeight: FontWeight.bold),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final number = phoneController.text;
+                Navigator.pop(dialogContext);
+                ShareUtils.shareViaWhatsApp(sale, phoneNumber: number);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryGreen,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                elevation: 0,
+              ),
+              child: const Text('Enviar', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
         );
       },
     );
