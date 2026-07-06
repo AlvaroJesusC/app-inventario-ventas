@@ -27,7 +27,6 @@ class HomeScreen extends StatefulWidget {
 
 class HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
-  bool _showProfile = false;
   bool _showAddProduct = false;
   bool _showNewSale = false;
   bool _showUserManagement = false;
@@ -35,44 +34,43 @@ class HomeScreenState extends State<HomeScreen> {
   PurchaseModel? _purchaseToEdit;
 
   final _inventoryTabKey = GlobalKey<InventoryTabState>();
+  late final PageController _pageController;
   late final List<Widget> _tabs;
 
   @override
   void initState() {
     super.initState();
+    _pageController = PageController(initialPage: _currentIndex);
     _tabs = [
       const HomeTab(),
       const SalesTab(),
       InventoryTab(key: _inventoryTabKey),
       const ReportsTab(),
+      const ProfileScreen(),
     ];
   }
 
-  void showProfile() {
-    setState(() {
-      _showProfile = true;
-      _showAddProduct = false;
-      _showNewSale = false;
-      _showUserManagement = false;
-      _showNewPurchase = false;
-    });
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
-  void hideProfile() {
-    setState(() {
-      _showProfile = false;
-    });
+  void showProfile() {
+    setTab(4);
   }
 
   void setTab(int index) {
     setState(() {
       _currentIndex = index;
-      _showProfile = false;
       _showAddProduct = false;
       _showNewSale = false;
       _showUserManagement = false;
       _showNewPurchase = false;
     });
+    if (_pageController.hasClients) {
+      _pageController.jumpToPage(index);
+    }
     if (index == 2) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _inventoryTabKey.currentState?.applyStockFilter(StockFilter.all);
@@ -83,12 +81,14 @@ class HomeScreenState extends State<HomeScreen> {
   void showCriticalInventory() {
     setState(() {
       _currentIndex = 2; // Inventory tab
-      _showProfile = false;
       _showAddProduct = false;
       _showNewSale = false;
       _showUserManagement = false;
       _showNewPurchase = false;
     });
+    if (_pageController.hasClients) {
+      _pageController.jumpToPage(2);
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _inventoryTabKey.currentState?.applyStockFilter(StockFilter.critical);
     });
@@ -97,7 +97,6 @@ class HomeScreenState extends State<HomeScreen> {
   void showAddProduct() {
     setState(() {
       _showAddProduct = true;
-      _showProfile = false;
       _showNewSale = false;
       _showUserManagement = false;
       _showNewPurchase = false;
@@ -114,7 +113,6 @@ class HomeScreenState extends State<HomeScreen> {
     setState(() {
       _showNewSale = true;
       _showAddProduct = false;
-      _showProfile = false;
       _showUserManagement = false;
       _showNewPurchase = false;
     });
@@ -129,7 +127,6 @@ class HomeScreenState extends State<HomeScreen> {
   void showUserManagement() {
     setState(() {
       _showUserManagement = true;
-      _showProfile = false;
       _showAddProduct = false;
       _showNewSale = false;
       _showNewPurchase = false;
@@ -139,8 +136,11 @@ class HomeScreenState extends State<HomeScreen> {
   void hideUserManagement() {
     setState(() {
       _showUserManagement = false;
-      _showProfile = true; // Return to profile since we came from there
+      _currentIndex = 4;
     });
+    if (_pageController.hasClients) {
+      _pageController.jumpToPage(4);
+    }
   }
 
   void showNewPurchase({PurchaseModel? purchaseToEdit}) {
@@ -148,7 +148,6 @@ class HomeScreenState extends State<HomeScreen> {
       _showNewPurchase = true;
       _purchaseToEdit = purchaseToEdit;
       _showAddProduct = false;
-      _showProfile = false;
       _showNewSale = false;
       _showUserManagement = false;
     });
@@ -164,7 +163,7 @@ class HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: !_showAddProduct && !_showProfile && !_showNewSale && !_showUserManagement && !_showNewPurchase,
+      canPop: !_showAddProduct && !_showNewSale && !_showUserManagement && !_showNewPurchase && _currentIndex == 0,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
         
@@ -172,12 +171,12 @@ class HomeScreenState extends State<HomeScreen> {
           hideAddProduct();
         } else if (_showUserManagement) {
           hideUserManagement();
-        } else if (_showProfile) {
-          hideProfile();
         } else if (_showNewSale) {
           hideNewSale();
         } else if (_showNewPurchase) {
           hideNewPurchase();
+        } else if (_currentIndex != 0) {
+          setTab(0);
         }
       },
       child: Scaffold(
@@ -201,15 +200,24 @@ class HomeScreenState extends State<HomeScreen> {
                 },
                 child: _showUserManagement
                     ? const UserManagementScreen()
-                    : _showProfile 
-                        ? const ProfileScreen() 
-                        : _showAddProduct 
-                            ? const AddProductScreen() 
-                            : _showNewSale
-                                ? const NewSaleScreen()
-                                : _showNewPurchase
-                                    ? NewPurchaseScreen(purchaseToEdit: _purchaseToEdit)
-                                    : _tabs[_currentIndex],
+                    : _showAddProduct 
+                        ? const AddProductScreen() 
+                        : _showNewSale
+                            ? const NewSaleScreen()
+                            : _showNewPurchase
+                                ? NewPurchaseScreen(purchaseToEdit: _purchaseToEdit)
+                                : PageView(
+                                    controller: _pageController,
+                                    onPageChanged: (index) {
+                                      setState(() {
+                                        _currentIndex = index;
+                                      });
+                                      if (index == 2) {
+                                        _inventoryTabKey.currentState?.applyStockFilter(StockFilter.all);
+                                      }
+                                    },
+                                    children: _tabs,
+                                  ),
               ),
             ),
           ],
@@ -287,28 +295,11 @@ class HomeScreenState extends State<HomeScreen> {
     required int index,
   }) {
     final bool isActive = index == 4
-        ? (_showProfile || _showUserManagement)
-        : (!_showProfile && !_showAddProduct && !_showNewSale && !_showUserManagement && _currentIndex == index);
+        ? (_currentIndex == 4 || _showUserManagement)
+        : (!_showUserManagement && !_showAddProduct && !_showNewSale && !_showNewPurchase && _currentIndex == index);
 
     return GestureDetector(
-      onTap: () {
-        if (index == 4) {
-          showProfile();
-        } else {
-          setState(() {
-            _currentIndex = index;
-            _showProfile = false;
-            _showAddProduct = false;
-            _showNewSale = false;
-            _showUserManagement = false;
-          });
-          if (index == 2) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              _inventoryTabKey.currentState?.applyStockFilter(StockFilter.all);
-            });
-          }
-        }
-      },
+      onTap: () => setTab(index),
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),

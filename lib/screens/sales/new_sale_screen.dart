@@ -444,6 +444,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       body: SafeArea(
+        bottom: false,
         child: Column(
           children: [
             _buildHeader(),
@@ -791,8 +792,14 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   }
 
   Widget _buildBottomBar() {
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 12,
+        bottom: 12 + bottomPadding,
+      ),
       decoration: BoxDecoration(
         color: AppTheme.primaryGreen,
         borderRadius: const BorderRadius.only(

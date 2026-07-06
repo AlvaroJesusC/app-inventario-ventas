@@ -28,11 +28,17 @@ class GlobalHeader extends StatelessWidget {
             // Icono y nombre de la App a la izquierda
             Row(
               children: [
-                const Icon(
-                  Icons
-                      .view_in_ar_rounded, // Icono similar al cubo de la imagen
-                  size: 28,
-                  color: AppTheme.primaryGreen,
+                Container(
+                  width: 32,
+                  height: 32,
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Image.asset(
+                    'assets/images/iconoAppInv.jpg',
+                    fit: BoxFit.cover,
+                  ),
                 ),
                 const SizedBox(width: 8),
                 Text(

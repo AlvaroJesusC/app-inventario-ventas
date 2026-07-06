@@ -544,6 +544,7 @@ class _LoginScreenState extends State<LoginScreen>
       child: Container(
         width: 80,
         height: 80,
+        clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           color: AppTheme.primaryGreenLight,
           borderRadius: BorderRadius.circular(20),
@@ -555,10 +556,9 @@ class _LoginScreenState extends State<LoginScreen>
             ),
           ],
         ),
-        child: const Icon(
-          Icons.inventory_2_rounded,
-          size: 40,
-          color: AppTheme.primaryGreen,
+        child: Image.asset(
+          'assets/images/iconoAppInv.jpg',
+          fit: BoxFit.cover,
         ),
       ),
     );
