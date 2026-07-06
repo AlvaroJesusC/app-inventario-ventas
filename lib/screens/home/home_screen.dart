@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../config/app_theme.dart';
 import '../../models/product_model.dart';
+import '../../models/purchase_model.dart';
 import '../home/tabs/home_tab.dart';
 import '../home/tabs/inventory_tab.dart';
 import '../home/tabs/sales_tab.dart';
@@ -31,6 +32,7 @@ class HomeScreenState extends State<HomeScreen> {
   bool _showNewSale = false;
   bool _showUserManagement = false;
   bool _showNewPurchase = false;
+  PurchaseModel? _purchaseToEdit;
 
   final _inventoryTabKey = GlobalKey<InventoryTabState>();
   late final List<Widget> _tabs;
@@ -141,9 +143,10 @@ class HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  void showNewPurchase() {
+  void showNewPurchase({PurchaseModel? purchaseToEdit}) {
     setState(() {
       _showNewPurchase = true;
+      _purchaseToEdit = purchaseToEdit;
       _showAddProduct = false;
       _showProfile = false;
       _showNewSale = false;
@@ -154,6 +157,7 @@ class HomeScreenState extends State<HomeScreen> {
   void hideNewPurchase() {
     setState(() {
       _showNewPurchase = false;
+      _purchaseToEdit = null;
     });
   }
 
@@ -185,6 +189,16 @@ class HomeScreenState extends State<HomeScreen> {
             Expanded(
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 250),
+                layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
+                  return Stack(
+                    alignment: Alignment.topCenter,
+                    children: <Widget>[
+                      ...previousChildren,
+                      // ignore: use_null_aware_elements
+                      if (currentChild != null) currentChild,
+                    ],
+                  );
+                },
                 child: _showUserManagement
                     ? const UserManagementScreen()
                     : _showProfile 
@@ -194,7 +208,7 @@ class HomeScreenState extends State<HomeScreen> {
                             : _showNewSale
                                 ? const NewSaleScreen()
                                 : _showNewPurchase
-                                    ? const NewPurchaseScreen()
+                                    ? NewPurchaseScreen(purchaseToEdit: _purchaseToEdit)
                                     : _tabs[_currentIndex],
               ),
             ),

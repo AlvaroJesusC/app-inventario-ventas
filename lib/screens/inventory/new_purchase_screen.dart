@@ -10,7 +10,8 @@ import '../../services/supplier_service.dart';
 import '../home/home_screen.dart';
 
 class NewPurchaseScreen extends StatefulWidget {
-  const NewPurchaseScreen({super.key});
+  final PurchaseModel? purchaseToEdit;
+  const NewPurchaseScreen({super.key, this.purchaseToEdit});
 
   @override
   State<NewPurchaseScreen> createState() => _NewPurchaseScreenState();
@@ -46,6 +47,15 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.purchaseToEdit != null) {
+      _purchaseItems.addAll(widget.purchaseToEdit!.articulos);
+      _selectedSupplier = SupplierModel(
+        id: widget.purchaseToEdit!.supplierId ?? '',
+        nombre: widget.purchaseToEdit!.proveedor,
+        ruc: '',
+        telefono: '',
+      );
+    }
     _loadSuppliers();
     _loadProducts();
   }
@@ -95,8 +105,16 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
     _productsSubscription = _productService.getProductsStream().listen(
       (products) {
         if (mounted) {
+          final sorted = List<ProductModel>.from(products);
+          sorted.sort((a, b) {
+            // Productos con stock 0 van primero
+            if (a.stock == 0 && b.stock > 0) return -1;
+            if (a.stock > 0 && b.stock == 0) return 1;
+            // Si ambos tienen stock 0 o ambos stock > 0, ordenar alfabéticamente (sin distinguir mayúsculas/minúsculas)
+            return a.nombre.toLowerCase().compareTo(b.nombre.toLowerCase());
+          });
           setState(() {
-            _availableProducts = products;
+            _availableProducts = sorted;
           });
         }
       },
@@ -212,22 +230,28 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
 
     try {
       final purchase = PurchaseModel(
-        id: '',
+        id: widget.purchaseToEdit?.id ?? '',
         proveedor: _selectedSupplier!.nombre,
         supplierId: _selectedSupplier!.id,
-        fecha: DateTime.now(),
+        fecha: widget.purchaseToEdit?.fecha ?? DateTime.now(),
         articulos: _purchaseItems,
         total: _totalAmount,
         totalProductos: _purchaseItems.length,
         totalUnidades: _totalUnits,
       );
 
-      await _purchaseService.addPurchase(purchase);
+      if (widget.purchaseToEdit != null) {
+        await _purchaseService.updatePurchase(widget.purchaseToEdit!, purchase);
+      } else {
+        await _purchaseService.addPurchase(purchase);
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Compra confirmada y stock actualizado correctamente'),
+          SnackBar(
+            content: Text(widget.purchaseToEdit != null
+                ? 'Compra actualizada y stock ajustado correctamente'
+                : 'Compra confirmada y stock actualizado correctamente'),
             backgroundColor: AppTheme.primaryGreen,
           ),
         );
@@ -519,7 +543,7 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                             ),
                           ),
                           subtitle: Text(
-                            'Stock: ${p.stockLabel} · Precio: S/. ${p.precio.toStringAsFixed(2)}',
+                            'Stock: ${p.stockLabel} · Costo Ref: S/. ${p.costo.toStringAsFixed(2)}',
                             style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
                           ),
                           trailing: isSelected
@@ -528,6 +552,11 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                           onTap: () {
                             setState(() {
                               _selectedProduct = p;
+                              if (p.costo > 0) {
+                                _unitCostController.text = p.costo.toStringAsFixed(2);
+                              } else {
+                                _unitCostController.clear();
+                              }
                             });
                             Navigator.pop(ctx);
                           },
@@ -548,21 +577,68 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
     return Scaffold(
       backgroundColor: AppTheme.white,
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.textPrimary),
-          onPressed: _handleBack,
-        ),
-        title: const Text(
-          'Nueva Compra',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: AppTheme.textPrimary,
+        toolbarHeight: 70,
+        leadingWidth: 68,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 16.0, top: 12.0, bottom: 12.0),
+          child: Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFFF5F5F5),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.textPrimary, size: 20),
+              onPressed: _handleBack,
+              padding: EdgeInsets.zero,
+            ),
           ),
         ),
-        centerTitle: true,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              widget.purchaseToEdit != null ? 'Editar Compra' : 'Nueva Compra',
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 2),
+            const Text(
+              'Registra los productos que estás comprando',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.normal,
+                color: AppTheme.textSecondary,
+              ),
+            ),
+          ],
+        ),
+        centerTitle: false,
         elevation: 0,
         backgroundColor: AppTheme.white,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.help_outline_outlined, color: AppTheme.primaryGreen, size: 24),
+                onPressed: () {
+                  // Ayuda o info
+                },
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+            ),
+          ),
+        ],
       ),
       body: SafeArea(
         child: _isLoading
@@ -570,294 +646,452 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                 child: CircularProgressIndicator(color: Color(0xFF2E7D32)),
               )
             : SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── 1. PROVEEDOR ──
-              const Text(
-                'Proveedor',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 8),
-              InkWell(
-                onTap: _showSupplierPickerSheet,
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  height: 54,
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF9F9F9),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppTheme.divider),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.storefront_outlined, color: AppTheme.textSecondary, size: 20),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          _selectedSupplier?.nombre ?? 'Seleccionar proveedor',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: _selectedSupplier != null ? FontWeight.w600 : FontWeight.normal,
-                            color: _selectedSupplier != null ? AppTheme.textPrimary : AppTheme.textHint,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ── 1. PROVEEDOR ──
+                    const Text(
+                      'Proveedor',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textPrimary,
                       ),
-                      const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.textSecondary),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 6),
-              const Text(
-                '¿No lo encuentras? Créalo al abrir la lista',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontStyle: FontStyle.italic,
-                  color: AppTheme.textHint,
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // ── 2. AGREGAR PRODUCTO ──
-              const Text(
-                'Agregar producto',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Selector elegir producto (InkWell Modal)
-                  Expanded(
-                    flex: 4,
-                    child: InkWell(
-                      onTap: _showProductPickerSheet,
-                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    const SizedBox(height: 8),
+                    InkWell(
+                      onTap: _showSupplierPickerSheet,
+                      borderRadius: BorderRadius.circular(14),
                       child: Container(
-                        height: 48,
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        height: 64,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF9F9F9),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppTheme.divider),
+                          color: AppTheme.white,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: const Color(0xFFE0E0E0)),
                         ),
                         child: Row(
                           children: [
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE8F5E9),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(
+                                Icons.storefront_rounded,
+                                color: AppTheme.primaryGreen,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
                             Expanded(
                               child: Text(
-                                _selectedProduct?.nombre ?? 'Elegir producto',
+                                _selectedSupplier?.nombre ?? 'Seleccionar proveedor',
                                 style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: _selectedProduct != null ? FontWeight.w600 : FontWeight.normal,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: _selectedSupplier != null ? AppTheme.textPrimary : AppTheme.textHint,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.textSecondary),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF1F8F3),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline_rounded,
+                            color: AppTheme.primaryGreen,
+                            size: 16,
+                          ),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '¿No lo encuentras? Créalo al abrir la lista',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: AppTheme.primaryGreen,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // ── 2. AGREGAR PRODUCTO ──
+                    const Text(
+                      'Agregar producto',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    // Selector elegir producto (InkWell Modal)
+                    InkWell(
+                      onTap: _showProductPickerSheet,
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        height: 54,
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF9F9F9),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFE0E0E0)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.search, color: AppTheme.textSecondary, size: 20),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                _selectedProduct?.nombre ?? 'Buscar o elegir producto',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: _selectedProduct != null ? FontWeight.bold : FontWeight.normal,
                                   color: _selectedProduct != null ? AppTheme.textPrimary : AppTheme.textHint,
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            const Icon(Icons.keyboard_arrow_down_rounded, size: 20, color: AppTheme.textSecondary),
+                            const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.textSecondary),
                           ],
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 6),
+                    const SizedBox(height: 12),
 
-                  // Campo Cantidad
-                  Expanded(
-                    flex: 3,
-                    child: TextField(
-                      controller: _quantityController,
-                      keyboardType: TextInputType.numberWithOptions(
-                        decimal: _selectedProduct?.ventaPorPeso ?? false,
-                      ),
-                      decoration: InputDecoration(
-                        isDense: true,
-                        hintText: _selectedProduct != null ? 'Cant. ($_currentUnit)' : 'Cant.',
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
-                        hintStyle: const TextStyle(fontSize: 12, color: AppTheme.textHint),
-                        fillColor: const Color(0xFFF9F9F9),
-                        filled: true,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppTheme.divider),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppTheme.divider),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppTheme.primaryGreen),
-                        ),
-                      ),
-                      style: const TextStyle(fontSize: 13),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-
-                  // Campo Costo Unit. S/.
-                  Expanded(
-                    flex: 4,
-                    child: TextField(
-                      controller: _unitCostController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      decoration: InputDecoration(
-                        isDense: true,
-                        hintText: 'Costo unit. S/.',
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
-                        hintStyle: const TextStyle(fontSize: 12, color: AppTheme.textHint),
-                        fillColor: const Color(0xFFF9F9F9),
-                        filled: true,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppTheme.divider),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppTheme.divider),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppTheme.primaryGreen),
-                        ),
-                      ),
-                      style: const TextStyle(fontSize: 13),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-
-                  // Botón verde "Agregar"
-                  SizedBox(
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: _addItemToPurchase,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryGreen,
-                        foregroundColor: Colors.white,
-                        minimumSize: Size.zero,
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: const Text(
-                        'Agregar',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 24),
-
-              // ── 3. PRODUCTOS EN ESTA COMPRA (N) ──
-              Text(
-                'Productos en esta compra (${_purchaseItems.length})',
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              if (_purchaseItems.isEmpty)
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF9F9F9),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppTheme.divider),
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'Aún no has agregado productos a esta compra',
-                      style: TextStyle(color: AppTheme.textHint, fontSize: 13),
-                    ),
-                  ),
-                )
-              else
-                ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _purchaseItems.length,
-                  separatorBuilder: (ctx, i) => const SizedBox(height: 10),
-                  itemBuilder: (ctx, index) {
-                    final item = _purchaseItems[index];
-                    return _buildPurchaseItemCard(item, () => _removeItem(index));
-                  },
-                ),
-
-              const SizedBox(height: 24),
-
-              // ── 4. RESUMEN ──
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F8F3), // Verde muy claro
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFC8E6C9)),
-                ),
-                child: Column(
-                  children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'Total productos',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: AppTheme.textSecondary,
+                        // Campo Cantidad
+                        Expanded(
+                          child: _buildCustomInputField(
+                            label: 'Cantidad',
+                            icon: Icons.inventory_2_outlined,
+                            child: TextField(
+                              controller: _quantityController,
+                              keyboardType: TextInputType.numberWithOptions(
+                                decimal: _selectedProduct?.ventaPorPeso ?? false,
+                              ),
+                              decoration: const InputDecoration(
+                                border: InputBorder.none,
+                                isDense: true,
+                                contentPadding: EdgeInsets.zero,
+                                hintText: '0',
+                                hintStyle: TextStyle(color: AppTheme.textHint),
+                                fillColor: Colors.transparent,
+                                filled: false,
+                              ),
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.textPrimary,
+                              ),
+                            ),
                           ),
                         ),
-                        Text(
-                          '${_purchaseItems.length}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.textPrimary,
+                        const SizedBox(width: 12),
+
+                        // Campo Costo Unit. S/.
+                        Expanded(
+                          child: _buildCustomInputField(
+                            label: 'Costo unitario',
+                            icon: Icons.local_offer_outlined,
+                            child: TextField(
+                              controller: _unitCostController,
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              decoration: const InputDecoration(
+                                border: InputBorder.none,
+                                isDense: true,
+                                contentPadding: EdgeInsets.zero,
+                                prefixText: 'S/. ',
+                                prefixStyle: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.textPrimary,
+                                ),
+                                hintText: '0.00',
+                                hintStyle: TextStyle(color: AppTheme.textHint),
+                                fillColor: Colors.transparent,
+                                filled: false,
+                              ),
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.textPrimary,
+                              ),
+                            ),
                           ),
                         ),
                       ],
                     ),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 10),
-                      child: Divider(color: Color(0xFFC8E6C9), height: 1),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Total a pagar',
+                    const SizedBox(height: 12),
+
+                    // Botón agregar producto
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: OutlinedButton.icon(
+                        onPressed: _addItemToPurchase,
+                        icon: const Icon(Icons.add_circle, color: AppTheme.primaryGreen, size: 20),
+                        label: const Text(
+                          'Agregar producto',
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: AppTheme.textPrimary,
+                            color: AppTheme.primaryGreen,
                           ),
                         ),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: AppTheme.primaryGreen, width: 1.5),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          backgroundColor: Colors.white,
+                          elevation: 0,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // ── 3. PRODUCTOS EN ESTA COMPRA (N) ──
+                    Text(
+                      'Productos en esta compra (${_purchaseItems.length})',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    if (_purchaseItems.isEmpty)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: const Color(0xFFE0E0E0)),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 56,
+                              height: 56,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFE8F5E9),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.inventory_2_outlined,
+                                color: AppTheme.primaryGreen,
+                                size: 26,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            const Text(
+                              'Aún no has agregado productos',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.textPrimary,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 6),
+                            const Text(
+                              'Agrega productos para verlos aquí.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppTheme.textSecondary,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _purchaseItems.length,
+                        separatorBuilder: (ctx, i) => const SizedBox(height: 10),
+                        itemBuilder: (ctx, index) {
+                          final item = _purchaseItems[index];
+                          return _buildPurchaseItemCard(item, () => _removeItem(index));
+                        },
+                      ),
+
+                    const SizedBox(height: 24),
+
+                    // ── 4. RESUMEN ──
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF6F8F6),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFFE8F0E9)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Resumen',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.primaryGreen,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Container(
+                                width: 32,
+                                height: 32,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFFE8F5E9),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.inventory_2_outlined,
+                                  color: AppTheme.primaryGreen,
+                                  size: 16,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              const Text(
+                                'Total productos',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: AppTheme.textPrimary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const Spacer(),
+                              Text(
+                                '${_purchaseItems.length}',
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 12),
+                            child: DashedDivider(color: Color(0xFFC8E6C9), height: 1),
+                          ),
+                          Row(
+                            children: [
+                              Container(
+                                width: 32,
+                                height: 32,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFFE8F5E9),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.account_balance_wallet_outlined,
+                                  color: AppTheme.primaryGreen,
+                                  size: 16,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              const Text(
+                                'Total a pagar',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: AppTheme.textPrimary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const Spacer(),
+                              Text(
+                                'S/. ${_totalAmount.toStringAsFixed(2)}',
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppTheme.primaryGreen,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 28),
+
+                    // ── 5. BOTÓN CONFIRMAR COMPRA ──
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton.icon(
+                        onPressed: _isSaving ? null : _confirmPurchase,
+                        icon: _isSaving
+                            ? const SizedBox.shrink()
+                            : const Icon(Icons.shopping_bag_outlined, color: Colors.white, size: 20),
+                        label: _isSaving
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                              )
+                            : const Text(
+                                'Confirmar Compra',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryGreen,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.check_circle_rounded,
+                          color: AppTheme.primaryGreen,
+                          size: 16,
+                        ),
+                        SizedBox(width: 6),
                         Text(
-                          'S/. ${_totalAmount.toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w800,
-                            color: AppTheme.primaryGreen,
+                          'Tu compra se registrará de forma segura',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppTheme.textSecondary,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],
@@ -865,124 +1099,152 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                   ],
                 ),
               ),
+      ),
+    );
+  }
 
-              const SizedBox(height: 28),
-
-              // ── 5. BOTÓN CONFIRMAR COMPRA ──
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: _isSaving ? null : _confirmPurchase,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryGreen,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 0,
+  Widget _buildCustomInputField({
+    required String label,
+    required Widget child,
+    required IconData icon,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9F9F9),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE0E0E0)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppTheme.textSecondary,
+                    fontWeight: FontWeight.w500,
                   ),
-                  child: _isSaving
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                        )
-                      : const Text(
-                          'Confirmar Compra',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 4),
+                child,
+              ],
+            ),
           ),
-        ),
+          const SizedBox(width: 8),
+          Icon(icon, color: AppTheme.textHint, size: 20),
+        ],
       ),
     );
   }
 
   Widget _buildPurchaseItemCard(PurchaseItemModel item, VoidCallback onDelete) {
     return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: AppTheme.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.divider),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: const Color(0xFFE0E0E0)),
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: IntrinsicHeight(
-          child: Row(
-            children: [
-              // Barra lateral verde
-              Container(
-                width: 5,
-                color: AppTheme.primaryGreen,
-              ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              item.nombre,
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.textPrimary,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          Text(
-                            'S/. ${item.costoTotal.toStringAsFixed(2)}',
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.primaryGreen,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          InkWell(
-                            onTap: onDelete,
-                            child: const Icon(
-                              Icons.delete_outline_rounded,
-                              color: AppTheme.textSecondary,
-                              size: 20,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${item.cantidadLabel} x S/. ${item.costoUnitario.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: AppTheme.textSecondary,
-                        ),
-                      ),
-                    ],
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F8F3),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(
+              Icons.inventory_2_outlined,
+              color: AppTheme.primaryGreen,
+              size: 18,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.nombre,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.textPrimary,
                   ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${item.cantidadLabel} x S/. ${item.costoUnitario.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                'S/. ${item.costoTotal.toStringAsFixed(2)}',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.primaryGreen,
+                ),
+              ),
+              const SizedBox(height: 4),
+              InkWell(
+                onTap: onDelete,
+                child: const Icon(
+                  Icons.delete_outline_rounded,
+                  color: Colors.redAccent,
+                  size: 18,
                 ),
               ),
             ],
           ),
-        ),
+        ],
       ),
+    );
+  }
+}
+
+class DashedDivider extends StatelessWidget {
+  final Color color;
+  final double height;
+  const DashedDivider({super.key, this.color = const Color(0xFFE0E0E0), this.height = 1});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final boxWidth = constraints.constrainWidth();
+        const dashWidth = 5.0;
+        const dashSpace = 3.0;
+        final dashCount = (boxWidth / (dashWidth + dashSpace)).floor();
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: List.generate(dashCount, (index) {
+            return SizedBox(
+              width: dashWidth,
+              height: height,
+              child: DecoratedBox(
+                decoration: BoxDecoration(color: color),
+              ),
+            );
+          }),
+        );
+      },
     );
   }
 }

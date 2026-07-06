@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
 import 'user_service.dart';
 /// Servicio de autenticación con Firebase Auth
@@ -112,6 +113,14 @@ class AuthService {
 
   /// Cerrar sesión
   Future<void> signOut() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('saved_email');
+      await prefs.remove('saved_password');
+      await prefs.setBool('remember_me', false);
+    } catch (_) {
+      // Ignorar errores al acceder a SharedPreferences en el logout
+    }
     await _auth.signOut();
   }
 

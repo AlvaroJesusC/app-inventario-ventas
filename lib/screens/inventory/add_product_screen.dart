@@ -31,7 +31,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
   final _nombreController = TextEditingController();
   final _precioController = TextEditingController();
-  final _stockController = TextEditingController();
+  final _costoController = TextEditingController();
 
   String? _selectedCategory;
   String? _scannedBarcode;
@@ -45,9 +45,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     if (widget.product != null) {
       _nombreController.text = widget.product!.nombre;
       _precioController.text = widget.product!.precio.toString();
-      _stockController.text = widget.product!.stock % 1 == 0
-          ? widget.product!.stock.toInt().toString()
-          : widget.product!.stock.toString();
+      _costoController.text = widget.product!.costo.toString();
       _selectedCategory = widget.product!.categoria;
       _scannedBarcode = widget.product!.codigoBarras;
       _ventaPorPeso = widget.product!.ventaPorPeso;
@@ -63,7 +61,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     _scannerController.dispose();
     _nombreController.dispose();
     _precioController.dispose();
-    _stockController.dispose();
+    _costoController.dispose();
     super.dispose();
   }
 
@@ -212,7 +210,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
         id: widget.product?.id ?? '', // Se conserva el ID si es edición
         nombre: _nombreController.text.trim(),
         precio: double.parse(_precioController.text.trim()),
-        stock: double.parse(_stockController.text.trim()),
+        costo: double.parse(_costoController.text.trim()),
+        stock: widget.product?.stock ?? 0.0,
         categoria: _selectedCategory,
         codigoBarras: _scannedBarcode,
         sku: widget.product?.sku ?? Sku.generar(
@@ -370,13 +369,46 @@ class _AddProductScreenState extends State<AddProductScreen> {
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // Costo de Compra (Proveedor)
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 _buildInputLabel(_ventaPorPeso
-                                    ? 'Precio (S/. por $_unidadMedida)'
-                                    : 'Precio (S/.)'),
+                                    ? 'Costo de Compra (S/. por $_unidadMedida)'
+                                    : 'Costo de Compra (S/.)'),
+                                const SizedBox(height: 8),
+                                TextFormField(
+                                  controller: _costoController,
+                                  keyboardType:
+                                      const TextInputType.numberWithOptions(
+                                        decimal: true,
+                                      ),
+                                  decoration: const InputDecoration(
+                                    hintText: 'S/. 0.00',
+                                  ),
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Requerido';
+                                    }
+                                    if (double.tryParse(value) == null) {
+                                      return 'Inválido';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          // Precio de Venta (Público)
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildInputLabel(_ventaPorPeso
+                                    ? 'Precio de Venta (S/. por $_unidadMedida)'
+                                    : 'Precio de Venta (S/.)'),
                                 const SizedBox(height: 8),
                                 TextFormField(
                                   controller: _precioController,
@@ -400,7 +432,14 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               ],
                             ),
                           ),
-                          const SizedBox(width: 16),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Unidad de Medida
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -411,101 +450,45 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               ],
                             ),
                           ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (_ventaPorPeso) ...[
+                                  _buildInputLabel('Tipo de Medida'),
+                                  const SizedBox(height: 8),
+                                  DropdownButtonFormField<String>(
+                                    initialValue: _unidadMedida == 'und' ? 'kg' : _unidadMedida,
+                                    decoration: const InputDecoration(
+                                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    ),
+                                    icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                                    items: const [
+                                      DropdownMenuItem(
+                                        value: 'kg',
+                                        child: Text('Kilos (kg)'),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 'l',
+                                        child: Text('Litros (l)'),
+                                      ),
+                                    ],
+                                    onChanged: (val) {
+                                      if (val != null) {
+                                        setState(() {
+                                          _unidadMedida = val;
+                                        });
+                                      }
+                                    },
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
                         ],
                       ),
-                      const SizedBox(height: 24),
-
-                      Text(
-                        'Stock Inicial',
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          color: AppTheme.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: _stockController,
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: _ventaPorPeso ? '0.0' : '0',
-                          suffixIcon: Container(
-                            width: 100,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFF1F1F1),
-                              border: Border(
-                                left: BorderSide(color: AppTheme.divider),
-                              ),
-                              borderRadius: BorderRadius.only(
-                                topRight: Radius.circular(11),
-                                bottomRight: Radius.circular(11),
-                              ),
-                            ),
-                            child: Center(
-                              child: _ventaPorPeso
-                                  ? DropdownButtonHideUnderline(
-                                      child: DropdownButton<String>(
-                                        value: _unidadMedida == 'und' ? 'kg' : _unidadMedida,
-                                        style: const TextStyle(
-                                          color: AppTheme.textPrimary,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16,
-                                        ),
-                                        icon: const Icon(
-                                          Icons.keyboard_arrow_down_rounded,
-                                          color: AppTheme.textSecondary,
-                                        ),
-                                        items: const [
-                                          DropdownMenuItem(
-                                            value: 'kg',
-                                            child: Text('kg'),
-                                          ),
-                                          DropdownMenuItem(
-                                            value: 'l',
-                                            child: Text('l'),
-                                          ),
-                                        ],
-                                        onChanged: (val) {
-                                          if (val != null) {
-                                            setState(() {
-                                              _unidadMedida = val;
-                                            });
-                                          }
-                                        },
-                                      ),
-                                    )
-                                  : const Text(
-                                      'und',
-                                      style: TextStyle(
-                                        color: AppTheme.textSecondary,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                            ),
-                          ),
-                          suffixIconConstraints: const BoxConstraints(
-                            minWidth: 100,
-                            minHeight: 56,
-                            maxHeight: 56,
-                          ),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Requerido';
-                          }
-                          if (double.tryParse(value) == null) {
-                            return 'Inválido';
-                          }
-                          if (!_ventaPorPeso && int.tryParse(value) == null) {
-                            return 'Inválido para unidad';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 48),
+                      const SizedBox(height: 32),
 
                       // Botones de acción
                       Row(
@@ -719,12 +702,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   setState(() {
                     _ventaPorPeso = false;
                     _unidadMedida = 'und';
-                    if (_stockController.text.isNotEmpty) {
-                      final doubleVal = double.tryParse(_stockController.text);
-                      if (doubleVal != null) {
-                        _stockController.text = doubleVal.toInt().toString();
-                      }
-                    }
                   });
                 }
               },
@@ -752,12 +729,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   setState(() {
                     _ventaPorPeso = true;
                     _unidadMedida = 'kg';
-                    if (_stockController.text.isNotEmpty) {
-                      final doubleVal = double.tryParse(_stockController.text);
-                      if (doubleVal != null) {
-                        _stockController.text = doubleVal.toString();
-                      }
-                    }
                   });
                 }
               },

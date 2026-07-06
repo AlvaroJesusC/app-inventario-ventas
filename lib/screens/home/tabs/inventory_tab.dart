@@ -176,6 +176,50 @@ class InventoryTabState extends State<InventoryTab>
     }
   }
 
+  void _navigateToEditPurchase(PurchaseModel purchase) {
+    final homeState = HomeScreen.of(context);
+    if (homeState != null) {
+      homeState.showNewPurchase(purchaseToEdit: purchase);
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => NewPurchaseScreen(purchaseToEdit: purchase),
+        ),
+      );
+    }
+  }
+
+  void _showDeletePurchaseDialog(BuildContext context, PurchaseModel purchase) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('¿Eliminar Compra?'),
+        content: const Text(
+            'Se eliminará este registro de compra de forma permanente y se restará automáticamente el stock ingresado de los productos correspondientes para mantener el inventario al día.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar', style: TextStyle(color: AppTheme.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _purchaseService.deletePurchase(purchase.id);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Compra eliminada y stock revertido correctamente.'),
+                  backgroundColor: AppTheme.primaryGreen,
+                ),
+              );
+            },
+            child: const Text('Eliminar y Revertir', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -685,14 +729,32 @@ class InventoryTabState extends State<InventoryTab>
                           PopupMenuButton<String>(
                             icon: const Icon(Icons.more_vert_rounded, size: 20, color: AppTheme.textSecondary),
                             onSelected: (val) {
-                              if (val == 'delete') {
-                                _purchaseService.deletePurchase(purchase.id);
+                              if (val == 'edit') {
+                                _navigateToEditPurchase(purchase);
+                              } else if (val == 'delete') {
+                                _showDeletePurchaseDialog(context, purchase);
                               }
                             },
                             itemBuilder: (ctx) => [
                               const PopupMenuItem(
+                                value: 'edit',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.edit_outlined, size: 18, color: AppTheme.textPrimary),
+                                    SizedBox(width: 8),
+                                    Text('Editar compra'),
+                                  ],
+                                ),
+                              ),
+                              const PopupMenuItem(
                                 value: 'delete',
-                                child: Text('Eliminar registro'),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.delete_outline_rounded, size: 18, color: AppTheme.error),
+                                    SizedBox(width: 8),
+                                    Text('Eliminar registro', style: TextStyle(color: AppTheme.error)),
+                                  ],
+                                ),
                               ),
                             ],
                           ),

@@ -59,9 +59,96 @@ class PurchaseService {
     return docRef.id;
   }
 
-  /// Eliminar una compra
+  /// Eliminar una compra y revertir el stock de los productos
   Future<void> deletePurchase(String purchaseId) async {
-    await _comprasRef.doc(purchaseId).delete();
+    final docSnapshot = await _comprasRef.doc(purchaseId).get();
+    if (!docSnapshot.exists) return;
+
+    final purchase = PurchaseModel.fromMap(docSnapshot.data()!, purchaseId);
+    final batch = _firestore.batch();
+
+    // 1. Revertir stock de los productos involucrados
+    for (var item in purchase.articulos) {
+      if (item.productId.isNotEmpty) {
+        final productDoc = _firestore.collection('productos').doc(item.productId);
+        batch.update(productDoc, {
+          'stock': FieldValue.increment(-item.cantidad),
+        });
+      }
+    }
+
+    // 2. Eliminar los movimientos de inventario asociados de la colección movimientos_inventario
+    final movementsSnapshot = await _firestore
+        .collection('movimientos_inventario')
+        .where('referenciaId', isEqualTo: purchaseId)
+        .get();
+
+    for (var doc in movementsSnapshot.docs) {
+      batch.delete(doc.reference);
+    }
+
+    // 3. Eliminar el documento de compra
+    batch.delete(_comprasRef.doc(purchaseId));
+
+    await batch.commit();
+  }
+
+  /// Actualizar una compra existente revertiendo el stock viejo y aplicando el nuevo
+  Future<void> updatePurchase(PurchaseModel oldPurchase, PurchaseModel newPurchase) async {
+    final batch = _firestore.batch();
+
+    // 1. Revertir stock de la compra anterior
+    for (var item in oldPurchase.articulos) {
+      if (item.productId.isNotEmpty) {
+        final productDoc = _firestore.collection('productos').doc(item.productId);
+        batch.update(productDoc, {
+          'stock': FieldValue.increment(-item.cantidad),
+        });
+      }
+    }
+
+    // 2. Aplicar stock de la nueva compra
+    for (var item in newPurchase.articulos) {
+      if (item.productId.isNotEmpty) {
+        final productDoc = _firestore.collection('productos').doc(item.productId);
+        batch.update(productDoc, {
+          'stock': FieldValue.increment(item.cantidad),
+        });
+      }
+    }
+
+    // 3. Eliminar movimientos de inventario viejos
+    final oldMovementsSnapshot = await _firestore
+        .collection('movimientos_inventario')
+        .where('referenciaId', isEqualTo: oldPurchase.id)
+        .get();
+
+    for (var doc in oldMovementsSnapshot.docs) {
+      batch.delete(doc.reference);
+    }
+
+    // 4. Crear nuevos movimientos de inventario
+    for (var item in newPurchase.articulos) {
+      if (item.productId.isNotEmpty) {
+        final movementDoc = _firestore.collection('movimientos_inventario').doc();
+        final movement = MovementModel(
+          id: '',
+          productoId: item.productId,
+          tipo: 'compra',
+          cantidad: item.cantidad,
+          unidad: item.unidad,
+          fecha: newPurchase.fecha,
+          referenciaId: oldPurchase.id,
+        );
+        batch.set(movementDoc, movement.toMap());
+      }
+    }
+
+    // 5. Actualizar el documento de compra
+    final purchaseDocRef = _comprasRef.doc(oldPurchase.id);
+    batch.set(purchaseDocRef, newPurchase.toMap());
+
+    await batch.commit();
   }
 
   /// Lista demo inspirada en la captura del diseño (Image 2) cuando no hay datos

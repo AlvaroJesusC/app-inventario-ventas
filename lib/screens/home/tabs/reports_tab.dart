@@ -88,11 +88,14 @@ class _ReportsTabState extends State<ReportsTab> {
         backgroundColor: Colors.transparent,
         child: Stack(
           children: [
-            Center(
+            Positioned.fill(
               child: InteractiveViewer(
                 minScale: 0.8,
                 maxScale: 4.0,
-                child: Image.memory(imageBytes, fit: BoxFit.contain),
+                boundaryMargin: const EdgeInsets.all(240),
+                child: Center(
+                  child: Image.memory(imageBytes, fit: BoxFit.contain),
+                ),
               ),
             ),
             Positioned(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../config/app_theme.dart';
 import '../../config/app_constants.dart';
 import '../../services/auth_service.dart';
@@ -24,6 +25,7 @@ class _LoginScreenState extends State<LoginScreen>
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _isLoading = false;
+  bool _rememberMe = true;
   
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -32,6 +34,7 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   void initState() {
     super.initState();
+    _loadSavedCredentials();
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
@@ -52,6 +55,27 @@ class _LoginScreenState extends State<LoginScreen>
       ),
     );
     _animationController.forward();
+  }
+
+  Future<void> _loadSavedCredentials() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final rememberMe = prefs.getBool('remember_me') ?? true;
+      final savedEmail = prefs.getString('saved_email') ?? '';
+      final savedPassword = prefs.getString('saved_password') ?? '';
+
+      if (mounted) {
+        setState(() {
+          _rememberMe = rememberMe;
+          if (rememberMe) {
+            _emailController.text = savedEmail;
+            _passwordController.text = savedPassword;
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Error al cargar credenciales guardadas: $e');
+    }
   }
 
   @override
@@ -83,6 +107,23 @@ class _LoginScreenState extends State<LoginScreen>
           password: _passwordController.text,
         );
       }
+
+      // Guardar o borrar credenciales según la preferencia de recordar
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        if (_rememberMe) {
+          await prefs.setBool('remember_me', true);
+          await prefs.setString('saved_email', _emailController.text.trim());
+          await prefs.setString('saved_password', _passwordController.text);
+        } else {
+          await prefs.setBool('remember_me', false);
+          await prefs.remove('saved_email');
+          await prefs.remove('saved_password');
+        }
+      } catch (e) {
+        debugPrint('Error al guardar credenciales en SharedPreferences: $e');
+      }
+
       // La navegación es automática gracias al AuthWrapper
     } catch (e) {
       if (!mounted) return;
@@ -356,6 +397,41 @@ class _LoginScreenState extends State<LoginScreen>
                       ],
 
                       const SizedBox(height: 12),
+
+                      // Opción Recordar mi sesión (solo en login)
+                      if (!_isRegisterMode) ...[
+                        Row(
+                          children: [
+                            SizedBox(
+                              height: 24,
+                              width: 24,
+                              child: Checkbox(
+                                value: _rememberMe,
+                                activeColor: AppTheme.primaryGreen,
+                                checkColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                onChanged: (value) {
+                                  setState(() {
+                                    _rememberMe = value ?? false;
+                                  });
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            const Text(
+                              'Recordar mi sesión',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: AppTheme.textSecondary,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                      ],
 
                       // Botón principal
                       ElevatedButton(
