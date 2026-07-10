@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../config/app_theme.dart';
 
 /// Pantalla secundaria que visualiza los Gráficos de Agente IA en Railway
@@ -15,6 +17,7 @@ class _ReportsImagesScreenState extends State<ReportsImagesScreen> {
   final Map<String, Uint8List> _imageBytesMap = {};
   final Map<String, bool> _loadingMap = {};
   final Map<String, String?> _errorMap = {};
+  final Map<String, bool> _isCachedMap = {};
 
   final List<String> _endpoints = const [
     'https://web-production-77cdd.up.railway.app/anomalias',
@@ -44,31 +47,46 @@ class _ReportsImagesScreenState extends State<ReportsImagesScreen> {
       _errorMap[url] = null;
     });
 
+    final prefs = await SharedPreferences.getInstance();
+
     try {
       final response = await http
           .get(Uri.parse(url))
           .timeout(const Duration(seconds: 15));
       if (response.statusCode == 200 && response.bodyBytes.isNotEmpty) {
+        // Guardar la imagen en caché como base64
+        final String base64Image = base64Encode(response.bodyBytes);
+        await prefs.setString('cached_image_$url', base64Image);
+
         if (mounted) {
           setState(() {
             _imageBytesMap[url] = response.bodyBytes;
+            _isCachedMap[url] = false;
+            _loadingMap[url] = false;
+          });
+        }
+      } else {
+        throw Exception('HTTP Error ${response.statusCode}');
+      }
+    } catch (e) {
+      // Intentar cargar la imagen desde el caché local offline
+      final String? cachedBase64 = prefs.getString('cached_image_$url');
+      if (cachedBase64 != null && cachedBase64.isNotEmpty) {
+        final Uint8List cachedBytes = base64Decode(cachedBase64);
+        if (mounted) {
+          setState(() {
+            _imageBytesMap[url] = cachedBytes;
+            _isCachedMap[url] = true;
             _loadingMap[url] = false;
           });
         }
       } else {
         if (mounted) {
           setState(() {
-            _errorMap[url] = 'Error HTTP ${response.statusCode}';
+            _errorMap[url] = 'Error de conexión y sin caché local';
             _loadingMap[url] = false;
           });
         }
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _errorMap[url] = 'Error de conexión';
-          _loadingMap[url] = false;
-        });
       }
     }
   }
@@ -520,7 +538,44 @@ class _ReportsImagesScreenState extends State<ReportsImagesScreen> {
                     }
 
                     if (bytes != null) {
-                      return Image.memory(bytes, fit: BoxFit.contain);
+                      return Stack(
+                        children: [
+                          Positioned.fill(
+                            child: Image.memory(bytes, fit: BoxFit.contain),
+                          ),
+                          if (_isCachedMap[baseUrl] == true)
+                            Positioned(
+                              bottom: 8,
+                              right: 8,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.6),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.cloud_off_rounded,
+                                      color: Colors.white,
+                                      size: 11,
+                                    ),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Offline (Caché)',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                        ],
+                      );
                     }
 
                     return const SizedBox.shrink();

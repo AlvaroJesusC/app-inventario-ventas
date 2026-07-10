@@ -50,6 +50,9 @@ class _ReportsTabState extends State<ReportsTab> with SingleTickerProviderStateM
         _peakHoursData = results[1] as PeakHoursData;
         _isLoading = false;
       });
+      if (!ReportService.isOfflineData) {
+        _reportService.preloadReportImages();
+      }
     } catch (e) {
       setState(() {
         _errorMessage = e.toString().replaceAll('Exception: ', '');
@@ -259,12 +262,20 @@ class _ReportsTabState extends State<ReportsTab> with SingleTickerProviderStateM
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Icon(Icons.broken_image_rounded, color: Colors.grey.shade400, size: 40),
+                                      Icon(
+                                        ReportService.isOfflineData
+                                            ? Icons.wifi_off_rounded
+                                            : Icons.broken_image_rounded,
+                                        color: Colors.grey.shade400,
+                                        size: 40,
+                                      ),
                                       const SizedBox(height: 8),
-                                      const Text(
-                                        'Gráfico no disponible para este producto',
+                                      Text(
+                                        ReportService.isOfflineData
+                                            ? 'Los gráficos predictivos requieren conexión a internet'
+                                            : 'Gráfico no disponible para este producto',
                                         textAlign: TextAlign.center,
-                                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                                        style: const TextStyle(fontSize: 12, color: Colors.grey),
                                       ),
                                     ],
                                   ),
@@ -308,7 +319,9 @@ class _ReportsTabState extends State<ReportsTab> with SingleTickerProviderStateM
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          'Este gráfico es generado en tiempo real por el modelo Prophet en Railway.',
+                          ReportService.isOfflineData
+                              ? 'Modo sin conexión. Conéctate a internet para generar predicciones en tiempo real.'
+                              : 'Este gráfico es generado en tiempo real por el modelo Prophet en Railway.',
                           style: TextStyle(
                             fontSize: 11,
                             fontStyle: FontStyle.italic,
@@ -474,6 +487,10 @@ class _ReportsTabState extends State<ReportsTab> with SingleTickerProviderStateM
         children: [
           _buildHeader(),
           const SizedBox(height: 20),
+          if (ReportService.isOfflineData) ...[
+            _buildOfflineBanner(),
+            const SizedBox(height: 20),
+          ],
           _buildTodaySummary(),
           const SizedBox(height: 24),
           _buildListSection(),
@@ -482,6 +499,51 @@ class _ReportsTabState extends State<ReportsTab> with SingleTickerProviderStateM
           const SizedBox(height: 24),
           _buildBarChartSection(),
           const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOfflineBanner() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF9C4),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFFBC02D).withValues(alpha: 0.5)),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.wifi_off_rounded,
+            color: Color(0xFFF57F17),
+            size: 24,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Modo sin conexión',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF5D4037),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Mostrando datos de la última sincronización: ${ReportService.lastCacheTime}',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Color(0xFF5D4037),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
