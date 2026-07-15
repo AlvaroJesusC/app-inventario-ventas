@@ -18,7 +18,7 @@ class _ReportsImagesScreenState extends State<ReportsImagesScreen> {
   final Map<String, bool> _loadingMap = {};
   final Map<String, String?> _errorMap = {};
   final Map<String, bool> _isCachedMap = {};
-
+  // endpoints
   final List<String> _endpoints = const [
     'https://web-production-77cdd.up.railway.app/anomalias',
     'https://web-production-77cdd.up.railway.app/clasificar',
@@ -159,7 +159,10 @@ class _ReportsImagesScreenState extends State<ReportsImagesScreen> {
         backgroundColor: AppTheme.white,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: AppTheme.textPrimary),
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppTheme.textPrimary,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
@@ -199,7 +202,8 @@ class _ReportsImagesScreenState extends State<ReportsImagesScreen> {
               _buildReportCard(
                 title: 'Panel de Alertas Críticas y Anomalías',
                 subtitle: 'endpoint /anomalias',
-                baseUrl: 'https://web-production-77cdd.up.railway.app/anomalias',
+                baseUrl:
+                    'https://web-production-77cdd.up.railway.app/anomalias',
                 icon: Icons.warning_amber_rounded,
                 iconBgColor: const Color(0xFFFFF3E0),
                 iconColor: const Color(0xFFE65100),
@@ -212,7 +216,8 @@ class _ReportsImagesScreenState extends State<ReportsImagesScreen> {
               _buildReportCard(
                 title: 'Productos Más Vendidos por Categoría',
                 subtitle: 'endpoint /clasificar',
-                baseUrl: 'https://web-production-77cdd.up.railway.app/clasificar',
+                baseUrl:
+                    'https://web-production-77cdd.up.railway.app/clasificar',
                 icon: Icons.pie_chart_rounded,
                 iconBgColor: AppTheme.primaryGreen.withValues(alpha: 0.1),
                 iconColor: AppTheme.primaryGreen,
@@ -221,7 +226,8 @@ class _ReportsImagesScreenState extends State<ReportsImagesScreen> {
               _buildReportCard(
                 title: 'Demanda Proyectada por Hora (Horarios Pico)',
                 subtitle: 'endpoint /horas-pico',
-                baseUrl: 'https://web-production-77cdd.up.railway.app/horas-pico',
+                baseUrl:
+                    'https://web-production-77cdd.up.railway.app/horas-pico',
                 icon: Icons.access_time_filled_rounded,
                 iconBgColor: const Color(0xFFE3F2FD),
                 iconColor: const Color(0xFF1565C0),
@@ -520,9 +526,7 @@ class _ReportsImagesScreenState extends State<ReportsImagesScreen> {
                               ),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: AppTheme.primaryGreen,
-                                side: BorderSide(
-                                  color: AppTheme.primaryGreen,
-                                ),
+                                side: BorderSide(color: AppTheme.primaryGreen),
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 12,
                                   vertical: 6,
@@ -548,7 +552,10 @@ class _ReportsImagesScreenState extends State<ReportsImagesScreen> {
                               bottom: 8,
                               right: 8,
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
                                   color: Colors.black.withValues(alpha: 0.6),
                                   borderRadius: BorderRadius.circular(8),

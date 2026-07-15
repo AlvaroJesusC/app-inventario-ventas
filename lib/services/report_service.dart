@@ -4,7 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/warehouse_dashboard_model.dart';
 
 class ReportService {
-  static const String _baseUrl = 'https://web-production-77cdd.up.railway.app/api/v1';
+  static const String _baseUrl =
+      'https://web-production-77cdd.up.railway.app/api/v1';
   static const String _dashboardCacheKey = 'cached_warehouse_dashboard';
   static const String _dashboardTimeKey = 'cached_warehouse_dashboard_time';
   static const String _peakHoursCacheKey = 'cached_peak_hours_data';
@@ -25,8 +26,9 @@ class ReportService {
 
         // Guardar exitosamente en caché local
         final now = DateTime.now();
-        final formattedTime = '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
-        
+        final formattedTime =
+            '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+
         await prefs.setString(_dashboardCacheKey, rawJson);
         await prefs.setString(_dashboardTimeKey, formattedTime);
 
@@ -74,11 +76,13 @@ class ReportService {
         final Map<String, dynamic> data = json.decode(cachedJson);
         return PeakHoursData.fromJson(data);
       }
-      throw Exception('Sin conexión y sin datos locales guardados para horas pico.');
+      throw Exception(
+        'Sin conexión y sin datos locales guardados para horas pico.',
+      );
     }
   }
 
-  /// Pre-descarga y guarda en caché las imágenes históricas de Railway
+  /// pre descarga del Railway - endpoint json
   Future<void> preloadReportImages() async {
     final List<String> endpoints = [
       'https://web-production-77cdd.up.railway.app/anomalias',
@@ -88,17 +92,23 @@ class ReportService {
     ];
 
     final prefs = await SharedPreferences.getInstance();
-    print('>>> ReportService: Iniciando pre-carga de imágenes en segundo plano...');
+    print(
+      '>>> ReportService: Iniciando pre-carga de imágenes en segundo plano...',
+    );
 
     for (final url in endpoints) {
       try {
-        final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 15));
+        final response = await http
+            .get(Uri.parse(url))
+            .timeout(const Duration(seconds: 15));
         if (response.statusCode == 200 && response.bodyBytes.isNotEmpty) {
           final String base64Image = base64Encode(response.bodyBytes);
           await prefs.setString('cached_image_$url', base64Image);
           print('>>> ReportService: Precargada exitosamente: $url');
         } else {
-          print('>>> ReportService: Error ${response.statusCode} al precargar: $url');
+          print(
+            '>>> ReportService: Error ${response.statusCode} al precargar: $url',
+          );
         }
       } catch (e) {
         print('>>> ReportService: Excepción al precargar $url: $e');
